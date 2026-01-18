@@ -80,8 +80,8 @@ async function loadAllData() {
             showLoading(false);
             updateFavoritesCount();
             
-            renderCategories(); // Update category counts
-    renderProducts(); // Always render products
+            renderCategories();
+            renderProducts();
             
         });
     } catch (error) {
@@ -103,19 +103,16 @@ function renderNavigation() {
         `<a href="#" class="nav-link" data-category="${cat.id}">${cat.name}</a>`
     ).join('');
     
-    // Update main nav
     mainNav.innerHTML = `
         <a href="#" class="nav-link active" data-category="all">הכל</a>
         ${navLinks}
     `;
     
-    // Update mobile nav
     mobileNav.innerHTML = `
         <a href="#" class="nav-link active" data-category="all">הכל</a>
         ${navLinks}
     `;
     
-    // Re-attach event listeners
     document.querySelectorAll('.nav-link').forEach(link => {
         link.addEventListener('click', handleNavClick);
     });
@@ -147,7 +144,6 @@ function renderCategories() {
         `;
     }).join('');
     
-    // Attach click events
     document.querySelectorAll('.category-card').forEach(card => {
         card.addEventListener('click', () => handleCategoryClick(card.dataset.category));
     });
@@ -158,14 +154,11 @@ function handleCategoryClick(categoryId) {
     currentCategoryId = categoryId;
     const category = categories.find(c => c.id === categoryId);
     
-    // Check if category has subcategories
     const subs = subcategories.filter(s => s.categoryId === categoryId);
     
     if (subs.length > 0) {
-        // Show subcategories
         showSubcategories(categoryId, subs);
     } else {
-        // Show products directly
         showProducts(categoryId, null);
     }
 }
@@ -194,7 +187,6 @@ function showSubcategories(categoryId, subs) {
         `;
     }).join('');
     
-    // Add "All in category" option
     subcategoriesGrid.innerHTML = `
         <div class="subcategory-card all-in-category" data-subcategory="all">
             <div class="subcategory-image">
@@ -211,7 +203,6 @@ function showSubcategories(categoryId, subs) {
         </div>
     ` + subcategoriesGrid.innerHTML;
     
-    // Attach click events
     document.querySelectorAll('.subcategory-card').forEach(card => {
         card.addEventListener('click', () => {
             const subId = card.dataset.subcategory;
@@ -223,9 +214,7 @@ function showSubcategories(categoryId, subs) {
         });
     });
     
-    // Update navigation
     setActiveNav(categoryId);
-    
     document.getElementById('products').scrollIntoView({ behavior: 'smooth' });
 }
 
@@ -255,7 +244,6 @@ function showProducts(categoryId, subcategoryId) {
     
     currentCategoryTitle.textContent = title;
     renderProducts(filtered);
-    
     setActiveNav(categoryId);
 }
 
@@ -282,19 +270,24 @@ function renderProducts(filteredProducts = null) {
     productsCountEl.textContent = productsToShow.length;
 }
 
-// ===== Create Product Card =====
+// ===== Create Product Card (עם תמיכה בקרוסלה) =====
 function createProductCard(product, isFavorite) {
+    // תמיכה גם בתמונה בודדת וגם במערך תמונות
+    const images = product.images && product.images.length > 0 
+        ? product.images 
+        : (product.image ? [product.image] : ['images/placeholder.svg']);
+    
     const card = document.createElement('div');
     card.className = 'product-card';
     card.innerHTML = `
         <div class="product-image">
-            <img src="${product.image || 'images/placeholder.svg'}" alt="${product.name}" onerror="this.src='images/placeholder.svg'">
-            <button class="favorite-btn ${isFavorite ? 'active' : ''}" data-id="${product.id}">
-                <svg viewBox="0 0 24 24">
-                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-                </svg>
-            </button>
+            <!-- הקרוסלה תיווצר כאן -->
         </div>
+        <button class="favorite-btn ${isFavorite ? 'active' : ''}" data-id="${product.id}">
+            <svg viewBox="0 0 24 24">
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+            </svg>
+        </button>
         <div class="product-info">
             <h3 class="product-name">${product.name}</h3>
             <p class="product-sku">מק"ט: ${product.sku || '-'}</p>
@@ -303,14 +296,21 @@ function createProductCard(product, isFavorite) {
         </div>
     `;
     
-    // Click on card to open modal
+    // אתחול הקרוסלה
+    setTimeout(() => {
+        if (typeof productCarousel !== 'undefined') {
+            productCarousel.initCardCarousel(card, images);
+        }
+    }, 10);
+    
+    // לחיצה על הכרטיס פותחת את המודל
     card.addEventListener('click', (e) => {
-        if (!e.target.closest('.favorite-btn')) {
+        if (!e.target.closest('.favorite-btn') && !e.target.closest('.carousel-arrow')) {
             openProductModal(product);
         }
     });
     
-    // Favorite button
+    // כפתור מועדפים
     const favoriteBtn = card.querySelector('.favorite-btn');
     favoriteBtn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -320,16 +320,21 @@ function createProductCard(product, isFavorite) {
     return card;
 }
 
-// ===== Product Modal =====
+// ===== Product Modal (עם תמיכה בקרוסלה) =====
 function openProductModal(product) {
     const cat = categories.find(c => c.id === product.categoryId);
     const sub = subcategories.find(s => s.id === product.subcategoryId);
     const isFavorite = favorites.includes(product.id);
     
+    // תמיכה גם בתמונה בודדת וגם במערך תמונות
+    const images = product.images && product.images.length > 0 
+        ? product.images 
+        : (product.image ? [product.image] : ['images/placeholder.svg']);
+    
     modalContent.innerHTML = `
         <div class="modal-product">
             <div class="modal-product-image">
-                <img src="${product.image || 'images/placeholder.svg'}" alt="${product.name}" onerror="this.src='images/placeholder.svg'">
+                <!-- הקרוסלה תיווצר כאן -->
             </div>
             <div class="modal-product-info">
                 <div class="modal-product-category">${cat ? cat.name : ''} ${sub ? '/ ' + sub.name : ''}</div>
@@ -367,11 +372,18 @@ function openProductModal(product) {
         </div>
     `;
     
-    // Favorite button in modal
+    // אתחול קרוסלה במודל
+    setTimeout(() => {
+        if (typeof productCarousel !== 'undefined') {
+            const modalElement = modalContent.querySelector('.modal-product');
+            productCarousel.initModalCarousel(modalElement, images);
+        }
+    }, 10);
+    
+    // כפתור מועדפים במודל
     const modalFavBtn = modalContent.querySelector('.modal-favorite-btn');
     modalFavBtn.addEventListener('click', () => {
         toggleFavorite(product.id, modalFavBtn);
-        // Update text
         const isNowFavorite = favorites.includes(product.id);
         modalFavBtn.innerHTML = `
             <svg viewBox="0 0 24 24">
@@ -392,12 +404,10 @@ function closeProductModal() {
 
 // ===== Event Listeners =====
 function setupEventListeners() {
-    // Navigation
     document.querySelectorAll('.nav-link').forEach(link => {
         link.addEventListener('click', handleNavClick);
     });
     
-    // Back to categories
     backToCategories.addEventListener('click', () => {
         currentView = 'categories';
         categoriesSection.style.display = 'block';
@@ -407,17 +417,14 @@ function setupEventListeners() {
         setActiveNav('all');
     });
     
-    // Favorites
     favoritesBtn.addEventListener('click', openFavoritesPanel);
     closePanel.addEventListener('click', closeFavoritesPanel);
     overlay.addEventListener('click', closeFavoritesPanel);
     btnClear.addEventListener('click', clearFavorites);
     btnWhatsapp.addEventListener('click', sendToWhatsApp);
     
-    // Mobile menu
     mobileMenuBtn.addEventListener('click', toggleMobileMenu);
     
-    // Product modal
     modalClose.addEventListener('click', closeProductModal);
     productModal.addEventListener('click', (e) => {
         if (e.target === productModal) closeProductModal();
@@ -432,7 +439,6 @@ function handleNavClick(e) {
     closeMobileMenu();
     
     if (categoryId === 'all') {
-        // Show all
         currentView = 'categories';
         currentCategoryId = null;
         currentSubcategoryId = null;
@@ -469,7 +475,6 @@ function toggleFavorite(productId, button) {
     updateFavoritesCount();
     renderFavoritesList();
     
-    // Update product card if visible
     const cardBtn = document.querySelector(`.product-card .favorite-btn[data-id="${productId}"]`);
     if (cardBtn && cardBtn !== button) {
         cardBtn.classList.toggle('active', favorites.includes(productId));
@@ -507,11 +512,16 @@ function renderFavoritesList() {
     const favoriteProducts = products.filter(p => favorites.includes(p.id));
     
     favoriteProducts.forEach(product => {
+        // תמיכה בתמונה הראשונה מהמערך
+        const firstImage = product.images && product.images.length > 0 
+            ? product.images[0] 
+            : (product.image || 'images/placeholder.svg');
+        
         const item = document.createElement('div');
         item.className = 'favorite-item';
         item.innerHTML = `
             <div class="favorite-item-image">
-                <img src="${product.image || 'images/placeholder.svg'}" alt="${product.name}" onerror="this.src='images/placeholder.svg'">
+                <img src="${firstImage}" alt="${product.name}" onerror="this.src='images/placeholder.svg'">
             </div>
             <div class="favorite-item-info">
                 <div class="favorite-item-name">${product.name}</div>
@@ -597,19 +607,22 @@ window.addEventListener('scroll', () => {
     }
 });
 
-// ===== Welcome Popup =====
+// ===== Welcome Popup (פעם אחת בסשן בלבד) =====
 function setupWelcomePopup() {
     const welcomePopup = document.getElementById('welcome-popup');
     const welcomeCloseBtn = document.getElementById('welcome-close');
     const dontShowAgain = document.getElementById('dont-show-again');
     
-    if (!localStorage.getItem('glasseria_welcome_dismissed')) {
+    // משתמש ב-sessionStorage - הפופאפ יופיע פעם אחת בכל סשן
+    if (!sessionStorage.getItem('glasseria_welcome_shown')) {
         setTimeout(() => {
             welcomePopup.classList.add('active');
+            sessionStorage.setItem('glasseria_welcome_shown', 'true');
         }, 500);
     }
     
     welcomeCloseBtn.addEventListener('click', () => {
+        // אם המשתמש סימן "אל תציג שוב" - שומר ב-localStorage לצמיתות
         if (dontShowAgain.checked) {
             localStorage.setItem('glasseria_welcome_dismissed', 'true');
         }
