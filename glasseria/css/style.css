@@ -1,5 +1,6 @@
 /* ===== Glasseria Catalog Styles - FULLY RESPONSIVE RTL ===== */
 /* Fixed for all mobile devices including iPhone 15 Pro Max */
+/* UPDATED: Fixed modal image display on mobile */
 
 /* ===== CRITICAL: Prevent horizontal overflow ===== */
 html {
@@ -53,17 +54,17 @@ body {
 
 .header .container {
     display: flex;
-    flex-direction: row-reverse; /* Reverse for RTL */
+    flex-direction: row-reverse;
     align-items: center;
     justify-content: space-between;
     height: 70px;
     gap: 10px;
 }
 
-/* Logo on LEFT side (appears right in RTL reversed) */
+/* Logo on LEFT side */
 .logo {
     display: flex;
-    flex-direction: row-reverse; /* Logo icon on left, text on right */
+    flex-direction: row-reverse;
     align-items: center;
     gap: 10px;
     text-decoration: none;
@@ -116,7 +117,7 @@ body {
     border: none;
     cursor: pointer;
     flex-shrink: 0;
-    order: 1; /* Force to right in RTL */
+    order: 1;
 }
 
 .mobile-menu-btn span {
@@ -386,7 +387,7 @@ body {
     position: relative;
     aspect-ratio: 1;
     overflow: hidden;
-    background: var(--light);
+    background: var(--white);
     width: 100%;
 }
 
@@ -403,6 +404,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    background: var(--white);
 }
 
 .product-image-slide img {
@@ -453,7 +455,6 @@ body {
     left: 8px;
 }
 
-/* Show arrows only when multiple images */
 .product-image.has-multiple .carousel-arrow {
     display: flex;
 }
@@ -554,7 +555,7 @@ body {
     color: var(--primary);
 }
 
-/* ===== Product Modal ===== */
+/* ===== Product Modal - FIXED FOR MOBILE ===== */
 .product-modal-overlay {
     position: fixed;
     top: 0;
@@ -612,12 +613,15 @@ body {
     grid-template-columns: 1fr 1fr;
 }
 
-/* Modal Image Carousel */
+/* Modal Image - FIXED */
 .modal-product-image {
     position: relative;
     aspect-ratio: 1;
-    background: var(--light);
+    background: var(--white);
     overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .modal-image-carousel {
@@ -633,13 +637,15 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    background: var(--white);
 }
 
 .modal-image-slide img {
-    width: 100%;
-    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
     object-fit: contain;
-    padding: 20px;
 }
 
 /* Modal Carousel Arrows */
@@ -695,6 +701,9 @@ body {
     display: none;
     gap: 8px;
     z-index: 5;
+    background: rgba(255,255,255,0.8);
+    padding: 6px 12px;
+    border-radius: 20px;
 }
 
 .modal-product-image.has-multiple .modal-carousel-dots {
@@ -705,7 +714,7 @@ body {
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: rgba(0,0,0,0.2);
+    background: rgba(0,0,0,0.3);
     border: none;
     padding: 0;
     cursor: pointer;
@@ -1259,6 +1268,7 @@ body {
     }
     
     .modal-product-image {
+        aspect-ratio: 4/3;
         max-height: 350px;
     }
     
@@ -1399,7 +1409,7 @@ body {
         font-size: 13px;
     }
     
-    /* Modal Mobile */
+    /* ===== Modal Mobile - FIXED ===== */
     .product-modal-overlay {
         padding: 0;
         align-items: flex-end;
@@ -1411,12 +1421,35 @@ body {
     }
     
     .modal-product-image {
-        max-height: 280px;
+        aspect-ratio: auto;
+        height: 280px;
+        max-height: 40vh;
+        background: var(--white);
+    }
+    
+    .modal-image-slide {
+        background: var(--white);
+        padding: 10px;
+    }
+    
+    .modal-image-slide img {
+        max-width: 100%;
+        max-height: 100%;
+        width: auto;
+        height: auto;
+        object-fit: contain;
+        border-radius: 8px;
     }
     
     /* Hide modal arrows on mobile */
     .modal-carousel-arrow {
         display: none !important;
+    }
+    
+    .modal-carousel-dots {
+        bottom: 10px;
+        background: rgba(255,255,255,0.9);
+        padding: 4px 10px;
     }
     
     .modal-product-info {
@@ -1525,6 +1558,12 @@ body {
     .favorite-btn svg {
         width: 14px;
         height: 14px;
+    }
+    
+    /* Modal on small screens */
+    .modal-product-image {
+        height: 240px;
+        max-height: 35vh;
     }
 }
 
