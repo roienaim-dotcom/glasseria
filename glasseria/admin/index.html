@@ -3,9 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>פאנל ניהול - Glasseria</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <title>Glasseria - פאנל ניהול</title>
     <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * {
@@ -14,26 +12,36 @@
             box-sizing: border-box;
         }
         
+        :root {
+            --primary: #1a1a1a;
+            --secondary: #666;
+            --light: #f5f5f5;
+            --white: #fff;
+            --success: #27ae60;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+        }
+        
         body {
             font-family: 'Heebo', sans-serif;
-            background: #f5f5f5;
+            background: var(--light);
             min-height: 100vh;
         }
         
         /* Login Screen */
-        .login-screen {
+        .login-container {
+            min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            min-height: 100vh;
-            background: linear-gradient(135deg, #1a1a1a 0%, #333 100%);
+            padding: 20px;
         }
         
         .login-box {
-            background: white;
+            background: var(--white);
             padding: 40px;
             border-radius: 16px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
             width: 100%;
             max-width: 400px;
             text-align: center;
@@ -41,476 +49,230 @@
         
         .login-box h1 {
             font-size: 28px;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
         }
         
         .login-box p {
-            color: #666;
+            color: var(--secondary);
             margin-bottom: 30px;
         }
         
-        .login-box input {
-            width: 100%;
-            padding: 14px 16px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 16px;
-            font-family: inherit;
-            margin-bottom: 16px;
-            transition: border-color 0.3s;
-        }
-        
-        .login-box input:focus {
-            outline: none;
-            border-color: #1a1a1a;
-        }
-        
-        .login-box button {
-            width: 100%;
-            padding: 14px;
-            background: #1a1a1a;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-        
-        .login-box button:hover {
-            background: #333;
-        }
-        
-        .login-box button:disabled {
-            background: #999;
-            cursor: not-allowed;
-        }
-        
-        .login-error {
-            color: #e74c3c;
-            margin-top: 12px;
-            display: none;
-        }
-        
-        /* Admin Panel */
-        .admin-panel {
-            display: none;
-        }
-        
-        .admin-header {
-            background: #1a1a1a;
-            color: white;
-            padding: 16px 24px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-        
-        .admin-header h1 {
-            font-size: 20px;
-            font-weight: 600;
-        }
-        
-        .admin-header-actions {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-        }
-        
-        .admin-user {
-            font-size: 14px;
-            opacity: 0.8;
-        }
-        
-        .btn-view-site {
-            padding: 8px 16px;
-            background: transparent;
-            border: 1px solid white;
-            color: white;
-            border-radius: 6px;
-            cursor: pointer;
-            text-decoration: none;
-            font-size: 14px;
-        }
-        
-        .btn-logout {
-            padding: 8px 16px;
-            background: #e74c3c;
-            border: none;
-            color: white;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        
-        /* Tabs */
-        .admin-tabs {
-            display: flex;
-            background: white;
-            border-bottom: 1px solid #e0e0e0;
-            overflow-x: auto;
-        }
-        
-        .admin-tab {
-            padding: 16px 24px;
-            border: none;
-            background: none;
-            font-size: 15px;
-            font-weight: 500;
-            color: #666;
-            cursor: pointer;
-            border-bottom: 3px solid transparent;
-            white-space: nowrap;
-            font-family: inherit;
-        }
-        
-        .admin-tab:hover {
-            color: #1a1a1a;
-        }
-        
-        .admin-tab.active {
-            color: #1a1a1a;
-            border-bottom-color: #1a1a1a;
-        }
-        
-        /* Content */
-        .admin-content {
-            padding: 24px;
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-        
-        .tab-content {
-            display: none;
-        }
-        
-        .tab-content.active {
-            display: block;
-        }
-        
-        /* Cards */
-        .admin-card {
-            background: white;
-            border-radius: 12px;
-            padding: 24px;
-            margin-bottom: 24px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-        }
-        
-        .admin-card h2 {
-            font-size: 18px;
-            margin-bottom: 20px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid #eee;
-        }
-        
-        /* Form */
-        .form-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
-            margin-bottom: 16px;
-        }
-        
         .form-group {
-            margin-bottom: 16px;
+            margin-bottom: 20px;
+            text-align: right;
         }
         
         .form-group label {
             display: block;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
             font-weight: 500;
-            font-size: 14px;
         }
         
         .form-group input,
         .form-group select,
         .form-group textarea {
             width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
+            padding: 12px 16px;
+            border: 2px solid #eee;
             border-radius: 8px;
-            font-size: 14px;
             font-family: inherit;
+            font-size: 14px;
+            transition: border-color 0.3s;
         }
         
         .form-group input:focus,
         .form-group select:focus,
         .form-group textarea:focus {
             outline: none;
-            border-color: #1a1a1a;
+            border-color: var(--primary);
         }
         
-        .form-group textarea {
-            min-height: 100px;
-            resize: vertical;
-        }
-        
-        /* Image Upload */
-        .image-upload {
-            border: 2px dashed #ddd;
-            border-radius: 8px;
-            padding: 20px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-            position: relative;
-        }
-        
-        .image-upload:hover {
-            border-color: #1a1a1a;
-            background: #fafafa;
-        }
-        
-        .image-upload input {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0;
-            cursor: pointer;
-        }
-        
-        .image-upload-icon {
-            font-size: 40px;
-            color: #ccc;
-            margin-bottom: 8px;
-        }
-        
-        .image-upload p {
-            color: #666;
-            font-size: 14px;
-        }
-        
-        .image-preview {
-            max-width: 150px;
-            max-height: 150px;
-            margin: 10px auto;
-            display: none;
-            border-radius: 8px;
-        }
-        
-        .image-preview.show {
-            display: block;
-        }
-        
-        /* Multiple Images Preview */
-        .images-preview-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin-top: 16px;
-        }
-        
-        .image-preview-item {
-            position: relative;
-            width: 100px;
-            height: 100px;
-        }
-        
-        .image-preview-item img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 8px;
-            border: 2px solid #eee;
-        }
-        
-        .image-preview-item.main img {
-            border-color: #1a1a1a;
-        }
-        
-        .image-preview-item .main-badge {
-            position: absolute;
-            top: 4px;
-            right: 4px;
-            background: #1a1a1a;
-            color: white;
-            font-size: 10px;
-            padding: 2px 6px;
-            border-radius: 4px;
-        }
-        
-        .image-preview-item .remove-btn {
-            position: absolute;
-            top: 4px;
-            left: 4px;
-            width: 24px;
-            height: 24px;
-            background: #e74c3c;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 14px;
-            line-height: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .image-preview-item .remove-btn:hover {
-            background: #c0392b;
-        }
-        
-        /* Buttons */
         .btn {
             padding: 12px 24px;
             border: none;
             border-radius: 8px;
+            font-family: inherit;
             font-size: 14px;
             font-weight: 600;
             cursor: pointer;
-            font-family: inherit;
             transition: all 0.3s;
         }
         
         .btn-primary {
-            background: #1a1a1a;
-            color: white;
+            background: var(--primary);
+            color: var(--white);
+            width: 100%;
         }
         
         .btn-primary:hover {
             background: #333;
         }
         
-        .btn-secondary {
-            background: #e0e0e0;
-            color: #333;
+        .btn-success {
+            background: var(--success);
+            color: var(--white);
         }
         
         .btn-danger {
-            background: #e74c3c;
-            color: white;
+            background: var(--danger);
+            color: var(--white);
         }
         
-        .btn-small {
-            padding: 8px 12px;
-            font-size: 13px;
+        .btn-secondary {
+            background: var(--light);
+            color: var(--primary);
         }
         
-        /* Table */
-        .admin-table {
+        /* Admin Panel */
+        .admin-container {
+            display: none;
+        }
+        
+        .admin-header {
+            background: var(--primary);
+            color: var(--white);
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .admin-header h1 {
+            font-size: 20px;
+        }
+        
+        .admin-nav {
+            display: flex;
+            background: var(--white);
+            border-bottom: 1px solid #eee;
+            overflow-x: auto;
+        }
+        
+        .admin-nav button {
+            padding: 16px 24px;
+            border: none;
+            background: none;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--secondary);
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            white-space: nowrap;
+            transition: all 0.3s;
+        }
+        
+        .admin-nav button:hover {
+            color: var(--primary);
+        }
+        
+        .admin-nav button.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+        
+        .admin-content {
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .section {
+            display: none;
+        }
+        
+        .section.active {
+            display: block;
+        }
+        
+        /* Dashboard */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: var(--white);
+            padding: 24px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .stat-label {
+            color: var(--secondary);
+            margin-top: 8px;
+        }
+        
+        /* Cards & Tables */
+        .card {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .card-header h2 {
+            font-size: 18px;
+        }
+        
+        table {
             width: 100%;
             border-collapse: collapse;
         }
         
-        .admin-table th,
-        .admin-table td {
+        th, td {
             padding: 12px;
             text-align: right;
             border-bottom: 1px solid #eee;
         }
         
-        .admin-table th {
-            background: #f9f9f9;
+        th {
             font-weight: 600;
-            font-size: 13px;
-            color: #666;
+            color: var(--secondary);
+            font-size: 12px;
+            text-transform: uppercase;
         }
         
-        .admin-table img {
+        .table-image {
             width: 50px;
             height: 50px;
             object-fit: cover;
-            border-radius: 6px;
+            border-radius: 8px;
         }
         
-        .admin-table .actions {
+        .actions {
             display: flex;
             gap: 8px;
         }
         
-        .admin-table .image-count {
-            font-size: 11px;
-            color: #666;
-            display: block;
+        .btn-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
         }
         
-        /* Stats */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-        
-        .stat-card {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-        }
-        
-        .stat-card h3 {
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 8px;
-        }
-        
-        .stat-card .number {
-            font-size: 32px;
-            font-weight: 700;
-        }
-        
-        /* Messages */
-        .message {
-            padding: 12px 16px;
-            border-radius: 8px;
-            margin-bottom: 16px;
-            display: none;
-        }
-        
-        .message.success {
-            background: #d4edda;
-            color: #155724;
-            display: block;
-        }
-        
-        .message.error {
-            background: #f8d7da;
-            color: #721c24;
-            display: block;
-        }
-        
-        /* Loading */
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #666;
-        }
-        
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid #eee;
-            border-top-color: #1a1a1a;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 16px;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: #999;
-        }
-        
-        .empty-state svg {
-            width: 80px;
-            height: 80px;
-            margin-bottom: 16px;
-            opacity: 0.5;
+        .btn-icon svg {
+            width: 16px;
+            height: 16px;
         }
         
         /* Modal */
@@ -518,13 +280,14 @@
             position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
+            right: 0;
+            bottom: 0;
             background: rgba(0,0,0,0.5);
             display: none;
             align-items: center;
             justify-content: center;
             z-index: 1000;
+            padding: 20px;
         }
         
         .modal-overlay.active {
@@ -532,10 +295,10 @@
         }
         
         .modal {
-            background: white;
-            border-radius: 12px;
-            width: 90%;
-            max-width: 600px;
+            background: var(--white);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 500px;
             max-height: 90vh;
             overflow-y: auto;
         }
@@ -557,7 +320,7 @@
             border: none;
             font-size: 24px;
             cursor: pointer;
-            color: #666;
+            color: var(--secondary);
         }
         
         .modal-body {
@@ -568,787 +331,1199 @@
             padding: 20px;
             border-top: 1px solid #eee;
             display: flex;
-            gap: 12px;
+            gap: 10px;
             justify-content: flex-end;
+        }
+        
+        /* Image Upload */
+        .image-upload {
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .image-upload:hover {
+            border-color: var(--primary);
+        }
+        
+        .image-upload input {
+            display: none;
+        }
+        
+        .image-preview {
+            margin-top: 10px;
+        }
+        
+        .image-preview img {
+            max-width: 100%;
+            max-height: 150px;
+            border-radius: 8px;
+        }
+        
+        /* Multiple Images Preview */
+        .images-preview-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .image-preview-item {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid #eee;
+        }
+        
+        .image-preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .image-preview-item .remove-btn {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            width: 20px;
+            height: 20px;
+            background: var(--danger);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .image-preview-item .main-badge {
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            background: var(--success);
+            color: white;
+            font-size: 8px;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        
+        /* Compression Status */
+        .compression-status {
+            background: #e8f5e9;
+            border: 1px solid #a5d6a7;
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 12px;
+            color: #2e7d32;
+        }
+        
+        .compression-status.compressing {
+            background: #fff3e0;
+            border-color: #ffcc80;
+            color: #e65100;
+        }
+        
+        /* Image Count Badge */
+        .image-count {
+            background: var(--primary);
+            color: white;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-right: 5px;
+        }
+        
+        /* Checkbox Group */
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            background: var(--light);
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        
+        .checkbox-item input {
+            width: auto;
+        }
+        
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--secondary);
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #eee;
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Error message */
+        .error-message {
+            background: #ffebee;
+            color: var(--danger);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .error-message.show {
+            display: block;
+        }
+        
+        /* Success message */
+        .success-message {
+            background: #e8f5e9;
+            color: var(--success);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
         }
         
         /* Responsive */
         @media (max-width: 768px) {
-            .admin-content {
-                padding: 16px;
+            .admin-nav button {
+                padding: 12px 16px;
+                font-size: 13px;
             }
             
-            .admin-table {
-                font-size: 14px;
+            .card-header {
+                flex-direction: column;
+                gap: 10px;
+                align-items: flex-start;
             }
             
-            .admin-table th,
-            .admin-table td {
+            table {
+                font-size: 13px;
+            }
+            
+            th, td {
                 padding: 8px;
             }
             
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-            
-            .admin-header {
+            .actions {
                 flex-direction: column;
-                gap: 12px;
-                text-align: center;
-            }
-            
-            .admin-header-actions {
-                flex-wrap: wrap;
-                justify-content: center;
-            }
-            
-            .image-preview-item {
-                width: 80px;
-                height: 80px;
             }
         }
     </style>
 </head>
 <body>
     <!-- Login Screen -->
-    <div class="login-screen" id="login-screen">
+    <div class="login-container" id="login-screen">
         <div class="login-box">
-            <h1>🔐 כניסה לניהול</h1>
-            <p>Glasseria Admin Panel</p>
-            <input type="email" id="email-input" placeholder="אימייל" autocomplete="email">
-            <input type="password" id="password-input" placeholder="סיסמה" autocomplete="current-password">
-            <button id="login-btn" onclick="handleLogin()">כניסה</button>
-            <p class="login-error" id="login-error">שגיאה בהתחברות</p>
+            <h1>🔐 פאנל ניהול</h1>
+            <p>Glasseria - מערכת ניהול קטלוג</p>
+            <div class="error-message" id="login-error"></div>
+            <form id="login-form">
+                <div class="form-group">
+                    <label>אימייל</label>
+                    <input type="email" id="login-email" required placeholder="admin@glasseria.co.il">
+                </div>
+                <div class="form-group">
+                    <label>סיסמה</label>
+                    <input type="password" id="login-password" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn btn-primary">התחבר</button>
+            </form>
         </div>
     </div>
-
+    
     <!-- Admin Panel -->
-    <div class="admin-panel" id="admin-panel">
-        <!-- Header -->
+    <div class="admin-container" id="admin-panel">
         <header class="admin-header">
-            <h1>⚙️ פאנל ניהול - Glasseria</h1>
-            <div class="admin-header-actions">
-                <span class="admin-user" id="admin-user-email"></span>
-                <a href="../index.html" target="_blank" class="btn-view-site">צפה באתר</a>
-                <button class="btn-logout" onclick="handleLogout()">יציאה</button>
-            </div>
+            <h1>📦 Glasseria - ניהול</h1>
+            <button class="btn btn-secondary" id="logout-btn">התנתק</button>
         </header>
-
-        <!-- Tabs -->
-        <div class="admin-tabs">
-            <button class="admin-tab active" data-tab="dashboard">📊 סטטיסטיקות</button>
-            <button class="admin-tab" data-tab="categories">📁 קטגוריות</button>
-            <button class="admin-tab" data-tab="subcategories">📂 תת-קטגוריות</button>
-            <button class="admin-tab" data-tab="products">📦 מוצרים</button>
-        </div>
-
-        <!-- Content -->
-        <div class="admin-content">
-            <!-- Dashboard Tab -->
-            <div class="tab-content active" id="tab-dashboard">
+        
+        <nav class="admin-nav">
+            <button class="active" data-section="dashboard">📊 דשבורד</button>
+            <button data-section="categories">📁 קטגוריות</button>
+            <button data-section="subcategories">📂 תת-קטגוריות</button>
+            <button data-section="products">📦 מוצרים</button>
+        </nav>
+        
+        <main class="admin-content">
+            <!-- Dashboard -->
+            <section class="section active" id="section-dashboard">
                 <div class="stats-grid">
                     <div class="stat-card">
-                        <h3>קטגוריות</h3>
-                        <div class="number" id="stat-categories">0</div>
+                        <div class="stat-number" id="stat-categories">0</div>
+                        <div class="stat-label">קטגוריות</div>
                     </div>
                     <div class="stat-card">
-                        <h3>תת-קטגוריות</h3>
-                        <div class="number" id="stat-subcategories">0</div>
+                        <div class="stat-number" id="stat-subcategories">0</div>
+                        <div class="stat-label">תת-קטגוריות</div>
                     </div>
                     <div class="stat-card">
-                        <h3>מוצרים</h3>
-                        <div class="number" id="stat-products">0</div>
+                        <div class="stat-number" id="stat-products">0</div>
+                        <div class="stat-label">מוצרים</div>
                     </div>
                 </div>
                 
-                <div class="admin-card">
-                    <h2>ברוך הבא לפאנל הניהול</h2>
-                    <p>כאן תוכל לנהל את הקטלוג שלך:</p>
-                    <ul style="margin: 16px 0; padding-right: 20px; line-height: 2;">
-                        <li><strong>קטגוריות</strong> - צור קטגוריות ראשיות עם תמונות</li>
-                        <li><strong>תת-קטגוריות</strong> - הוסף תת-קטגוריות לכל קטגוריה</li>
-                        <li><strong>מוצרים</strong> - הוסף מוצרים עם <strong>מספר תמונות</strong>, מחירים ומידות</li>
-                    </ul>
+                <div class="card">
+                    <h2>👋 ברוך הבא לפאנל הניהול</h2>
+                    <p style="margin-top: 10px; color: var(--secondary);">
+                        כאן תוכל לנהל את הקטלוג שלך - להוסיף קטגוריות, תת-קטגוריות ומוצרים.
+                    </p>
+                    <p style="margin-top: 10px; color: var(--success);">
+                        ✅ <strong>דחיסת תמונות אוטומטית:</strong> כל תמונה שתעלה תכווץ אוטומטית לגודל אופטימלי!
+                    </p>
                 </div>
-            </div>
-
-            <!-- Categories Tab -->
-            <div class="tab-content" id="tab-categories">
-                <div class="admin-card">
-                    <h2>➕ הוספת קטגוריה חדשה</h2>
-                    <div id="category-message"></div>
-                    <form id="category-form">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>שם הקטגוריה *</label>
-                                <input type="text" id="category-name" required placeholder="לדוגמה: ארונות אמבטיה">
-                            </div>
-                            <div class="form-group">
-                                <label>סדר תצוגה</label>
-                                <input type="number" id="category-order" value="0" min="0">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>תמונת קטגוריה</label>
-                            <div class="image-upload" id="category-image-upload">
-                                <div class="image-upload-icon">📷</div>
-                                <p>לחץ או גרור תמונה לכאן</p>
-                                <input type="file" id="category-image" accept="image/*">
-                                <img class="image-preview" id="category-image-preview">
-                            </div>
-                        </div>
-                        <button type="submit" class="btn btn-primary">הוסף קטגוריה</button>
-                    </form>
-                </div>
-
-                <div class="admin-card">
-                    <h2>📋 רשימת קטגוריות</h2>
+            </section>
+            
+            <!-- Categories -->
+            <section class="section" id="section-categories">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>📁 קטגוריות</h2>
+                        <button class="btn btn-primary" onclick="openCategoryModal()">+ הוסף קטגוריה</button>
+                    </div>
                     <div id="categories-loading" class="loading">
                         <div class="spinner"></div>
-                        <p>טוען...</p>
+                        טוען...
                     </div>
-                    <table class="admin-table" id="categories-table" style="display: none;">
+                    <table id="categories-table" style="display: none;">
                         <thead>
                             <tr>
                                 <th>תמונה</th>
                                 <th>שם</th>
-                                <th>תת-קטגוריות</th>
-                                <th>מוצרים</th>
                                 <th>סדר</th>
                                 <th>פעולות</th>
                             </tr>
                         </thead>
-                        <tbody id="categories-list"></tbody>
+                        <tbody id="categories-tbody"></tbody>
                     </table>
-                    <div class="empty-state" id="categories-empty" style="display: none;">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                            <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
-                        </svg>
-                        <p>אין קטגוריות עדיין. הוסף את הקטגוריה הראשונה!</p>
+                </div>
+            </section>
+            
+            <!-- Subcategories -->
+            <section class="section" id="section-subcategories">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>📂 תת-קטגוריות</h2>
+                        <button class="btn btn-primary" onclick="openSubcategoryModal()">+ הוסף תת-קטגוריה</button>
                     </div>
-                </div>
-            </div>
-
-            <!-- Subcategories Tab -->
-            <div class="tab-content" id="tab-subcategories">
-                <div class="admin-card">
-                    <h2>➕ הוספת תת-קטגוריה חדשה</h2>
-                    <div id="subcategory-message"></div>
-                    <form id="subcategory-form">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>קטגוריה ראשית *</label>
-                                <select id="subcategory-parent" required>
-                                    <option value="">בחר קטגוריה...</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>שם תת-הקטגוריה *</label>
-                                <input type="text" id="subcategory-name" required placeholder="לדוגמה: ארונות תלויים">
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>סדר תצוגה</label>
-                                <input type="number" id="subcategory-order" value="0" min="0">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>תמונת תת-קטגוריה</label>
-                            <div class="image-upload" id="subcategory-image-upload">
-                                <div class="image-upload-icon">📷</div>
-                                <p>לחץ או גרור תמונה לכאן</p>
-                                <input type="file" id="subcategory-image" accept="image/*">
-                                <img class="image-preview" id="subcategory-image-preview">
-                            </div>
-                        </div>
-                        <button type="submit" class="btn btn-primary">הוסף תת-קטגוריה</button>
-                    </form>
-                </div>
-
-                <div class="admin-card">
-                    <h2>📋 רשימת תת-קטגוריות</h2>
                     <div id="subcategories-loading" class="loading">
                         <div class="spinner"></div>
-                        <p>טוען...</p>
+                        טוען...
                     </div>
-                    <table class="admin-table" id="subcategories-table" style="display: none;">
+                    <table id="subcategories-table" style="display: none;">
                         <thead>
                             <tr>
                                 <th>תמונה</th>
                                 <th>שם</th>
-                                <th>קטגוריה ראשית</th>
-                                <th>מוצרים</th>
+                                <th>קטגוריה</th>
                                 <th>סדר</th>
                                 <th>פעולות</th>
                             </tr>
                         </thead>
-                        <tbody id="subcategories-list"></tbody>
+                        <tbody id="subcategories-tbody"></tbody>
                     </table>
-                    <div class="empty-state" id="subcategories-empty" style="display: none;">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                            <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
-                        </svg>
-                        <p>אין תת-קטגוריות עדיין. הוסף קטגוריה ראשית קודם!</p>
-                    </div>
                 </div>
-            </div>
-
-            <!-- Products Tab -->
-            <div class="tab-content" id="tab-products">
-                <div class="admin-card">
-                    <h2>➕ הוספת מוצר חדש</h2>
-                    <div id="product-message"></div>
-                    <form id="product-form">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>קטגוריה *</label>
-                                <select id="product-category" required>
-                                    <option value="">בחר קטגוריה...</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>תת-קטגוריה</label>
-                                <select id="product-subcategory">
-                                    <option value="">בחר תת-קטגוריה (אופציונלי)...</option>
-                                </select>
-                            </div>
+            </section>
+            
+            <!-- Products -->
+            <section class="section" id="section-products">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>📦 מוצרים</h2>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <select id="filter-category" onchange="filterProducts()" style="padding: 8px; border-radius: 6px; border: 1px solid #ddd;">
+                                <option value="">כל הקטגוריות</option>
+                            </select>
+                            <button class="btn btn-primary" onclick="openProductModal()">+ הוסף מוצר</button>
                         </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>שם המוצר *</label>
-                                <input type="text" id="product-name" required placeholder="לדוגמה: ארון ואנטו">
-                            </div>
-                            <div class="form-group">
-                                <label>מק"ט</label>
-                                <input type="text" id="product-sku" placeholder="VAN-001">
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>מחיר (₪)</label>
-                                <input type="number" id="product-price" min="0" placeholder="0">
-                            </div>
-                            <div class="form-group">
-                                <label>סוג/חומר</label>
-                                <input type="text" id="product-type" placeholder="לדוגמה: פורניר | ארון תלוי">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>תיאור</label>
-                            <textarea id="product-description" placeholder="תיאור המוצר..."></textarea>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>מידות זמינות (מופרד בפסיקים)</label>
-                                <input type="text" id="product-sizes" placeholder="60, 70, 80, 90, 100, 120">
-                            </div>
-                            <div class="form-group">
-                                <label>צבעים זמינים (מופרד בפסיקים)</label>
-                                <input type="text" id="product-colors" placeholder="לבן, שחור, אפור">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>תמונות מוצר (עד 10 תמונות - התמונה הראשונה תהיה הראשית)</label>
-                            <div class="image-upload" id="product-images-upload">
-                                <div class="image-upload-icon">📷</div>
-                                <p>לחץ או גרור תמונות לכאן (ניתן לבחור מספר תמונות)</p>
-                                <input type="file" id="product-images" accept="image/*" multiple>
-                            </div>
-                            <div class="images-preview-container" id="product-images-preview"></div>
-                        </div>
-                        <button type="submit" class="btn btn-primary">הוסף מוצר</button>
-                    </form>
-                </div>
-
-                <div class="admin-card">
-                    <h2>📋 רשימת מוצרים</h2>
-                    <div class="form-group" style="max-width: 300px; margin-bottom: 16px;">
-                        <select id="filter-category">
-                            <option value="">כל הקטגוריות</option>
-                        </select>
                     </div>
                     <div id="products-loading" class="loading">
                         <div class="spinner"></div>
-                        <p>טוען...</p>
+                        טוען...
                     </div>
-                    <table class="admin-table" id="products-table" style="display: none;">
+                    <table id="products-table" style="display: none;">
                         <thead>
                             <tr>
                                 <th>תמונה</th>
                                 <th>שם</th>
                                 <th>מק"ט</th>
-                                <th>קטגוריה</th>
                                 <th>מחיר</th>
+                                <th>קטגוריה</th>
                                 <th>פעולות</th>
                             </tr>
                         </thead>
-                        <tbody id="products-list"></tbody>
+                        <tbody id="products-tbody"></tbody>
                     </table>
-                    <div class="empty-state" id="products-empty" style="display: none;">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                            <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-                        </svg>
-                        <p>אין מוצרים עדיין. הוסף את המוצר הראשון!</p>
-                    </div>
                 </div>
+            </section>
+        </main>
+    </div>
+    
+    <!-- Category Modal -->
+    <div class="modal-overlay" id="category-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="category-modal-title">הוסף קטגוריה</h3>
+                <button class="modal-close" onclick="closeCategoryModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="category-form">
+                    <input type="hidden" id="category-id">
+                    <div class="form-group">
+                        <label>שם הקטגוריה *</label>
+                        <input type="text" id="category-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>סדר תצוגה</label>
+                        <input type="number" id="category-order" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label>תמונה</label>
+                        <div class="image-upload" onclick="document.getElementById('category-image').click()">
+                            <input type="file" id="category-image" accept="image/*" onchange="previewCategoryImage(this)">
+                            <p>📷 לחץ לבחירת תמונה</p>
+                            <div class="image-preview" id="category-image-preview"></div>
+                        </div>
+                        <div class="compression-status" id="category-compression-status" style="display: none;"></div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeCategoryModal()">ביטול</button>
+                <button class="btn btn-primary" onclick="saveCategory()">שמור</button>
             </div>
         </div>
     </div>
-
-    <!-- Edit Modal -->
-    <div class="modal-overlay" id="edit-modal">
+    
+    <!-- Subcategory Modal -->
+    <div class="modal-overlay" id="subcategory-modal">
         <div class="modal">
             <div class="modal-header">
-                <h3 id="modal-title">עריכה</h3>
-                <button class="modal-close" onclick="closeModal()">&times;</button>
+                <h3 id="subcategory-modal-title">הוסף תת-קטגוריה</h3>
+                <button class="modal-close" onclick="closeSubcategoryModal()">&times;</button>
             </div>
-            <div class="modal-body" id="modal-body">
-                <!-- Dynamic content -->
+            <div class="modal-body">
+                <form id="subcategory-form">
+                    <input type="hidden" id="subcategory-id">
+                    <div class="form-group">
+                        <label>קטגוריה ראשית *</label>
+                        <select id="subcategory-category" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label>שם תת-הקטגוריה *</label>
+                        <input type="text" id="subcategory-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>סדר תצוגה</label>
+                        <input type="number" id="subcategory-order" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label>תמונה</label>
+                        <div class="image-upload" onclick="document.getElementById('subcategory-image').click()">
+                            <input type="file" id="subcategory-image" accept="image/*" onchange="previewSubcategoryImage(this)">
+                            <p>📷 לחץ לבחירת תמונה</p>
+                            <div class="image-preview" id="subcategory-image-preview"></div>
+                        </div>
+                        <div class="compression-status" id="subcategory-compression-status" style="display: none;"></div>
+                    </div>
+                </form>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeModal()">ביטול</button>
-                <button class="btn btn-primary" id="modal-save">שמור</button>
+                <button class="btn btn-secondary" onclick="closeSubcategoryModal()">ביטול</button>
+                <button class="btn btn-primary" onclick="saveSubcategory()">שמור</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Product Modal -->
+    <div class="modal-overlay" id="product-modal">
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 id="product-modal-title">הוסף מוצר</h3>
+                <button class="modal-close" onclick="closeProductModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="product-form">
+                    <input type="hidden" id="product-id">
+                    <div class="form-group">
+                        <label>שם המוצר *</label>
+                        <input type="text" id="product-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>מק"ט</label>
+                        <input type="text" id="product-sku">
+                    </div>
+                    <div class="form-group">
+                        <label>מחיר</label>
+                        <input type="number" id="product-price" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label>קטגוריה *</label>
+                        <select id="product-category" required onchange="updateProductSubcategories()"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>תת-קטגוריה</label>
+                        <select id="product-subcategory">
+                            <option value="">ללא תת-קטגוריה</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>סוג/דגם</label>
+                        <input type="text" id="product-type">
+                    </div>
+                    <div class="form-group">
+                        <label>תיאור</label>
+                        <textarea id="product-description" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>מידות זמינות</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-item"><input type="checkbox" name="sizes" value="50"> 50</label>
+                            <label class="checkbox-item"><input type="checkbox" name="sizes" value="60"> 60</label>
+                            <label class="checkbox-item"><input type="checkbox" name="sizes" value="70"> 70</label>
+                            <label class="checkbox-item"><input type="checkbox" name="sizes" value="80"> 80</label>
+                            <label class="checkbox-item"><input type="checkbox" name="sizes" value="90"> 90</label>
+                            <label class="checkbox-item"><input type="checkbox" name="sizes" value="100"> 100</label>
+                            <label class="checkbox-item"><input type="checkbox" name="sizes" value="120"> 120</label>
+                            <label class="checkbox-item"><input type="checkbox" name="sizes" value="150"> 150</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>צבעים זמינים</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-item"><input type="checkbox" name="colors" value="לבן"> לבן</label>
+                            <label class="checkbox-item"><input type="checkbox" name="colors" value="שחור"> שחור</label>
+                            <label class="checkbox-item"><input type="checkbox" name="colors" value="אפור"> אפור</label>
+                            <label class="checkbox-item"><input type="checkbox" name="colors" value="אלון"> אלון</label>
+                            <label class="checkbox-item"><input type="checkbox" name="colors" value="אגוז"> אגוז</label>
+                            <label class="checkbox-item"><input type="checkbox" name="colors" value="ונגה"> ונגה</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>תמונות (עד 10)</label>
+                        <div class="image-upload" onclick="document.getElementById('product-images').click()">
+                            <input type="file" id="product-images" accept="image/*" multiple onchange="handleProductImagesSelect(this)">
+                            <p>📷 לחץ לבחירת תמונות (ניתן לבחור מספר תמונות)</p>
+                        </div>
+                        <div class="images-preview-container" id="product-images-preview"></div>
+                        <div class="compression-status" id="product-compression-status" style="display: none;"></div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeProductModal()">ביטול</button>
+                <button class="btn btn-primary" id="save-product-btn" onclick="saveProduct()">שמור</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Delete Confirmation Modal -->
+    <div class="modal-overlay" id="delete-modal">
+        <div class="modal" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3>אישור מחיקה</h3>
+                <button class="modal-close" onclick="closeDeleteModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="delete-message">האם אתה בטוח שברצונך למחוק פריט זה?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeDeleteModal()">ביטול</button>
+                <button class="btn btn-danger" id="confirm-delete-btn">מחק</button>
             </div>
         </div>
     </div>
 
     <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <script src="../js/firebase-config.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    
     <script>
+        // ===== Firebase Configuration =====
+        const firebaseConfig = {
+            apiKey: "AIzaSyBaQbwRvxuraWb2ax6ijFNoxE6OXKhgVm8",
+            authDomain: "glasseria-3761f.firebaseapp.com",
+            projectId: "glasseria-3761f",
+            storageBucket: "glasseria-3761f.firebasestorage.app",
+            messagingSenderId: "1039571860801",
+            appId: "1:1039571860801:web:1bb49bbf44bfd560ddb5c0"
+        };
+        
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+        const auth = firebase.auth();
+        
+        // Collections
+        const categoriesCollection = db.collection('glasseria_categories');
+        const subcategoriesCollection = db.collection('glasseria_subcategories');
+        const productsCollection = db.collection('glasseria_products');
+        
+        // ===== Image Compression =====
+        async function compressImage(file, options = {}) {
+            const {
+                maxWidth = 1200,
+                maxHeight = 1200,
+                quality = 0.8,
+                outputType = 'image/webp'
+            } = options;
+
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                
+                reader.onload = (e) => {
+                    const img = new Image();
+                    
+                    img.onload = () => {
+                        let { width, height } = img;
+                        
+                        if (width > maxWidth) {
+                            height = (height * maxWidth) / width;
+                            width = maxWidth;
+                        }
+                        
+                        if (height > maxHeight) {
+                            width = (width * maxHeight) / height;
+                            height = maxHeight;
+                        }
+                        
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+                        
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        canvas.toBlob(
+                            (blob) => {
+                                if (blob) {
+                                    const originalSize = (file.size / 1024).toFixed(1);
+                                    const newSize = (blob.size / 1024).toFixed(1);
+                                    console.log(`✅ דחיסה: ${originalSize}KB → ${newSize}KB (${Math.round((1 - blob.size/file.size) * 100)}% חיסכון)`);
+                                    resolve(blob);
+                                } else {
+                                    reject(new Error('שגיאה בדחיסת התמונה'));
+                                }
+                            },
+                            outputType,
+                            quality
+                        );
+                    };
+                    
+                    img.onerror = () => reject(new Error('שגיאה בטעינת התמונה'));
+                    img.src = e.target.result;
+                };
+                
+                reader.onerror = () => reject(new Error('שגיאה בקריאת הקובץ'));
+                reader.readAsDataURL(file);
+            });
+        }
+        
         // ===== State =====
         let categories = [];
         let subcategories = [];
         let products = [];
         let currentUser = null;
         
-        // For multiple images
-        let newProductImages = []; // Files to upload for new product
-        let editProductImages = []; // Existing image URLs when editing
-        let newEditProductImages = []; // New files to upload when editing
+        // Product images state
+        let newProductImages = []; // For new product
+        let existingProductImages = []; // URLs of existing images when editing
+        let editProductNewImages = []; // New images added during edit
         
-        // ===== Authentication with Firebase =====
-        async function handleLogin() {
-            const email = document.getElementById('email-input').value;
-            const password = document.getElementById('password-input').value;
-            const error = document.getElementById('login-error');
-            const loginBtn = document.getElementById('login-btn');
-            
-            if (!email || !password) {
-                error.textContent = 'נא למלא אימייל וסיסמה';
-                error.style.display = 'block';
-                return;
+        // ===== Authentication =====
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                currentUser = user;
+                showAdminPanel();
+                loadAllData();
+            } else {
+                currentUser = null;
+                showLoginScreen();
             }
-            
-            loginBtn.disabled = true;
-            loginBtn.textContent = 'מתחבר...';
-            error.style.display = 'none';
+        });
+        
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            const errorEl = document.getElementById('login-error');
             
             try {
                 await auth.signInWithEmailAndPassword(email, password);
-            } catch (err) {
-                console.error('Login error:', err);
-                
-                if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
-                    error.textContent = 'אימייל או סיסמה שגויים';
-                } else if (err.code === 'auth/invalid-email') {
-                    error.textContent = 'כתובת אימייל לא תקינה';
-                } else if (err.code === 'auth/too-many-requests') {
-                    error.textContent = 'יותר מדי ניסיונות, נסה שוב מאוחר יותר';
-                } else {
-                    error.textContent = 'שגיאה בהתחברות: ' + err.message;
-                }
-                error.style.display = 'block';
-                
-                loginBtn.disabled = false;
-                loginBtn.textContent = 'כניסה';
+                errorEl.classList.remove('show');
+            } catch (error) {
+                errorEl.textContent = 'אימייל או סיסמה שגויים';
+                errorEl.classList.add('show');
             }
-        }
-        
-        async function handleLogout() {
-            try {
-                await auth.signOut();
-            } catch (err) {
-                console.error('Logout error:', err);
-                alert('שגיאה ביציאה');
-            }
-        }
-        
-        function showAdminPanel(user) {
-            currentUser = user;
-            document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('admin-panel').style.display = 'block';
-            document.getElementById('admin-user-email').textContent = user.email;
-            loadAllData();
-        }
-        
-        function showLoginScreen() {
-            currentUser = null;
-            document.getElementById('login-screen').style.display = 'flex';
-            document.getElementById('admin-panel').style.display = 'none';
-            document.getElementById('login-btn').disabled = false;
-            document.getElementById('login-btn').textContent = 'כניסה';
-        }
-        
-        // ===== Initialize =====
-        document.addEventListener('DOMContentLoaded', () => {
-            auth.onAuthStateChanged((user) => {
-                if (user) {
-                    showAdminPanel(user);
-                } else {
-                    showLoginScreen();
-                }
-            });
-            
-            document.getElementById('password-input').addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') handleLogin();
-            });
-            document.getElementById('email-input').addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') document.getElementById('password-input').focus();
-            });
-            
-            document.querySelectorAll('.admin-tab').forEach(tab => {
-                tab.addEventListener('click', () => switchTab(tab.dataset.tab));
-            });
-            
-            document.getElementById('category-form').addEventListener('submit', handleCategorySubmit);
-            document.getElementById('subcategory-form').addEventListener('submit', handleSubcategorySubmit);
-            document.getElementById('product-form').addEventListener('submit', handleProductSubmit);
-            
-            setupImagePreview('category-image', 'category-image-preview');
-            setupImagePreview('subcategory-image', 'subcategory-image-preview');
-            
-            // Multiple images for products
-            setupMultipleImagesPreview('product-images', 'product-images-preview');
-            
-            document.getElementById('product-category').addEventListener('change', updateSubcategoryOptions);
-            document.getElementById('filter-category').addEventListener('change', filterProductsList);
         });
         
-        // ===== Tab Switching =====
-        function switchTab(tabName) {
-            document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            
-            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
-            document.getElementById(`tab-${tabName}`).classList.add('active');
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            auth.signOut();
+        });
+        
+        function showLoginScreen() {
+            document.getElementById('login-screen').style.display = 'flex';
+            document.getElementById('admin-panel').style.display = 'none';
         }
+        
+        function showAdminPanel() {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('admin-panel').style.display = 'block';
+        }
+        
+        // ===== Navigation =====
+        document.querySelectorAll('.admin-nav button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.admin-nav button').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+                document.getElementById(`section-${btn.dataset.section}`).classList.add('active');
+            });
+        });
         
         // ===== Load Data =====
         async function loadAllData() {
-            await Promise.all([
-                loadCategories(),
-                loadSubcategories(),
-                loadProducts()
-            ]);
-            updateStats();
-            updateCategorySelects();
-        }
-        
-        async function loadCategories() {
-            try {
-                const snapshot = await categoriesCollection.orderBy('order').get();
+            // Load categories
+            categoriesCollection.orderBy('order').onSnapshot((snapshot) => {
                 categories = [];
-                snapshot.forEach(doc => {
+                snapshot.forEach((doc) => {
                     categories.push({ id: doc.id, ...doc.data() });
                 });
-                renderCategoriesList();
-            } catch (error) {
-                console.error('Error loading categories:', error);
-            }
-        }
-        
-        async function loadSubcategories() {
-            try {
-                const snapshot = await subcategoriesCollection.orderBy('order').get();
+                renderCategories();
+                updateCategorySelects();
+                document.getElementById('stat-categories').textContent = categories.length;
+            });
+            
+            // Load subcategories
+            subcategoriesCollection.orderBy('order').onSnapshot((snapshot) => {
                 subcategories = [];
-                snapshot.forEach(doc => {
+                snapshot.forEach((doc) => {
                     subcategories.push({ id: doc.id, ...doc.data() });
                 });
-                renderSubcategoriesList();
-            } catch (error) {
-                console.error('Error loading subcategories:', error);
-            }
-        }
-        
-        async function loadProducts() {
-            try {
-                const snapshot = await productsCollection.orderBy('createdAt', 'desc').get();
+                renderSubcategories();
+                document.getElementById('stat-subcategories').textContent = subcategories.length;
+            });
+            
+            // Load products
+            productsCollection.orderBy('createdAt', 'desc').onSnapshot((snapshot) => {
                 products = [];
-                snapshot.forEach(doc => {
+                snapshot.forEach((doc) => {
                     products.push({ id: doc.id, ...doc.data() });
                 });
-                renderProductsList();
-            } catch (error) {
-                console.error('Error loading products:', error);
-            }
+                renderProducts();
+                document.getElementById('stat-products').textContent = products.length;
+            });
         }
         
-        // ===== Render Lists =====
-        function renderCategoriesList() {
+        // ===== Categories =====
+        function renderCategories() {
+            const tbody = document.getElementById('categories-tbody');
             const loading = document.getElementById('categories-loading');
             const table = document.getElementById('categories-table');
-            const empty = document.getElementById('categories-empty');
-            const list = document.getElementById('categories-list');
             
             loading.style.display = 'none';
+            table.style.display = 'table';
             
-            if (categories.length === 0) {
-                table.style.display = 'none';
-                empty.style.display = 'block';
+            tbody.innerHTML = categories.map(cat => `
+                <tr>
+                    <td><img src="${cat.image || '../images/placeholder.svg'}" class="table-image" onerror="this.src='../images/placeholder.svg'"></td>
+                    <td>${cat.name}</td>
+                    <td>${cat.order || 0}</td>
+                    <td class="actions">
+                        <button class="btn btn-icon btn-secondary" onclick="editCategory('${cat.id}')">✏️</button>
+                        <button class="btn btn-icon btn-danger" onclick="deleteCategory('${cat.id}')">🗑️</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        function openCategoryModal(category = null) {
+            document.getElementById('category-modal').classList.add('active');
+            document.getElementById('category-modal-title').textContent = category ? 'עריכת קטגוריה' : 'הוסף קטגוריה';
+            
+            if (category) {
+                document.getElementById('category-id').value = category.id;
+                document.getElementById('category-name').value = category.name;
+                document.getElementById('category-order').value = category.order || 0;
+                if (category.image) {
+                    document.getElementById('category-image-preview').innerHTML = `<img src="${category.image}">`;
+                }
+            } else {
+                document.getElementById('category-form').reset();
+                document.getElementById('category-id').value = '';
+                document.getElementById('category-image-preview').innerHTML = '';
+            }
+            
+            document.getElementById('category-compression-status').style.display = 'none';
+        }
+        
+        function closeCategoryModal() {
+            document.getElementById('category-modal').classList.remove('active');
+        }
+        
+        function editCategory(id) {
+            const category = categories.find(c => c.id === id);
+            if (category) openCategoryModal(category);
+        }
+        
+        async function previewCategoryImage(input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                const statusEl = document.getElementById('category-compression-status');
+                
+                statusEl.textContent = '⏳ דוחס תמונה...';
+                statusEl.className = 'compression-status compressing';
+                statusEl.style.display = 'block';
+                
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    document.getElementById('category-image-preview').innerHTML = `<img src="${e.target.result}">`;
+                };
+                reader.readAsDataURL(file);
+                
+                // Show compression will happen on save
+                const originalSize = (file.size / 1024).toFixed(1);
+                statusEl.textContent = `📷 גודל מקורי: ${originalSize}KB - יידחס בשמירה`;
+                statusEl.className = 'compression-status';
+            }
+        }
+        
+        async function saveCategory() {
+            const id = document.getElementById('category-id').value;
+            const name = document.getElementById('category-name').value;
+            const order = parseInt(document.getElementById('category-order').value) || 0;
+            const imageFile = document.getElementById('category-image').files[0];
+            
+            if (!name) {
+                alert('נא למלא שם קטגוריה');
                 return;
             }
             
-            table.style.display = 'table';
-            empty.style.display = 'none';
+            const statusEl = document.getElementById('category-compression-status');
             
-            list.innerHTML = categories.map(cat => {
-                const subCount = subcategories.filter(s => s.categoryId === cat.id).length;
-                const prodCount = products.filter(p => p.categoryId === cat.id).length;
-                return `
-                    <tr>
-                        <td><img src="${cat.image || '../images/placeholder.svg'}" onerror="this.src='../images/placeholder.svg'"></td>
-                        <td><strong>${cat.name}</strong></td>
-                        <td>${subCount}</td>
-                        <td>${prodCount}</td>
-                        <td>${cat.order || 0}</td>
-                        <td class="actions">
-                            <button class="btn btn-small btn-secondary" onclick="editCategory('${cat.id}')">ערוך</button>
-                            <button class="btn btn-small btn-danger" onclick="deleteCategory('${cat.id}')">מחק</button>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
+            try {
+                let imageUrl = null;
+                
+                if (imageFile) {
+                    statusEl.textContent = '⏳ דוחס ומעלה תמונה...';
+                    statusEl.className = 'compression-status compressing';
+                    statusEl.style.display = 'block';
+                    
+                    // Compress image
+                    const compressedBlob = await compressImage(imageFile);
+                    const fileName = `${Date.now()}_${imageFile.name.replace(/\.[^.]+$/, '')}.webp`;
+                    const ref = storage.ref(`glasseria/categories/${fileName}`);
+                    await ref.put(compressedBlob);
+                    imageUrl = await ref.getDownloadURL();
+                    
+                    const newSize = (compressedBlob.size / 1024).toFixed(1);
+                    statusEl.textContent = `✅ תמונה נדחסה ל-${newSize}KB`;
+                    statusEl.className = 'compression-status';
+                }
+                
+                const data = {
+                    name,
+                    order,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                
+                if (imageUrl) data.image = imageUrl;
+                
+                if (id) {
+                    await categoriesCollection.doc(id).update(data);
+                } else {
+                    data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                    await categoriesCollection.add(data);
+                }
+                
+                closeCategoryModal();
+            } catch (error) {
+                console.error('Error saving category:', error);
+                alert('שגיאה בשמירה: ' + error.message);
+            }
         }
         
-        function renderSubcategoriesList() {
+        function deleteCategory(id) {
+            openDeleteModal('האם אתה בטוח שברצונך למחוק קטגוריה זו?', async () => {
+                await categoriesCollection.doc(id).delete();
+            });
+        }
+        
+        // ===== Subcategories =====
+        function renderSubcategories() {
+            const tbody = document.getElementById('subcategories-tbody');
             const loading = document.getElementById('subcategories-loading');
             const table = document.getElementById('subcategories-table');
-            const empty = document.getElementById('subcategories-empty');
-            const list = document.getElementById('subcategories-list');
             
             loading.style.display = 'none';
-            
-            if (subcategories.length === 0) {
-                table.style.display = 'none';
-                empty.style.display = 'block';
-                return;
-            }
-            
             table.style.display = 'table';
-            empty.style.display = 'none';
             
-            list.innerHTML = subcategories.map(sub => {
-                const parent = categories.find(c => c.id === sub.categoryId);
-                const prodCount = products.filter(p => p.subcategoryId === sub.id).length;
+            tbody.innerHTML = subcategories.map(sub => {
+                const cat = categories.find(c => c.id === sub.categoryId);
                 return `
                     <tr>
-                        <td><img src="${sub.image || '../images/placeholder.svg'}" onerror="this.src='../images/placeholder.svg'"></td>
-                        <td><strong>${sub.name}</strong></td>
-                        <td>${parent ? parent.name : '-'}</td>
-                        <td>${prodCount}</td>
+                        <td><img src="${sub.image || '../images/placeholder.svg'}" class="table-image" onerror="this.src='../images/placeholder.svg'"></td>
+                        <td>${sub.name}</td>
+                        <td>${cat ? cat.name : '-'}</td>
                         <td>${sub.order || 0}</td>
                         <td class="actions">
-                            <button class="btn btn-small btn-secondary" onclick="editSubcategory('${sub.id}')">ערוך</button>
-                            <button class="btn btn-small btn-danger" onclick="deleteSubcategory('${sub.id}')">מחק</button>
+                            <button class="btn btn-icon btn-secondary" onclick="editSubcategory('${sub.id}')">✏️</button>
+                            <button class="btn btn-icon btn-danger" onclick="deleteSubcategory('${sub.id}')">🗑️</button>
                         </td>
                     </tr>
                 `;
             }).join('');
         }
         
-        function renderProductsList(filteredProducts = null) {
-            const loading = document.getElementById('products-loading');
-            const table = document.getElementById('products-table');
-            const empty = document.getElementById('products-empty');
-            const list = document.getElementById('products-list');
+        function openSubcategoryModal(subcategory = null) {
+            document.getElementById('subcategory-modal').classList.add('active');
+            document.getElementById('subcategory-modal-title').textContent = subcategory ? 'עריכת תת-קטגוריה' : 'הוסף תת-קטגוריה';
             
-            loading.style.display = 'none';
+            // Populate categories select
+            const select = document.getElementById('subcategory-category');
+            select.innerHTML = categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
             
-            const productsToShow = filteredProducts || products;
+            if (subcategory) {
+                document.getElementById('subcategory-id').value = subcategory.id;
+                document.getElementById('subcategory-category').value = subcategory.categoryId;
+                document.getElementById('subcategory-name').value = subcategory.name;
+                document.getElementById('subcategory-order').value = subcategory.order || 0;
+                if (subcategory.image) {
+                    document.getElementById('subcategory-image-preview').innerHTML = `<img src="${subcategory.image}">`;
+                }
+            } else {
+                document.getElementById('subcategory-form').reset();
+                document.getElementById('subcategory-id').value = '';
+                document.getElementById('subcategory-image-preview').innerHTML = '';
+            }
             
-            if (productsToShow.length === 0) {
-                table.style.display = 'none';
-                empty.style.display = 'block';
+            document.getElementById('subcategory-compression-status').style.display = 'none';
+        }
+        
+        function closeSubcategoryModal() {
+            document.getElementById('subcategory-modal').classList.remove('active');
+        }
+        
+        function editSubcategory(id) {
+            const subcategory = subcategories.find(s => s.id === id);
+            if (subcategory) openSubcategoryModal(subcategory);
+        }
+        
+        async function previewSubcategoryImage(input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                const statusEl = document.getElementById('subcategory-compression-status');
+                
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    document.getElementById('subcategory-image-preview').innerHTML = `<img src="${e.target.result}">`;
+                };
+                reader.readAsDataURL(file);
+                
+                const originalSize = (file.size / 1024).toFixed(1);
+                statusEl.textContent = `📷 גודל מקורי: ${originalSize}KB - יידחס בשמירה`;
+                statusEl.className = 'compression-status';
+                statusEl.style.display = 'block';
+            }
+        }
+        
+        async function saveSubcategory() {
+            const id = document.getElementById('subcategory-id').value;
+            const categoryId = document.getElementById('subcategory-category').value;
+            const name = document.getElementById('subcategory-name').value;
+            const order = parseInt(document.getElementById('subcategory-order').value) || 0;
+            const imageFile = document.getElementById('subcategory-image').files[0];
+            
+            if (!name || !categoryId) {
+                alert('נא למלא את כל השדות הנדרשים');
                 return;
             }
             
-            table.style.display = 'table';
-            empty.style.display = 'none';
+            const statusEl = document.getElementById('subcategory-compression-status');
             
-            list.innerHTML = productsToShow.map(prod => {
-                const cat = categories.find(c => c.id === prod.categoryId);
-                const imageCount = (prod.images && prod.images.length) || (prod.image ? 1 : 0);
-                const mainImage = (prod.images && prod.images[0]) || prod.image || '../images/placeholder.svg';
+            try {
+                let imageUrl = null;
+                
+                if (imageFile) {
+                    statusEl.textContent = '⏳ דוחס ומעלה תמונה...';
+                    statusEl.className = 'compression-status compressing';
+                    statusEl.style.display = 'block';
+                    
+                    const compressedBlob = await compressImage(imageFile);
+                    const fileName = `${Date.now()}_${imageFile.name.replace(/\.[^.]+$/, '')}.webp`;
+                    const ref = storage.ref(`glasseria/subcategories/${fileName}`);
+                    await ref.put(compressedBlob);
+                    imageUrl = await ref.getDownloadURL();
+                    
+                    const newSize = (compressedBlob.size / 1024).toFixed(1);
+                    statusEl.textContent = `✅ תמונה נדחסה ל-${newSize}KB`;
+                    statusEl.className = 'compression-status';
+                }
+                
+                const data = {
+                    categoryId,
+                    name,
+                    order,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                
+                if (imageUrl) data.image = imageUrl;
+                
+                if (id) {
+                    await subcategoriesCollection.doc(id).update(data);
+                } else {
+                    data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                    await subcategoriesCollection.add(data);
+                }
+                
+                closeSubcategoryModal();
+            } catch (error) {
+                console.error('Error saving subcategory:', error);
+                alert('שגיאה בשמירה: ' + error.message);
+            }
+        }
+        
+        function deleteSubcategory(id) {
+            openDeleteModal('האם אתה בטוח שברצונך למחוק תת-קטגוריה זו?', async () => {
+                await subcategoriesCollection.doc(id).delete();
+            });
+        }
+        
+        // ===== Products =====
+        function renderProducts() {
+            const tbody = document.getElementById('products-tbody');
+            const loading = document.getElementById('products-loading');
+            const table = document.getElementById('products-table');
+            
+            loading.style.display = 'none';
+            table.style.display = 'table';
+            
+            const filterCategoryId = document.getElementById('filter-category').value;
+            let filteredProducts = products;
+            
+            if (filterCategoryId) {
+                filteredProducts = products.filter(p => p.categoryId === filterCategoryId);
+            }
+            
+            tbody.innerHTML = filteredProducts.map(product => {
+                const cat = categories.find(c => c.id === product.categoryId);
+                const mainImage = product.images && product.images.length > 0 
+                    ? product.images[0] 
+                    : (product.image || '../images/placeholder.svg');
+                const imageCount = product.images ? product.images.length : (product.image ? 1 : 0);
+                
                 return `
                     <tr>
                         <td>
-                            <img src="${mainImage}" onerror="this.src='../images/placeholder.svg'">
+                            <img src="${mainImage}" class="table-image" onerror="this.src='../images/placeholder.svg'">
                             ${imageCount > 1 ? `<span class="image-count">${imageCount} תמונות</span>` : ''}
                         </td>
-                        <td><strong>${prod.name}</strong></td>
-                        <td>${prod.sku || '-'}</td>
+                        <td>${product.name}</td>
+                        <td>${product.sku || '-'}</td>
+                        <td>₪${product.price || 0}</td>
                         <td>${cat ? cat.name : '-'}</td>
-                        <td>₪${prod.price || 0}</td>
                         <td class="actions">
-                            <button class="btn btn-small btn-secondary" onclick="editProduct('${prod.id}')">ערוך</button>
-                            <button class="btn btn-small btn-danger" onclick="deleteProduct('${prod.id}')">מחק</button>
+                            <button class="btn btn-icon btn-secondary" onclick="editProduct('${product.id}')">✏️</button>
+                            <button class="btn btn-icon btn-danger" onclick="deleteProduct('${product.id}')">🗑️</button>
                         </td>
                     </tr>
                 `;
             }).join('');
         }
         
-        // ===== Stats =====
-        function updateStats() {
-            document.getElementById('stat-categories').textContent = categories.length;
-            document.getElementById('stat-subcategories').textContent = subcategories.length;
-            document.getElementById('stat-products').textContent = products.length;
+        function filterProducts() {
+            renderProducts();
         }
         
-        // ===== Update Selects =====
         function updateCategorySelects() {
-            const selects = [
-                document.getElementById('subcategory-parent'),
-                document.getElementById('product-category'),
-                document.getElementById('filter-category')
-            ];
+            const filterSelect = document.getElementById('filter-category');
+            const productSelect = document.getElementById('product-category');
             
-            selects.forEach(select => {
-                const currentValue = select.value;
-                const firstOption = select.options[0].outerHTML;
-                select.innerHTML = firstOption + categories.map(cat => 
-                    `<option value="${cat.id}">${cat.name}</option>`
-                ).join('');
-                select.value = currentValue;
-            });
+            const options = categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            
+            filterSelect.innerHTML = '<option value="">כל הקטגוריות</option>' + options;
+            productSelect.innerHTML = '<option value="">בחר קטגוריה</option>' + options;
         }
         
-        function updateSubcategoryOptions() {
+        function updateProductSubcategories() {
             const categoryId = document.getElementById('product-category').value;
             const select = document.getElementById('product-subcategory');
             
-            const filtered = subcategories.filter(s => s.categoryId === categoryId);
-            select.innerHTML = '<option value="">בחר תת-קטגוריה (אופציונלי)...</option>' +
-                filtered.map(sub => `<option value="${sub.id}">${sub.name}</option>`).join('');
+            const subs = subcategories.filter(s => s.categoryId === categoryId);
+            select.innerHTML = '<option value="">ללא תת-קטגוריה</option>' + 
+                subs.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
         }
         
-        // ===== Filter Products =====
-        function filterProductsList() {
-            const categoryId = document.getElementById('filter-category').value;
-            if (!categoryId) {
-                renderProductsList();
-            } else {
-                const filtered = products.filter(p => p.categoryId === categoryId);
-                renderProductsList(filtered);
-            }
-        }
-        
-        // ===== Image Upload (Single) =====
-        function setupImagePreview(inputId, previewId) {
-            const input = document.getElementById(inputId);
-            const preview = document.getElementById(previewId);
+        function openProductModal(product = null) {
+            document.getElementById('product-modal').classList.add('active');
+            document.getElementById('product-modal-title').textContent = product ? 'עריכת מוצר' : 'הוסף מוצר';
             
-            input.addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        preview.src = e.target.result;
-                        preview.classList.add('show');
-                    };
-                    reader.readAsDataURL(file);
-                }
-            });
-        }
-        
-        // ===== Multiple Images Upload =====
-        function setupMultipleImagesPreview(inputId, containerId) {
-            const input = document.getElementById(inputId);
-            const container = document.getElementById(containerId);
+            // Reset images state
+            newProductImages = [];
+            existingProductImages = [];
+            editProductNewImages = [];
             
-            input.addEventListener('change', (e) => {
-                const files = Array.from(e.target.files);
+            if (product) {
+                document.getElementById('product-id').value = product.id;
+                document.getElementById('product-name').value = product.name;
+                document.getElementById('product-sku').value = product.sku || '';
+                document.getElementById('product-price').value = product.price || '';
+                document.getElementById('product-category').value = product.categoryId || '';
+                updateProductSubcategories();
+                document.getElementById('product-subcategory').value = product.subcategoryId || '';
+                document.getElementById('product-type').value = product.type || '';
+                document.getElementById('product-description').value = product.description || '';
                 
-                // Limit to 10 images
-                const availableSlots = 10 - newProductImages.length;
-                const filesToAdd = files.slice(0, availableSlots);
-                
-                filesToAdd.forEach(file => {
-                    newProductImages.push(file);
+                // Set sizes
+                document.querySelectorAll('input[name="sizes"]').forEach(cb => {
+                    cb.checked = product.sizes && product.sizes.includes(cb.value);
                 });
                 
-                renderImagesPreview(container, newProductImages, 'new');
+                // Set colors
+                document.querySelectorAll('input[name="colors"]').forEach(cb => {
+                    cb.checked = product.colors && product.colors.includes(cb.value);
+                });
                 
-                // Reset input so same file can be selected again
-                input.value = '';
-            });
-        }
-        
-        function renderImagesPreview(container, images, type = 'new') {
-            container.innerHTML = images.map((img, index) => {
-                let src;
-                if (typeof img === 'string') {
-                    // URL (existing image)
-                    src = img;
-                } else {
-                    // File object (new image)
-                    src = URL.createObjectURL(img);
+                // Load existing images
+                if (product.images && product.images.length > 0) {
+                    existingProductImages = [...product.images];
+                } else if (product.image) {
+                    existingProductImages = [product.image];
                 }
                 
-                return `
-                    <div class="image-preview-item ${index === 0 ? 'main' : ''}" data-index="${index}" data-type="${type}">
-                        <img src="${src}">
-                        ${index === 0 ? '<span class="main-badge">ראשית</span>' : ''}
-                        <button type="button" class="remove-btn" onclick="removeImage(${index}, '${type}')">&times;</button>
-                    </div>
-                `;
-            }).join('');
-        }
-        
-        function removeImage(index, type) {
-            if (type === 'new') {
-                newProductImages.splice(index, 1);
-                renderImagesPreview(document.getElementById('product-images-preview'), newProductImages, 'new');
-            } else if (type === 'edit-existing') {
-                editProductImages.splice(index, 1);
-                renderEditImagesPreview();
-            } else if (type === 'edit-new') {
-                newEditProductImages.splice(index, 1);
-                renderEditImagesPreview();
+                renderProductImagesPreview();
+            } else {
+                document.getElementById('product-form').reset();
+                document.getElementById('product-id').value = '';
+                document.getElementById('product-images-preview').innerHTML = '';
             }
+            
+            document.getElementById('product-compression-status').style.display = 'none';
         }
         
-        function renderEditImagesPreview() {
-            const container = document.getElementById('edit-images-preview');
-            if (!container) return;
+        function closeProductModal() {
+            document.getElementById('product-modal').classList.remove('active');
+            newProductImages = [];
+            existingProductImages = [];
+            editProductNewImages = [];
+        }
+        
+        function editProduct(id) {
+            const product = products.find(p => p.id === id);
+            if (product) openProductModal(product);
+        }
+        
+        function handleProductImagesSelect(input) {
+            const files = Array.from(input.files);
+            const isEditing = document.getElementById('product-id').value !== '';
+            const statusEl = document.getElementById('product-compression-status');
+            
+            // Max 10 images total
+            const currentCount = isEditing 
+                ? existingProductImages.length + editProductNewImages.length 
+                : newProductImages.length;
+            
+            const availableSlots = 10 - currentCount;
+            const filesToAdd = files.slice(0, availableSlots);
+            
+            if (filesToAdd.length < files.length) {
+                alert(`ניתן להעלות עד 10 תמונות. נוספו ${filesToAdd.length} תמונות.`);
+            }
+            
+            // Add files with preview data
+            filesToAdd.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const imageData = {
+                        file: file,
+                        preview: e.target.result,
+                        name: file.name,
+                        size: file.size
+                    };
+                    
+                    if (isEditing) {
+                        editProductNewImages.push(imageData);
+                    } else {
+                        newProductImages.push(imageData);
+                    }
+                    
+                    renderProductImagesPreview();
+                };
+                reader.readAsDataURL(file);
+            });
+            
+            // Show compression notice
+            const totalSize = filesToAdd.reduce((sum, f) => sum + f.size, 0);
+            statusEl.textContent = `📷 ${filesToAdd.length} תמונות (${(totalSize / 1024).toFixed(1)}KB) - יידחסו בשמירה`;
+            statusEl.className = 'compression-status';
+            statusEl.style.display = 'block';
+            
+            // Clear the input
+            input.value = '';
+        }
+        
+        function renderProductImagesPreview() {
+            const container = document.getElementById('product-images-preview');
+            const isEditing = document.getElementById('product-id').value !== '';
             
             let html = '';
             
-            // Existing images
-            editProductImages.forEach((url, index) => {
-                const isMain = index === 0 && newEditProductImages.length === 0;
+            // Existing images (when editing)
+            existingProductImages.forEach((url, index) => {
                 html += `
-                    <div class="image-preview-item ${isMain ? 'main' : ''}" data-index="${index}" data-type="edit-existing">
-                        <img src="${url}">
-                        ${isMain ? '<span class="main-badge">ראשית</span>' : ''}
-                        <button type="button" class="remove-btn" onclick="removeImage(${index}, 'edit-existing')">&times;</button>
+                    <div class="image-preview-item">
+                        <img src="${url}" alt="תמונה ${index + 1}">
+                        <button type="button" class="remove-btn" onclick="removeExistingImage(${index})">&times;</button>
+                        ${index === 0 ? '<span class="main-badge">ראשית</span>' : ''}
                     </div>
                 `;
             });
             
-            // New images to add
-            newEditProductImages.forEach((file, index) => {
-                const isMain = editProductImages.length === 0 && index === 0;
+            // New images (when editing)
+            editProductNewImages.forEach((imageData, index) => {
                 html += `
-                    <div class="image-preview-item ${isMain ? 'main' : ''}" data-index="${index}" data-type="edit-new">
-                        <img src="${URL.createObjectURL(file)}">
-                        ${isMain ? '<span class="main-badge">ראשית</span>' : ''}
-                        <button type="button" class="remove-btn" onclick="removeImage(${index}, 'edit-new')">&times;</button>
+                    <div class="image-preview-item">
+                        <img src="${imageData.preview}" alt="תמונה חדשה ${index + 1}">
+                        <button type="button" class="remove-btn" onclick="removeEditNewImage(${index})">&times;</button>
+                        ${existingProductImages.length === 0 && index === 0 ? '<span class="main-badge">ראשית</span>' : ''}
+                    </div>
+                `;
+            });
+            
+            // New images (when creating new product)
+            newProductImages.forEach((imageData, index) => {
+                html += `
+                    <div class="image-preview-item">
+                        <img src="${imageData.preview}" alt="תמונה ${index + 1}">
+                        <button type="button" class="remove-btn" onclick="removeNewImage(${index})">&times;</button>
+                        ${index === 0 ? '<span class="main-badge">ראשית</span>' : ''}
                     </div>
                 `;
             });
@@ -1356,467 +1531,138 @@
             container.innerHTML = html;
         }
         
-        async function uploadImage(file, path) {
-            const timestamp = Date.now();
-            const fileName = `${timestamp}_${file.name}`;
-            const ref = storage.ref().child(`${path}/${fileName}`);
-            
-            await ref.put(file);
-            return await ref.getDownloadURL();
+        function removeExistingImage(index) {
+            existingProductImages.splice(index, 1);
+            renderProductImagesPreview();
         }
         
-        async function uploadMultipleImages(files, path) {
+        function removeEditNewImage(index) {
+            editProductNewImages.splice(index, 1);
+            renderProductImagesPreview();
+        }
+        
+        function removeNewImage(index) {
+            newProductImages.splice(index, 1);
+            renderProductImagesPreview();
+        }
+        
+        async function uploadProductImages(imageDataArray) {
             const urls = [];
-            for (const file of files) {
-                const url = await uploadImage(file, path);
+            
+            for (const imageData of imageDataArray) {
+                const compressedBlob = await compressImage(imageData.file);
+                const fileName = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}.webp`;
+                const ref = storage.ref(`glasseria/products/${fileName}`);
+                await ref.put(compressedBlob);
+                const url = await ref.getDownloadURL();
                 urls.push(url);
             }
+            
             return urls;
         }
         
-        // ===== Form Handlers =====
-        async function handleCategorySubmit(e) {
-            e.preventDefault();
-            const messageEl = document.getElementById('category-message');
+        async function saveProduct() {
+            const id = document.getElementById('product-id').value;
+            const name = document.getElementById('product-name').value;
+            const sku = document.getElementById('product-sku').value;
+            const price = parseFloat(document.getElementById('product-price').value) || 0;
+            const categoryId = document.getElementById('product-category').value;
+            const subcategoryId = document.getElementById('product-subcategory').value;
+            const type = document.getElementById('product-type').value;
+            const description = document.getElementById('product-description').value;
             
-            try {
-                const name = document.getElementById('category-name').value;
-                const order = parseInt(document.getElementById('category-order').value) || 0;
-                const imageFile = document.getElementById('category-image').files[0];
-                
-                let imageUrl = '';
-                if (imageFile) {
-                    messageEl.innerHTML = '<div class="message success">מעלה תמונה...</div>';
-                    imageUrl = await uploadImage(imageFile, 'glasseria/categories');
-                }
-                
-                await categoriesCollection.add({
-                    name,
-                    order,
-                    image: imageUrl,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                
-                messageEl.innerHTML = '<div class="message success">הקטגוריה נוספה בהצלחה!</div>';
-                e.target.reset();
-                document.getElementById('category-image-preview').classList.remove('show');
-                
-                await loadCategories();
-                updateStats();
-                updateCategorySelects();
-                
-            } catch (error) {
-                console.error('Error adding category:', error);
-                messageEl.innerHTML = '<div class="message error">שגיאה בהוספת קטגוריה</div>';
+            if (!name || !categoryId) {
+                alert('נא למלא שם מוצר וקטגוריה');
+                return;
             }
-        }
-        
-        async function handleSubcategorySubmit(e) {
-            e.preventDefault();
-            const messageEl = document.getElementById('subcategory-message');
+            
+            const sizes = Array.from(document.querySelectorAll('input[name="sizes"]:checked')).map(cb => cb.value);
+            const colors = Array.from(document.querySelectorAll('input[name="colors"]:checked')).map(cb => cb.value);
+            
+            const saveBtn = document.getElementById('save-product-btn');
+            const statusEl = document.getElementById('product-compression-status');
+            
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'שומר...';
             
             try {
-                const categoryId = document.getElementById('subcategory-parent').value;
-                const name = document.getElementById('subcategory-name').value;
-                const order = parseInt(document.getElementById('subcategory-order').value) || 0;
-                const imageFile = document.getElementById('subcategory-image').files[0];
+                let allImageUrls = [...existingProductImages];
                 
-                let imageUrl = '';
-                if (imageFile) {
-                    messageEl.innerHTML = '<div class="message success">מעלה תמונה...</div>';
-                    imageUrl = await uploadImage(imageFile, 'glasseria/subcategories');
+                // Upload new images
+                const imagesToUpload = id ? editProductNewImages : newProductImages;
+                
+                if (imagesToUpload.length > 0) {
+                    statusEl.textContent = `⏳ דוחס ומעלה ${imagesToUpload.length} תמונות...`;
+                    statusEl.className = 'compression-status compressing';
+                    statusEl.style.display = 'block';
+                    
+                    const newUrls = await uploadProductImages(imagesToUpload);
+                    allImageUrls = [...allImageUrls, ...newUrls];
+                    
+                    statusEl.textContent = `✅ ${imagesToUpload.length} תמונות נדחסו והועלו בהצלחה!`;
+                    statusEl.className = 'compression-status';
                 }
                 
-                await subcategoriesCollection.add({
-                    categoryId,
-                    name,
-                    order,
-                    image: imageUrl,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
+                const cat = categories.find(c => c.id === categoryId);
                 
-                messageEl.innerHTML = '<div class="message success">תת-הקטגוריה נוספה בהצלחה!</div>';
-                e.target.reset();
-                document.getElementById('subcategory-image-preview').classList.remove('show');
-                
-                await loadSubcategories();
-                updateStats();
-                
-            } catch (error) {
-                console.error('Error adding subcategory:', error);
-                messageEl.innerHTML = '<div class="message error">שגיאה בהוספת תת-קטגוריה</div>';
-            }
-        }
-        
-        async function handleProductSubmit(e) {
-            e.preventDefault();
-            const messageEl = document.getElementById('product-message');
-            
-            try {
-                const categoryId = document.getElementById('product-category').value;
-                const subcategoryId = document.getElementById('product-subcategory').value || null;
-                const name = document.getElementById('product-name').value;
-                const sku = document.getElementById('product-sku').value;
-                const price = parseFloat(document.getElementById('product-price').value) || 0;
-                const type = document.getElementById('product-type').value;
-                const description = document.getElementById('product-description').value;
-                const sizesStr = document.getElementById('product-sizes').value;
-                const colorsStr = document.getElementById('product-colors').value;
-                
-                const sizes = sizesStr ? sizesStr.split(',').map(s => s.trim()) : [];
-                const colors = colorsStr ? colorsStr.split(',').map(c => c.trim()) : [];
-                
-                const category = categories.find(c => c.id === categoryId);
-                
-                let images = [];
-                if (newProductImages.length > 0) {
-                    messageEl.innerHTML = `<div class="message success">מעלה ${newProductImages.length} תמונות...</div>`;
-                    images = await uploadMultipleImages(newProductImages, 'glasseria/products');
-                }
-                
-                await productsCollection.add({
-                    categoryId,
-                    subcategoryId,
-                    category: category ? category.name : '',
+                const data = {
                     name,
                     sku,
                     price,
+                    categoryId,
+                    subcategoryId: subcategoryId || null,
+                    category: cat ? cat.name : '',
                     type,
                     description,
                     sizes,
                     colors,
-                    image: images[0] || '', // Main image for backward compatibility
-                    images: images, // All images array
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                
-                messageEl.innerHTML = '<div class="message success">המוצר נוסף בהצלחה!</div>';
-                e.target.reset();
-                newProductImages = [];
-                document.getElementById('product-images-preview').innerHTML = '';
-                
-                await loadProducts();
-                updateStats();
-                
-            } catch (error) {
-                console.error('Error adding product:', error);
-                messageEl.innerHTML = '<div class="message error">שגיאה בהוספת מוצר</div>';
-            }
-        }
-        
-        // ===== Delete Functions =====
-        async function deleteCategory(id) {
-            if (!confirm('האם אתה בטוח? פעולה זו תמחק גם את כל תת-הקטגוריות והמוצרים בקטגוריה זו!')) return;
-            
-            try {
-                const subs = subcategories.filter(s => s.categoryId === id);
-                for (const sub of subs) {
-                    await subcategoriesCollection.doc(sub.id).delete();
-                }
-                
-                const prods = products.filter(p => p.categoryId === id);
-                for (const prod of prods) {
-                    await productsCollection.doc(prod.id).delete();
-                }
-                
-                await categoriesCollection.doc(id).delete();
-                
-                await loadAllData();
-            } catch (error) {
-                console.error('Error deleting category:', error);
-                alert('שגיאה במחיקת קטגוריה');
-            }
-        }
-        
-        async function deleteSubcategory(id) {
-            if (!confirm('האם אתה בטוח? פעולה זו תמחק גם את כל המוצרים בתת-קטגוריה זו!')) return;
-            
-            try {
-                const prods = products.filter(p => p.subcategoryId === id);
-                for (const prod of prods) {
-                    await productsCollection.doc(prod.id).delete();
-                }
-                
-                await subcategoriesCollection.doc(id).delete();
-                
-                await loadAllData();
-            } catch (error) {
-                console.error('Error deleting subcategory:', error);
-                alert('שגיאה במחיקת תת-קטגוריה');
-            }
-        }
-        
-        async function deleteProduct(id) {
-            if (!confirm('האם אתה בטוח שברצונך למחוק מוצר זה?')) return;
-            
-            try {
-                await productsCollection.doc(id).delete();
-                await loadProducts();
-                updateStats();
-            } catch (error) {
-                console.error('Error deleting product:', error);
-                alert('שגיאה במחיקת מוצר');
-            }
-        }
-        
-        // ===== Edit Functions =====
-        function editCategory(id) {
-            const cat = categories.find(c => c.id === id);
-            if (!cat) return;
-            
-            document.getElementById('modal-title').textContent = 'עריכת קטגוריה';
-            document.getElementById('modal-body').innerHTML = `
-                <div class="form-group">
-                    <label>שם הקטגוריה</label>
-                    <input type="text" id="edit-cat-name" value="${cat.name}">
-                </div>
-                <div class="form-group">
-                    <label>סדר תצוגה</label>
-                    <input type="number" id="edit-cat-order" value="${cat.order || 0}">
-                </div>
-                <div class="form-group">
-                    <label>תמונה נוכחית</label>
-                    ${cat.image ? `<img src="${cat.image}" style="max-width: 100px; display: block; margin-bottom: 10px; border-radius: 8px;">` : '<p>אין תמונה</p>'}
-                </div>
-                <div class="form-group">
-                    <label>תמונה חדשה</label>
-                    <input type="file" id="edit-cat-image" accept="image/*">
-                </div>
-            `;
-            
-            document.getElementById('modal-save').onclick = () => saveCategory(id);
-            document.getElementById('edit-modal').classList.add('active');
-        }
-        
-        async function saveCategory(id) {
-            try {
-                const name = document.getElementById('edit-cat-name').value;
-                const order = parseInt(document.getElementById('edit-cat-order').value) || 0;
-                const imageFile = document.getElementById('edit-cat-image').files[0];
-                
-                const updateData = { name, order };
-                
-                if (imageFile) {
-                    updateData.image = await uploadImage(imageFile, 'glasseria/categories');
-                }
-                
-                await categoriesCollection.doc(id).update(updateData);
-                closeModal();
-                await loadCategories();
-                updateCategorySelects();
-            } catch (error) {
-                console.error('Error updating category:', error);
-                alert('שגיאה בעדכון קטגוריה');
-            }
-        }
-        
-        function editSubcategory(id) {
-            const sub = subcategories.find(s => s.id === id);
-            if (!sub) return;
-            
-            document.getElementById('modal-title').textContent = 'עריכת תת-קטגוריה';
-            document.getElementById('modal-body').innerHTML = `
-                <div class="form-group">
-                    <label>קטגוריה ראשית</label>
-                    <select id="edit-sub-category">
-                        ${categories.map(c => `<option value="${c.id}" ${c.id === sub.categoryId ? 'selected' : ''}>${c.name}</option>`).join('')}
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>שם תת-הקטגוריה</label>
-                    <input type="text" id="edit-sub-name" value="${sub.name}">
-                </div>
-                <div class="form-group">
-                    <label>סדר תצוגה</label>
-                    <input type="number" id="edit-sub-order" value="${sub.order || 0}">
-                </div>
-                <div class="form-group">
-                    <label>תמונה נוכחית</label>
-                    ${sub.image ? `<img src="${sub.image}" style="max-width: 100px; display: block; margin-bottom: 10px; border-radius: 8px;">` : '<p>אין תמונה</p>'}
-                </div>
-                <div class="form-group">
-                    <label>תמונה חדשה</label>
-                    <input type="file" id="edit-sub-image" accept="image/*">
-                </div>
-            `;
-            
-            document.getElementById('modal-save').onclick = () => saveSubcategory(id);
-            document.getElementById('edit-modal').classList.add('active');
-        }
-        
-        async function saveSubcategory(id) {
-            try {
-                const categoryId = document.getElementById('edit-sub-category').value;
-                const name = document.getElementById('edit-sub-name').value;
-                const order = parseInt(document.getElementById('edit-sub-order').value) || 0;
-                const imageFile = document.getElementById('edit-sub-image').files[0];
-                
-                const updateData = { categoryId, name, order };
-                
-                if (imageFile) {
-                    updateData.image = await uploadImage(imageFile, 'glasseria/subcategories');
-                }
-                
-                await subcategoriesCollection.doc(id).update(updateData);
-                closeModal();
-                await loadSubcategories();
-            } catch (error) {
-                console.error('Error updating subcategory:', error);
-                alert('שגיאה בעדכון תת-קטגוריה');
-            }
-        }
-        
-        function editProduct(id) {
-            const prod = products.find(p => p.id === id);
-            if (!prod) return;
-            
-            // Initialize edit images arrays
-            editProductImages = prod.images || (prod.image ? [prod.image] : []);
-            newEditProductImages = [];
-            
-            const subOptions = subcategories.filter(s => s.categoryId === prod.categoryId);
-            
-            document.getElementById('modal-title').textContent = 'עריכת מוצר';
-            document.getElementById('modal-body').innerHTML = `
-                <div class="form-group">
-                    <label>קטגוריה</label>
-                    <select id="edit-prod-category" onchange="updateEditSubcategoryOptions()">
-                        ${categories.map(c => `<option value="${c.id}" ${c.id === prod.categoryId ? 'selected' : ''}>${c.name}</option>`).join('')}
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>תת-קטגוריה</label>
-                    <select id="edit-prod-subcategory">
-                        <option value="">ללא</option>
-                        ${subOptions.map(s => `<option value="${s.id}" ${s.id === prod.subcategoryId ? 'selected' : ''}>${s.name}</option>`).join('')}
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>שם המוצר</label>
-                    <input type="text" id="edit-prod-name" value="${prod.name}">
-                </div>
-                <div class="form-group">
-                    <label>מק"ט</label>
-                    <input type="text" id="edit-prod-sku" value="${prod.sku || ''}">
-                </div>
-                <div class="form-group">
-                    <label>מחיר</label>
-                    <input type="number" id="edit-prod-price" value="${prod.price || 0}">
-                </div>
-                <div class="form-group">
-                    <label>סוג/חומר</label>
-                    <input type="text" id="edit-prod-type" value="${prod.type || ''}">
-                </div>
-                <div class="form-group">
-                    <label>תיאור</label>
-                    <textarea id="edit-prod-description">${prod.description || ''}</textarea>
-                </div>
-                <div class="form-group">
-                    <label>מידות (מופרד בפסיקים)</label>
-                    <input type="text" id="edit-prod-sizes" value="${(prod.sizes || []).join(', ')}">
-                </div>
-                <div class="form-group">
-                    <label>צבעים (מופרד בפסיקים)</label>
-                    <input type="text" id="edit-prod-colors" value="${(prod.colors || []).join(', ')}">
-                </div>
-                <div class="form-group">
-                    <label>תמונות מוצר (לחץ על X למחיקה, התמונה הראשונה היא הראשית)</label>
-                    <div class="images-preview-container" id="edit-images-preview"></div>
-                    <div style="margin-top: 12px;">
-                        <label>הוסף תמונות חדשות:</label>
-                        <input type="file" id="edit-prod-images" accept="image/*" multiple onchange="handleEditImagesSelect(this)">
-                    </div>
-                </div>
-            `;
-            
-            renderEditImagesPreview();
-            
-            document.getElementById('modal-save').onclick = () => saveProduct(id);
-            document.getElementById('edit-modal').classList.add('active');
-        }
-        
-        function updateEditSubcategoryOptions() {
-            const categoryId = document.getElementById('edit-prod-category').value;
-            const select = document.getElementById('edit-prod-subcategory');
-            
-            const filtered = subcategories.filter(s => s.categoryId === categoryId);
-            select.innerHTML = '<option value="">ללא</option>' +
-                filtered.map(sub => `<option value="${sub.id}">${sub.name}</option>`).join('');
-        }
-        
-        function handleEditImagesSelect(input) {
-            const files = Array.from(input.files);
-            const totalImages = editProductImages.length + newEditProductImages.length;
-            const availableSlots = 10 - totalImages;
-            const filesToAdd = files.slice(0, availableSlots);
-            
-            filesToAdd.forEach(file => {
-                newEditProductImages.push(file);
-            });
-            
-            renderEditImagesPreview();
-            input.value = '';
-        }
-        
-        async function saveProduct(id) {
-            try {
-                const categoryId = document.getElementById('edit-prod-category').value;
-                const subcategoryId = document.getElementById('edit-prod-subcategory').value || null;
-                const name = document.getElementById('edit-prod-name').value;
-                const sku = document.getElementById('edit-prod-sku').value;
-                const price = parseFloat(document.getElementById('edit-prod-price').value) || 0;
-                const type = document.getElementById('edit-prod-type').value;
-                const description = document.getElementById('edit-prod-description').value;
-                const sizesStr = document.getElementById('edit-prod-sizes').value;
-                const colorsStr = document.getElementById('edit-prod-colors').value;
-                
-                const sizes = sizesStr ? sizesStr.split(',').map(s => s.trim()) : [];
-                const colors = colorsStr ? colorsStr.split(',').map(c => c.trim()) : [];
-                
-                const category = categories.find(c => c.id === categoryId);
-                
-                // Upload new images if any
-                let newImageUrls = [];
-                if (newEditProductImages.length > 0) {
-                    newImageUrls = await uploadMultipleImages(newEditProductImages, 'glasseria/products');
-                }
-                
-                // Combine existing and new images
-                const allImages = [...editProductImages, ...newImageUrls];
-                
-                const updateData = {
-                    categoryId,
-                    subcategoryId,
-                    category: category ? category.name : '',
-                    name,
-                    sku,
-                    price,
-                    type,
-                    description,
-                    sizes,
-                    colors,
-                    image: allImages[0] || '', // Main image for backward compatibility
-                    images: allImages // All images
+                    images: allImageUrls,
+                    image: allImageUrls[0] || null, // Backward compatibility
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 };
                 
-                await productsCollection.doc(id).update(updateData);
-                closeModal();
-                await loadProducts();
+                if (id) {
+                    await productsCollection.doc(id).update(data);
+                } else {
+                    data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                    await productsCollection.add(data);
+                }
+                
+                closeProductModal();
             } catch (error) {
-                console.error('Error updating product:', error);
-                alert('שגיאה בעדכון מוצר');
+                console.error('Error saving product:', error);
+                alert('שגיאה בשמירה: ' + error.message);
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'שמור';
             }
         }
         
-        // ===== Modal =====
-        function closeModal() {
-            document.getElementById('edit-modal').classList.remove('active');
-            editProductImages = [];
-            newEditProductImages = [];
+        function deleteProduct(id) {
+            openDeleteModal('האם אתה בטוח שברצונך למחוק מוצר זה?', async () => {
+                await productsCollection.doc(id).delete();
+            });
         }
         
-        document.getElementById('edit-modal').addEventListener('click', (e) => {
-            if (e.target.id === 'edit-modal') closeModal();
+        // ===== Delete Modal =====
+        let deleteCallback = null;
+        
+        function openDeleteModal(message, callback) {
+            document.getElementById('delete-message').textContent = message;
+            document.getElementById('delete-modal').classList.add('active');
+            deleteCallback = callback;
+        }
+        
+        function closeDeleteModal() {
+            document.getElementById('delete-modal').classList.remove('active');
+            deleteCallback = null;
+        }
+        
+        document.getElementById('confirm-delete-btn').addEventListener('click', async () => {
+            if (deleteCallback) {
+                await deleteCallback();
+                closeDeleteModal();
+            }
         });
     </script>
 </body>
