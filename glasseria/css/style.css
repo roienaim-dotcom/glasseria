@@ -1,6 +1,6 @@
 /* ===== Glasseria Catalog Styles - FULLY RESPONSIVE RTL ===== */
 /* Fixed for all mobile devices including iPhone 15 Pro Max */
-/* UPDATED: Fixed modal image display on mobile */
+/* UPDATED: Modal image fix + Fullscreen Lightbox */
 
 /* ===== CRITICAL: Prevent horizontal overflow ===== */
 html {
@@ -622,6 +622,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    cursor: zoom-in;
 }
 
 .modal-image-carousel {
@@ -822,6 +823,113 @@ body {
 
 .modal-favorite-btn.active {
     background: #e74c3c;
+}
+
+/* ===== Fullscreen Image Lightbox ===== */
+.image-lightbox {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.95);
+    z-index: 2000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    cursor: zoom-out;
+}
+
+.image-lightbox.active {
+    display: flex;
+}
+
+.image-lightbox img {
+    max-width: 95%;
+    max-height: 90%;
+    object-fit: contain;
+    border-radius: 4px;
+    transition: opacity 0.15s ease;
+}
+
+.lightbox-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 44px;
+    height: 44px;
+    background: rgba(255,255,255,0.15);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.3s;
+    z-index: 10;
+}
+
+.lightbox-close:hover {
+    background: rgba(255,255,255,0.25);
+}
+
+.lightbox-close svg {
+    width: 24px;
+    height: 24px;
+    stroke: white;
+    stroke-width: 2;
+}
+
+/* Lightbox Navigation Arrows */
+.lightbox-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 50px;
+    height: 50px;
+    background: rgba(255,255,255,0.15);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.3s;
+    z-index: 10;
+}
+
+.lightbox-arrow:hover {
+    background: rgba(255,255,255,0.25);
+}
+
+.lightbox-arrow svg {
+    width: 24px;
+    height: 24px;
+    stroke: white;
+    stroke-width: 2;
+    fill: none;
+}
+
+.lightbox-arrow.prev {
+    right: 20px;
+}
+
+.lightbox-arrow.next {
+    left: 20px;
+}
+
+/* Lightbox Counter */
+.lightbox-counter {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: white;
+    font-size: 14px;
+    background: rgba(0,0,0,0.5);
+    padding: 8px 16px;
+    border-radius: 20px;
+    z-index: 10;
 }
 
 /* ===== Favorites Panel ===== */
@@ -1464,6 +1572,43 @@ body {
         font-size: 24px;
     }
     
+    /* Lightbox Mobile */
+    .lightbox-close {
+        top: 15px;
+        right: 15px;
+        width: 40px;
+        height: 40px;
+    }
+    
+    .lightbox-close svg {
+        width: 20px;
+        height: 20px;
+    }
+    
+    .lightbox-arrow {
+        width: 44px;
+        height: 44px;
+    }
+    
+    .lightbox-arrow svg {
+        width: 20px;
+        height: 20px;
+    }
+    
+    .lightbox-arrow.prev {
+        right: 10px;
+    }
+    
+    .lightbox-arrow.next {
+        left: 10px;
+    }
+    
+    .lightbox-counter {
+        bottom: 15px;
+        font-size: 13px;
+        padding: 6px 14px;
+    }
+    
     /* Favorites */
     .favorites-btn {
         bottom: 20px;
@@ -1565,6 +1710,17 @@ body {
         height: 240px;
         max-height: 35vh;
     }
+    
+    /* Lightbox on small screens */
+    .lightbox-arrow {
+        width: 38px;
+        height: 38px;
+    }
+    
+    .lightbox-arrow svg {
+        width: 18px;
+        height: 18px;
+    }
 }
 
 /* ===== iPhone Safe Areas ===== */
@@ -1596,6 +1752,24 @@ body {
     
     .welcome-popup-overlay {
         padding-bottom: env(safe-area-inset-bottom);
+    }
+    
+    /* Lightbox Safe Areas */
+    .lightbox-close {
+        top: max(20px, calc(env(safe-area-inset-top) + 10px));
+        right: max(20px, env(safe-area-inset-right));
+    }
+    
+    .lightbox-counter {
+        bottom: max(20px, calc(env(safe-area-inset-bottom) + 10px));
+    }
+    
+    .lightbox-arrow.prev {
+        right: max(20px, env(safe-area-inset-right));
+    }
+    
+    .lightbox-arrow.next {
+        left: max(20px, env(safe-area-inset-left));
     }
 }
 
