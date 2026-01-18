@@ -1,4 +1,5 @@
 // ===== Glasseria Catalog App with Dynamic Categories =====
+// Updated with Fullscreen Image Lightbox
 
 // WhatsApp Number
 const WHATSAPP_NUMBER = '972524048371';
@@ -11,6 +12,10 @@ let favorites = JSON.parse(localStorage.getItem('glasseria_favorites')) || [];
 let currentView = 'categories'; // 'categories', 'subcategories', 'products'
 let currentCategoryId = null;
 let currentSubcategoryId = null;
+
+// Lightbox State
+let lightboxImages = [];
+let lightboxCurrentIndex = 0;
 
 // DOM Elements
 const mainNav = document.getElementById('main-nav');
@@ -45,7 +50,166 @@ document.addEventListener('DOMContentLoaded', () => {
     loadAllData();
     setupEventListeners();
     setupWelcomePopup();
+    createLightbox();
 });
+
+// ===== Create Lightbox Element =====
+function createLightbox() {
+    // Check if lightbox already exists
+    if (document.getElementById('image-lightbox')) return;
+    
+    const lightbox = document.createElement('div');
+    lightbox.className = 'image-lightbox';
+    lightbox.id = 'image-lightbox';
+    lightbox.innerHTML = `
+        <button class="lightbox-close" id="lightbox-close">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+        </button>
+        <button class="lightbox-arrow prev" id="lightbox-prev">
+            <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <img src="" alt="תמונה מוגדלת" id="lightbox-image">
+        <button class="lightbox-arrow next" id="lightbox-next">
+            <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+        <div class="lightbox-counter" id="lightbox-counter">1 / 1</div>
+    `;
+    document.body.appendChild(lightbox);
+    
+    // Event listeners for lightbox
+    const lightboxEl = document.getElementById('image-lightbox');
+    const lightboxClose = document.getElementById('lightbox-close');
+    const lightboxPrev = document.getElementById('lightbox-prev');
+    const lightboxNext = document.getElementById('lightbox-next');
+    const lightboxImage = document.getElementById('lightbox-image');
+    
+    // Close lightbox
+    lightboxClose.addEventListener('click', closeLightbox);
+    lightboxEl.addEventListener('click', (e) => {
+        if (e.target === lightboxEl || e.target === lightboxImage) {
+            closeLightbox();
+        }
+    });
+    
+    // Navigation
+    lightboxPrev.addEventListener('click', (e) => {
+        e.stopPropagation();
+        navigateLightbox(-1);
+    });
+    
+    lightboxNext.addEventListener('click', (e) => {
+        e.stopPropagation();
+        navigateLightbox(1);
+    });
+    
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+        if (!lightboxEl.classList.contains('active')) return;
+        
+        if (e.key === 'Escape') closeLightbox();
+        if (e.key === 'ArrowRight') navigateLightbox(-1); // RTL
+        if (e.key === 'ArrowLeft') navigateLightbox(1); // RTL
+    });
+    
+    // Swipe support for mobile
+    let touchStartX = 0;
+    let touchEndX = 0;
+    
+    lightboxEl.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+    
+    lightboxEl.addEventListener('touchend', (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        handleLightboxSwipe();
+    }, { passive: true });
+    
+    function handleLightboxSwipe() {
+        const swipeThreshold = 50;
+        const diff = touchStartX - touchEndX;
+        
+        if (Math.abs(diff) > swipeThreshold) {
+            if (diff > 0) {
+                // Swipe left - next (RTL)
+                navigateLightbox(1);
+            } else {
+                // Swipe right - prev (RTL)
+                navigateLightbox(-1);
+            }
+        }
+    }
+}
+
+// ===== Open Lightbox =====
+function openLightbox(images, startIndex = 0) {
+    lightboxImages = images;
+    lightboxCurrentIndex = startIndex;
+    
+    const lightbox = document.getElementById('image-lightbox');
+    const lightboxImage = document.getElementById('lightbox-image');
+    const lightboxCounter = document.getElementById('lightbox-counter');
+    const lightboxPrev = document.getElementById('lightbox-prev');
+    const lightboxNext = document.getElementById('lightbox-next');
+    
+    // Set image
+    lightboxImage.src = lightboxImages[lightboxCurrentIndex];
+    
+    // Update counter
+    if (lightboxImages.length > 1) {
+        lightboxCounter.style.display = 'block';
+        lightboxCounter.textContent = `${lightboxCurrentIndex + 1} / ${lightboxImages.length}`;
+        lightboxPrev.style.display = 'flex';
+        lightboxNext.style.display = 'flex';
+    } else {
+        lightboxCounter.style.display = 'none';
+        lightboxPrev.style.display = 'none';
+        lightboxNext.style.display = 'none';
+    }
+    
+    // Show lightbox
+    lightbox.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+// ===== Close Lightbox =====
+function closeLightbox() {
+    const lightbox = document.getElementById('image-lightbox');
+    lightbox.classList.remove('active');
+    
+    // Only restore scroll if modal is not open
+    if (!productModal.classList.contains('active')) {
+        document.body.style.overflow = '';
+    }
+}
+
+// ===== Navigate Lightbox =====
+function navigateLightbox(direction) {
+    if (lightboxImages.length <= 1) return;
+    
+    lightboxCurrentIndex += direction;
+    
+    // Loop around
+    if (lightboxCurrentIndex < 0) {
+        lightboxCurrentIndex = lightboxImages.length - 1;
+    } else if (lightboxCurrentIndex >= lightboxImages.length) {
+        lightboxCurrentIndex = 0;
+    }
+    
+    const lightboxImage = document.getElementById('lightbox-image');
+    const lightboxCounter = document.getElementById('lightbox-counter');
+    
+    // Add fade effect
+    lightboxImage.style.opacity = '0';
+    
+    setTimeout(() => {
+        lightboxImage.src = lightboxImages[lightboxCurrentIndex];
+        lightboxCounter.textContent = `${lightboxCurrentIndex + 1} / ${lightboxImages.length}`;
+        lightboxImage.style.opacity = '1';
+    }, 150);
+}
 
 // ===== Load All Data =====
 async function loadAllData() {
@@ -320,7 +484,7 @@ function createProductCard(product, isFavorite) {
     return card;
 }
 
-// ===== Product Modal (עם תמיכה בקרוסלה) =====
+// ===== Product Modal (עם תמיכה בקרוסלה ו-Lightbox) =====
 function openProductModal(product) {
     const cat = categories.find(c => c.id === product.categoryId);
     const sub = subcategories.find(s => s.id === product.subcategoryId);
@@ -333,7 +497,7 @@ function openProductModal(product) {
     
     modalContent.innerHTML = `
         <div class="modal-product">
-            <div class="modal-product-image">
+            <div class="modal-product-image" data-images='${JSON.stringify(images)}'>
                 <!-- הקרוסלה תיווצר כאן -->
             </div>
             <div class="modal-product-info">
@@ -377,6 +541,27 @@ function openProductModal(product) {
         if (typeof productCarousel !== 'undefined') {
             const modalElement = modalContent.querySelector('.modal-product');
             productCarousel.initModalCarousel(modalElement, images);
+        }
+        
+        // הוספת אירוע לחיצה על התמונה לפתיחת Lightbox
+        const modalImageContainer = modalContent.querySelector('.modal-product-image');
+        if (modalImageContainer) {
+            modalImageContainer.style.cursor = 'zoom-in';
+            modalImageContainer.addEventListener('click', (e) => {
+                // לא לפתוח lightbox אם לחצו על חצים
+                if (e.target.closest('.modal-carousel-arrow') || e.target.closest('.modal-carousel-dot')) {
+                    return;
+                }
+                
+                // מציאת האינדקס הנוכחי של התמונה
+                let currentIndex = 0;
+                const activeDot = modalImageContainer.querySelector('.modal-carousel-dot.active');
+                if (activeDot) {
+                    currentIndex = parseInt(activeDot.dataset.index) || 0;
+                }
+                
+                openLightbox(images, currentIndex);
+            });
         }
     }, 10);
     
