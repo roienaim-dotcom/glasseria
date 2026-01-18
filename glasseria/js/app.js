@@ -80,10 +80,9 @@ async function loadAllData() {
             showLoading(false);
             updateFavoritesCount();
             
-            // Render based on current view
-            if (currentView === 'products') {
-                renderProducts();
-            }
+            renderCategories(); // Update category counts
+    renderProducts(); // Always render products
+            
         });
     } catch (error) {
         console.error('Error loading data:', error);
