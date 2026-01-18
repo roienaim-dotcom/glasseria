@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glasseria - קטלוג מוצרים</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <a href="index.html" class="logo">
+                <img src="images/logo.png" alt="Glasseria">
+                <span class="logo-text">GLASSERIA</span>
+            </a>
+            <nav class="nav" id="main-nav">
+                <a href="#" class="nav-link active" data-category="all">הכל</a>
+                <!-- Dynamic categories will be loaded here -->
+            </nav>
+            <button class="mobile-menu-btn" aria-label="תפריט">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Mobile Navigation -->
+    <div class="mobile-nav" id="mobile-nav">
+        <a href="#" class="nav-link active" data-category="all">הכל</a>
+        <!-- Dynamic categories will be loaded here -->
+    </div>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <h1>קטלוג מוצרים</h1>
+            <p>בחרו את המוצרים האהובים עליכם ושלחו לנו ב-WhatsApp</p>
+        </div>
+    </section>
+
+    <!-- Categories Section -->
+    <section class="categories-section" id="categories">
+        <div class="container">
+            <div class="categories-grid" id="categories-grid">
+                <!-- Dynamic categories will be loaded here -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Subcategories Section -->
+    <section class="subcategories-section" id="subcategories" style="display: none;">
+        <div class="container">
+            <div class="section-header">
+                <button class="back-btn" id="back-to-categories">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M15 18l-6-6 6-6"/>
+                    </svg>
+                    חזרה לקטגוריות
+                </button>
+                <h2 id="subcategories-title">תת-קטגוריות</h2>
+            </div>
+            <div class="subcategories-grid" id="subcategories-grid">
+                <!-- Dynamic subcategories will be loaded here -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Products Grid -->
+    <section class="products-section" id="products">
+        <div class="container">
+            <div class="section-header">
+                <h2 id="current-category">כל המוצרים</h2>
+                <div class="products-count"><span id="products-count">0</span> מוצרים</div>
+            </div>
+            
+            <!-- Loading State -->
+            <div class="loading" id="loading">
+                <div class="loading-spinner"></div>
+                <p>טוען מוצרים...</p>
+            </div>
+            
+            <div class="products-grid" id="products-grid">
+                <!-- Products will be loaded here -->
+            </div>
+            <div class="no-products" id="no-products" style="display: none;">
+                <p>אין מוצרים בקטגוריה זו</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Favorites Button (Fixed) -->
+    <button class="favorites-btn" id="favorites-btn">
+        <svg class="heart-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+        </svg>
+        <span class="favorites-count" id="favorites-count">0</span>
+    </button>
+
+    <!-- Favorites Panel -->
+    <div class="favorites-panel" id="favorites-panel">
+        <div class="favorites-header">
+            <h3>המוצרים שבחרתי</h3>
+            <button class="close-panel" id="close-panel">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+        </div>
+        <div class="favorites-list" id="favorites-list"></div>
+        <div class="favorites-empty" id="favorites-empty">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+            </svg>
+            <p>עדיין לא בחרתם מוצרים</p>
+        </div>
+        <div class="favorites-actions">
+            <button class="btn-clear" id="btn-clear">נקה הכל</button>
+            <button class="btn-whatsapp" id="btn-whatsapp">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                </svg>
+                שלח ב-WhatsApp
+            </button>
+        </div>
+    </div>
+
+    <!-- Overlay -->
+    <div class="overlay" id="overlay"></div>
+
+    <!-- Product Modal -->
+    <div class="product-modal-overlay" id="product-modal">
+        <div class="product-modal">
+            <button class="modal-close" id="modal-close">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+            <div class="modal-content" id="modal-content">
+                <!-- Product details will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 Glasseria. כל הזכויות שמורות.</p>
+        </div>
+    </footer>
+
+    <!-- Welcome Popup -->
+    <div class="welcome-popup-overlay" id="welcome-popup">
+        <div class="welcome-popup">
+            <div class="welcome-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                </svg>
+            </div>
+            <h2>ברוכים הבאים לקטלוג של</h2>
+            <div class="welcome-brand">GLASSERIA</div>
+            <div class="welcome-steps">
+                <div class="welcome-step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <strong>עברו על המוצרים</strong>
+                        <p>גללו בקטלוג וצפו במוצרים השונים</p>
+                    </div>
+                </div>
+                <div class="step-arrow">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 5v14M5 12l7 7 7-7"/>
+                    </svg>
+                </div>
+                <div class="welcome-step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <strong>סמנו את המועדפים</strong>
+                        <p>לחצו על הלב בכל מוצר שאהבתם</p>
+                    </div>
+                </div>
+                <div class="step-arrow">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 5v14M5 12l7 7 7-7"/>
+                    </svg>
+                </div>
+                <div class="welcome-step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <strong>שלחו לנו ב-WhatsApp</strong>
+                        <p>לחצו על הכפתור השחור ושלחו את הבחירות</p>
+                    </div>
+                </div>
+            </div>
+            <button class="welcome-btn" id="welcome-close">הבנתי, בואו נתחיל!</button>
+            <label class="welcome-checkbox">
+                <input type="checkbox" id="dont-show-again">
+                <span>אל תציג שוב</span>
+            </label>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
