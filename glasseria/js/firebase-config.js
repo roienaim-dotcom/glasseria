@@ -1,12 +1,11 @@
 // Firebase Configuration
 const firebaseConfig = {
-    apiKey: "AIzaSyCVopVsGyE08C_2qw9eb25ka2CbFpdLRvg",
-    authDomain: "izhar-d3157.firebaseapp.com",
-    projectId: "izhar-d3157",
-    storageBucket: "izhar-d3157.firebasestorage.app",
-    messagingSenderId: "357627571852",
-    appId: "1:357627571852:web:435217f0b70be489f415a9",
-    measurementId: "G-TQET0FR1XC"
+    apiKey: "AIzaSyBaQbwRvxuraWb2ax6ijFNoxE6OXKhgVm8",
+    authDomain: "glasseria-3761f.firebaseapp.com",
+    projectId: "glasseria-3761f",
+    storageBucket: "glasseria-3761f.firebasestorage.app",
+    messagingSenderId: "1039571860801",
+    appId: "1:1039571860801:web:1bb49bbf44bfd560ddb5c0"
 };
 
 // Initialize Firebase
@@ -17,6 +16,9 @@ const db = firebase.firestore();
 
 // Initialize Storage
 const storage = firebase.storage();
+
+// Initialize Auth
+const auth = firebase.auth();
 
 // Collections References
 const categoriesCollection = db.collection('glasseria_categories');
