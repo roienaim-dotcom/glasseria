@@ -82,6 +82,11 @@
             background: #333;
         }
         
+        .login-box button:disabled {
+            background: #999;
+            cursor: not-allowed;
+        }
+        
         .login-error {
             color: #e74c3c;
             margin-top: 12px;
@@ -114,6 +119,11 @@
             display: flex;
             gap: 12px;
             align-items: center;
+        }
+        
+        .admin-user {
+            font-size: 14px;
+            opacity: 0.8;
         }
         
         .btn-view-site {
@@ -515,6 +525,17 @@
             .form-row {
                 grid-template-columns: 1fr;
             }
+            
+            .admin-header {
+                flex-direction: column;
+                gap: 12px;
+                text-align: center;
+            }
+            
+            .admin-header-actions {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
         }
     </style>
 </head>
@@ -524,9 +545,10 @@
         <div class="login-box">
             <h1>🔐 כניסה לניהול</h1>
             <p>Glasseria Admin Panel</p>
-            <input type="password" id="password-input" placeholder="הזן סיסמה">
-            <button onclick="checkPassword()">כניסה</button>
-            <p class="login-error" id="login-error">סיסמה שגויה</p>
+            <input type="email" id="email-input" placeholder="אימייל" autocomplete="email">
+            <input type="password" id="password-input" placeholder="סיסמה" autocomplete="current-password">
+            <button id="login-btn" onclick="handleLogin()">כניסה</button>
+            <p class="login-error" id="login-error">שגיאה בהתחברות</p>
         </div>
     </div>
 
@@ -536,8 +558,9 @@
         <header class="admin-header">
             <h1>⚙️ פאנל ניהול - Glasseria</h1>
             <div class="admin-header-actions">
+                <span class="admin-user" id="admin-user-email"></span>
                 <a href="../index.html" target="_blank" class="btn-view-site">צפה באתר</a>
-                <button class="btn-logout" onclick="logout()">יציאה</button>
+                <button class="btn-logout" onclick="handleLogout()">יציאה</button>
             </div>
         </header>
 
@@ -824,51 +847,98 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="../js/firebase-config.js"></script>
     <script>
-        // ===== Configuration =====
-        const ADMIN_PASSWORD = 'glasseria2024';
-        
         // ===== State =====
         let categories = [];
         let subcategories = [];
         let products = [];
+        let currentUser = null;
         
-        // ===== Authentication =====
-        function checkPassword() {
-            const input = document.getElementById('password-input');
+        // ===== Authentication with Firebase =====
+        async function handleLogin() {
+            const email = document.getElementById('email-input').value;
+            const password = document.getElementById('password-input').value;
             const error = document.getElementById('login-error');
+            const loginBtn = document.getElementById('login-btn');
             
-            if (input.value === ADMIN_PASSWORD) {
-                sessionStorage.setItem('glasseria_admin', 'true');
-                showAdminPanel();
-            } else {
+            if (!email || !password) {
+                error.textContent = 'נא למלא אימייל וסיסמה';
                 error.style.display = 'block';
-                input.value = '';
+                return;
+            }
+            
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'מתחבר...';
+            error.style.display = 'none';
+            
+            try {
+                await auth.signInWithEmailAndPassword(email, password);
+                // Auth state listener will handle the rest
+            } catch (err) {
+                console.error('Login error:', err);
+                
+                // User-friendly error messages
+                if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+                    error.textContent = 'אימייל או סיסמה שגויים';
+                } else if (err.code === 'auth/invalid-email') {
+                    error.textContent = 'כתובת אימייל לא תקינה';
+                } else if (err.code === 'auth/too-many-requests') {
+                    error.textContent = 'יותר מדי ניסיונות, נסה שוב מאוחר יותר';
+                } else {
+                    error.textContent = 'שגיאה בהתחברות: ' + err.message;
+                }
+                error.style.display = 'block';
+                
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'כניסה';
             }
         }
         
-        function logout() {
-            sessionStorage.removeItem('glasseria_admin');
-            location.reload();
+        async function handleLogout() {
+            try {
+                await auth.signOut();
+                // Auth state listener will handle the rest
+            } catch (err) {
+                console.error('Logout error:', err);
+                alert('שגיאה ביציאה');
+            }
         }
         
-        function showAdminPanel() {
+        function showAdminPanel(user) {
+            currentUser = user;
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('admin-panel').style.display = 'block';
+            document.getElementById('admin-user-email').textContent = user.email;
             loadAllData();
+        }
+        
+        function showLoginScreen() {
+            currentUser = null;
+            document.getElementById('login-screen').style.display = 'flex';
+            document.getElementById('admin-panel').style.display = 'none';
+            document.getElementById('login-btn').disabled = false;
+            document.getElementById('login-btn').textContent = 'כניסה';
         }
         
         // ===== Initialize =====
         document.addEventListener('DOMContentLoaded', () => {
-            // Check if already logged in
-            if (sessionStorage.getItem('glasseria_admin') === 'true') {
-                showAdminPanel();
-            }
+            // Listen for auth state changes
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    showAdminPanel(user);
+                } else {
+                    showLoginScreen();
+                }
+            });
             
             // Enter key for login
             document.getElementById('password-input').addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') checkPassword();
+                if (e.key === 'Enter') handleLogin();
+            });
+            document.getElementById('email-input').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') document.getElementById('password-input').focus();
             });
             
             // Tab switching
