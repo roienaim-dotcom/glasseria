@@ -495,11 +495,27 @@ async function loadAllData() {
             });
         });
         
-        // Load products
-        productsCollection.orderBy('createdAt', 'desc').onSnapshot((snapshot) => {
+        // Load products - load without orderBy to support products without order field
+        productsCollection.onSnapshot((snapshot) => {
             products = [];
             snapshot.forEach((doc) => {
                 products.push({ id: doc.id, ...doc.data() });
+            });
+            
+            // Sort in memory: products with order first (by order), then products without order (by createdAt)
+            products.sort((a, b) => {
+                // Both have order - sort by order
+                if (a.order !== undefined && b.order !== undefined) {
+                    return a.order - b.order;
+                }
+                // Only a has order - a comes first
+                if (a.order !== undefined) return -1;
+                // Only b has order - b comes first
+                if (b.order !== undefined) return 1;
+                // Neither has order - sort by createdAt (newest first)
+                const aTime = a.createdAt?.toMillis?.() || 0;
+                const bTime = b.createdAt?.toMillis?.() || 0;
+                return bTime - aTime;
             });
             
             showLoading(false);
