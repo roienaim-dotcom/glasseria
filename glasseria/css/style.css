@@ -107,6 +107,15 @@ body {
     color: var(--white);
 }
 
+/* About link in nav */
+.nav-about {
+    border: 1px solid #ddd;
+}
+
+.nav-about:hover {
+    border-color: var(--primary);
+}
+
 /* Mobile Menu Button - RIGHT side */
 .mobile-menu-btn {
     display: none;
