@@ -355,24 +355,26 @@ function createLightbox() {
         }
     });
     
-    // Navigation - RTL: right arrow (prev) goes forward, left arrow (next) goes backward
+    // Navigation
+    // prev button (RIGHT side, arrow points left) = go to PREVIOUS image
     lightboxPrev.addEventListener('click', (e) => {
         e.stopPropagation();
-        navigateLightbox(1);
+        navigateLightbox(-1); // Go to previous (index - 1)
     });
     
+    // next button (LEFT side, arrow points right) = go to NEXT image
     lightboxNext.addEventListener('click', (e) => {
         e.stopPropagation();
-        navigateLightbox(-1);
+        navigateLightbox(1); // Go to next (index + 1)
     });
     
-    // Keyboard navigation - RTL adjusted
+    // Keyboard navigation
     document.addEventListener('keydown', (e) => {
         if (!lightboxEl.classList.contains('active')) return;
         
         if (e.key === 'Escape') closeLightbox();
-        if (e.key === 'ArrowRight') navigateLightbox(1); // RTL: right = next
-        if (e.key === 'ArrowLeft') navigateLightbox(-1); // RTL: left = prev
+        if (e.key === 'ArrowRight') navigateLightbox(-1); // Right key = previous
+        if (e.key === 'ArrowLeft') navigateLightbox(1);  // Left key = next
     });
     
     // Swipe support for mobile
@@ -394,10 +396,10 @@ function createLightbox() {
         
         if (Math.abs(diff) > swipeThreshold) {
             if (diff > 0) {
-                // Swipe left - next in RTL
+                // Swiped left = go to next image
                 navigateLightbox(1);
             } else {
-                // Swipe right - prev in RTL
+                // Swiped right = go to previous image
                 navigateLightbox(-1);
             }
         }
