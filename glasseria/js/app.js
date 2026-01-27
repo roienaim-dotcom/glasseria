@@ -1,5 +1,5 @@
 // ===== Glasseria Catalog App with Dynamic Categories =====
-// Updated with Fullscreen Image Lightbox
+// Updated with Size & Color Selection before adding to favorites
 
 // WhatsApp Number
 const WHATSAPP_NUMBER = '972524048371';
@@ -8,7 +8,14 @@ const WHATSAPP_NUMBER = '972524048371';
 let categories = [];
 let subcategories = [];
 let products = [];
+// favorites now stores objects: { id, selectedSize, selectedColor }
 let favorites = JSON.parse(localStorage.getItem('glasseria_favorites')) || [];
+// Migration: convert old format (array of IDs) to new format (array of objects)
+if (favorites.length > 0 && typeof favorites[0] === 'string') {
+    favorites = favorites.map(id => ({ id, selectedSize: null, selectedColor: null }));
+    localStorage.setItem('glasseria_favorites', JSON.stringify(favorites));
+}
+
 let currentView = 'categories'; // 'categories', 'subcategories', 'products'
 let currentCategoryId = null;
 let currentSubcategoryId = null;
@@ -16,6 +23,9 @@ let currentSubcategoryId = null;
 // Lightbox State
 let lightboxImages = [];
 let lightboxCurrentIndex = 0;
+
+// Selection Modal State
+let pendingFavoriteProduct = null;
 
 // DOM Elements
 const mainNav = document.getElementById('main-nav');
@@ -51,7 +61,258 @@ document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
     setupWelcomePopup();
     createLightbox();
+    createSelectionModal();
 });
+
+// ===== Create Selection Modal =====
+function createSelectionModal() {
+    if (document.getElementById('selection-modal')) return;
+    
+    const modal = document.createElement('div');
+    modal.className = 'selection-modal-overlay';
+    modal.id = 'selection-modal';
+    modal.innerHTML = `
+        <div class="selection-modal">
+            <button class="selection-modal-close" id="selection-modal-close">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+            <div class="selection-modal-header">
+                <div class="selection-modal-image" id="selection-modal-image"></div>
+                <div class="selection-modal-info">
+                    <h3 id="selection-modal-name"></h3>
+                    <p id="selection-modal-sku"></p>
+                </div>
+            </div>
+            <div class="selection-modal-body">
+                <div class="selection-group" id="selection-sizes-group" style="display: none;">
+                    <label>בחר מידה:</label>
+                    <div class="selection-options" id="selection-sizes"></div>
+                </div>
+                <div class="selection-group" id="selection-colors-group" style="display: none;">
+                    <label>בחר צבע:</label>
+                    <div class="selection-options" id="selection-colors"></div>
+                </div>
+                <div class="selection-note" id="selection-note" style="display: none;">
+                    <span>💡</span> ניתן להוסיף גם בלי לבחור מידה/צבע
+                </div>
+            </div>
+            <div class="selection-modal-footer">
+                <button class="btn-add-favorite" id="btn-add-favorite">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                    </svg>
+                    הוסף למועדפים
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    
+    // Event listeners
+    document.getElementById('selection-modal-close').addEventListener('click', closeSelectionModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeSelectionModal();
+    });
+    document.getElementById('btn-add-favorite').addEventListener('click', confirmAddToFavorites);
+}
+
+// ===== Open Selection Modal =====
+function openSelectionModal(product, sourceButton) {
+    pendingFavoriteProduct = { product, sourceButton };
+    
+    const modal = document.getElementById('selection-modal');
+    const modalImage = document.getElementById('selection-modal-image');
+    const modalName = document.getElementById('selection-modal-name');
+    const modalSku = document.getElementById('selection-modal-sku');
+    const sizesGroup = document.getElementById('selection-sizes-group');
+    const colorsGroup = document.getElementById('selection-colors-group');
+    const sizesContainer = document.getElementById('selection-sizes');
+    const colorsContainer = document.getElementById('selection-colors');
+    const selectionNote = document.getElementById('selection-note');
+    
+    // Set product info
+    const firstImage = product.images && product.images.length > 0 
+        ? product.images[0] 
+        : (product.image || 'images/placeholder.svg');
+    modalImage.innerHTML = `<img src="${firstImage}" alt="${product.name}" onerror="this.src='images/placeholder.svg'">`;
+    modalName.textContent = product.name;
+    modalSku.textContent = `מק"ט: ${product.sku || '-'}`;
+    
+    // Set sizes
+    if (product.sizes && product.sizes.length > 0) {
+        sizesGroup.style.display = 'block';
+        sizesContainer.innerHTML = product.sizes.map(size => `
+            <button class="selection-option" data-type="size" data-value="${size}">${size}</button>
+        `).join('');
+        
+        // Add click handlers for sizes
+        sizesContainer.querySelectorAll('.selection-option').forEach(btn => {
+            btn.addEventListener('click', () => {
+                sizesContainer.querySelectorAll('.selection-option').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+            });
+        });
+    } else {
+        sizesGroup.style.display = 'none';
+    }
+    
+    // Set colors
+    if (product.colors && product.colors.length > 0) {
+        colorsGroup.style.display = 'block';
+        colorsContainer.innerHTML = product.colors.map(color => `
+            <button class="selection-option" data-type="color" data-value="${color}">${color}</button>
+        `).join('');
+        
+        // Add click handlers for colors
+        colorsContainer.querySelectorAll('.selection-option').forEach(btn => {
+            btn.addEventListener('click', () => {
+                colorsContainer.querySelectorAll('.selection-option').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+            });
+        });
+    } else {
+        colorsGroup.style.display = 'none';
+    }
+    
+    // Show note if there are options to select
+    if ((product.sizes && product.sizes.length > 0) || (product.colors && product.colors.length > 0)) {
+        selectionNote.style.display = 'flex';
+    } else {
+        selectionNote.style.display = 'none';
+    }
+    
+    modal.classList.add('active');
+}
+
+// ===== Close Selection Modal =====
+function closeSelectionModal() {
+    const modal = document.getElementById('selection-modal');
+    modal.classList.remove('active');
+    pendingFavoriteProduct = null;
+    
+    // Clear selections
+    document.querySelectorAll('#selection-modal .selection-option').forEach(btn => {
+        btn.classList.remove('selected');
+    });
+}
+
+// ===== Confirm Add to Favorites =====
+function confirmAddToFavorites() {
+    if (!pendingFavoriteProduct) return;
+    
+    const { product, sourceButton } = pendingFavoriteProduct;
+    
+    // Get selected size and color
+    const selectedSizeBtn = document.querySelector('#selection-sizes .selection-option.selected');
+    const selectedColorBtn = document.querySelector('#selection-colors .selection-option.selected');
+    
+    const selectedSize = selectedSizeBtn ? selectedSizeBtn.dataset.value : null;
+    const selectedColor = selectedColorBtn ? selectedColorBtn.dataset.value : null;
+    
+    // Add to favorites with selections
+    addToFavorites(product.id, selectedSize, selectedColor, sourceButton);
+    
+    closeSelectionModal();
+}
+
+// ===== Helper: Check if product is in favorites =====
+function isProductInFavorites(productId) {
+    return favorites.some(fav => fav.id === productId);
+}
+
+// ===== Helper: Find favorite by product ID =====
+function findFavorite(productId) {
+    return favorites.find(fav => fav.id === productId);
+}
+
+// ===== Add to Favorites =====
+function addToFavorites(productId, selectedSize, selectedColor, button) {
+    favorites.push({
+        id: productId,
+        selectedSize: selectedSize,
+        selectedColor: selectedColor
+    });
+    
+    if (button) {
+        button.classList.add('active');
+    }
+    
+    localStorage.setItem('glasseria_favorites', JSON.stringify(favorites));
+    updateFavoritesCount();
+    renderFavoritesList();
+    
+    // Update card button if exists
+    const cardBtn = document.querySelector(`.product-card .favorite-btn[data-id="${productId}"]`);
+    if (cardBtn && cardBtn !== button) {
+        cardBtn.classList.add('active');
+    }
+}
+
+// ===== Remove from Favorites =====
+function removeFromFavorites(productId, button) {
+    const index = favorites.findIndex(fav => fav.id === productId);
+    if (index !== -1) {
+        favorites.splice(index, 1);
+    }
+    
+    if (button) {
+        button.classList.remove('active');
+    }
+    
+    localStorage.setItem('glasseria_favorites', JSON.stringify(favorites));
+    updateFavoritesCount();
+    renderFavoritesList();
+    
+    // Update card button if exists
+    const cardBtn = document.querySelector(`.product-card .favorite-btn[data-id="${productId}"]`);
+    if (cardBtn && cardBtn !== button) {
+        cardBtn.classList.remove('active');
+    }
+    
+    // Update modal button if exists
+    const modalBtn = document.querySelector(`.modal-favorite-btn[data-id="${productId}"]`);
+    if (modalBtn) {
+        modalBtn.classList.remove('active');
+        modalBtn.innerHTML = `
+            <svg viewBox="0 0 24 24">
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+            </svg>
+            הוסף למועדפים
+        `;
+    }
+}
+
+// ===== Toggle Favorite (for removing only) =====
+function toggleFavorite(productId, button, product = null) {
+    const isFavorite = isProductInFavorites(productId);
+    
+    if (isFavorite) {
+        // Remove from favorites
+        removeFromFavorites(productId, button);
+    } else {
+        // If product provided, open selection modal
+        if (product) {
+            // Check if product has sizes or colors
+            if ((product.sizes && product.sizes.length > 0) || (product.colors && product.colors.length > 0)) {
+                openSelectionModal(product, button);
+            } else {
+                // No options, add directly
+                addToFavorites(productId, null, null, button);
+            }
+        } else {
+            // Find product and check
+            const foundProduct = products.find(p => p.id === productId);
+            if (foundProduct && ((foundProduct.sizes && foundProduct.sizes.length > 0) || (foundProduct.colors && foundProduct.colors.length > 0))) {
+                openSelectionModal(foundProduct, button);
+            } else {
+                addToFavorites(productId, null, null, button);
+            }
+        }
+    }
+}
 
 // ===== Create Lightbox Element =====
 function createLightbox() {
@@ -425,7 +686,7 @@ function renderProducts(filteredProducts = null) {
         noProducts.style.display = 'none';
         
         productsToShow.forEach(product => {
-            const isFavorite = favorites.includes(product.id);
+            const isFavorite = isProductInFavorites(product.id);
             const card = createProductCard(product, isFavorite);
             productsGrid.appendChild(card);
         });
@@ -478,7 +739,7 @@ function createProductCard(product, isFavorite) {
     const favoriteBtn = card.querySelector('.favorite-btn');
     favoriteBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        toggleFavorite(product.id, favoriteBtn);
+        toggleFavorite(product.id, favoriteBtn, product);
     });
     
     return card;
@@ -488,7 +749,7 @@ function createProductCard(product, isFavorite) {
 function openProductModal(product) {
     const cat = categories.find(c => c.id === product.categoryId);
     const sub = subcategories.find(s => s.id === product.subcategoryId);
-    const isFavorite = favorites.includes(product.id);
+    const isFavorite = isProductInFavorites(product.id);
     
     // תמיכה גם בתמונה בודדת וגם במערך תמונות
     const images = product.images && product.images.length > 0 
@@ -568,14 +829,15 @@ function openProductModal(product) {
     // כפתור מועדפים במודל
     const modalFavBtn = modalContent.querySelector('.modal-favorite-btn');
     modalFavBtn.addEventListener('click', () => {
-        toggleFavorite(product.id, modalFavBtn);
-        const isNowFavorite = favorites.includes(product.id);
+        toggleFavorite(product.id, modalFavBtn, product);
+        const isNowFavorite = isProductInFavorites(product.id);
         modalFavBtn.innerHTML = `
             <svg viewBox="0 0 24 24">
                 <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
             </svg>
             ${isNowFavorite ? 'הסר מהמועדפים' : 'הוסף למועדפים'}
         `;
+        modalFavBtn.classList.toggle('active', isNowFavorite);
     });
     
     productModal.classList.add('active');
@@ -645,27 +907,6 @@ function setActiveNav(categoryId) {
 }
 
 // ===== Favorites Functions =====
-function toggleFavorite(productId, button) {
-    const index = favorites.indexOf(productId);
-    
-    if (index === -1) {
-        favorites.push(productId);
-        button.classList.add('active');
-    } else {
-        favorites.splice(index, 1);
-        button.classList.remove('active');
-    }
-    
-    localStorage.setItem('glasseria_favorites', JSON.stringify(favorites));
-    updateFavoritesCount();
-    renderFavoritesList();
-    
-    const cardBtn = document.querySelector(`.product-card .favorite-btn[data-id="${productId}"]`);
-    if (cardBtn && cardBtn !== button) {
-        cardBtn.classList.toggle('active', favorites.includes(productId));
-    }
-}
-
 function updateFavoritesCount() {
     favoritesCountEl.textContent = favorites.length;
     
@@ -694,13 +935,23 @@ function closeFavoritesPanel() {
 function renderFavoritesList() {
     favoritesList.innerHTML = '';
     
-    const favoriteProducts = products.filter(p => favorites.includes(p.id));
-    
-    favoriteProducts.forEach(product => {
+    favorites.forEach(fav => {
+        const product = products.find(p => p.id === fav.id);
+        if (!product) return;
+        
         // תמיכה בתמונה הראשונה מהמערך
         const firstImage = product.images && product.images.length > 0 
             ? product.images[0] 
             : (product.image || 'images/placeholder.svg');
+        
+        // Build selection info
+        let selectionInfo = '';
+        if (fav.selectedSize || fav.selectedColor) {
+            const parts = [];
+            if (fav.selectedSize) parts.push(`מידה: ${fav.selectedSize}`);
+            if (fav.selectedColor) parts.push(`צבע: ${fav.selectedColor}`);
+            selectionInfo = `<div class="favorite-item-selection">${parts.join(' | ')}</div>`;
+        }
         
         const item = document.createElement('div');
         item.className = 'favorite-item';
@@ -711,6 +962,7 @@ function renderFavoritesList() {
             <div class="favorite-item-info">
                 <div class="favorite-item-name">${product.name}</div>
                 <div class="favorite-item-sku">מק"ט: ${product.sku || '-'}</div>
+                ${selectionInfo}
                 <div class="favorite-item-price">₪${product.price || 0}</div>
             </div>
             <button class="favorite-item-remove" data-id="${product.id}">
@@ -723,7 +975,7 @@ function renderFavoritesList() {
         
         const removeBtn = item.querySelector('.favorite-item-remove');
         removeBtn.addEventListener('click', () => {
-            toggleFavorite(product.id, removeBtn);
+            removeFromFavorites(product.id, null);
         });
         
         favoritesList.appendChild(item);
@@ -749,15 +1001,25 @@ function sendToWhatsApp() {
         return;
     }
     
-    const favoriteProducts = products.filter(p => favorites.includes(p.id));
-    
     let message = 'שלום, אני מעוניין במוצרים הבאים:\n\n';
     
-    favoriteProducts.forEach((product, index) => {
+    favorites.forEach((fav, index) => {
+        const product = products.find(p => p.id === fav.id);
+        if (!product) return;
+        
         const cat = categories.find(c => c.id === product.categoryId);
         message += `${index + 1}. ${product.name}\n`;
         message += `   מק"ט: ${product.sku || '-'}\n`;
         if (cat) message += `   קטגוריה: ${cat.name}\n`;
+        
+        // Add selected size and color
+        if (fav.selectedSize) {
+            message += `   מידה: ${fav.selectedSize}\n`;
+        }
+        if (fav.selectedColor) {
+            message += `   צבע: ${fav.selectedColor}\n`;
+        }
+        
         message += `   מחיר: ₪${product.price || '0'}\n\n`;
     });
     
