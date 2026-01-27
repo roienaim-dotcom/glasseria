@@ -108,8 +108,22 @@ class ProductCarousel {
         const updateCarousel = (index) => {
             currentIndex = index;
             
-            // Use negative translateX because carousel has direction:ltr in CSS
-            carousel.style.transform = `translateX(${-index * 100}%)`;
+            // Check if we're on a touch device with CSS scroll-snap enabled
+            const isTouchDevice = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+            
+            if (isTouchDevice) {
+                // On touch devices, use native scroll (CSS has scroll-snap enabled)
+                const slide = carousel.children[index];
+                if (slide) {
+                    carousel.scrollTo({
+                        left: index * carousel.offsetWidth,
+                        behavior: 'smooth'
+                    });
+                }
+            } else {
+                // On desktop, use transform
+                carousel.style.transform = `translateX(${-index * 100}%)`;
+            }
             
             // Update dots
             dots.forEach((dot, i) => {
@@ -156,33 +170,23 @@ class ProductCarousel {
             });
         });
         
-        // Touch swipe support
-        let touchStartX = 0;
-        let touchEndX = 0;
-        
-        carousel.addEventListener('touchstart', (e) => {
-            touchStartX = e.changedTouches[0].screenX;
-        }, { passive: true });
-        
-        carousel.addEventListener('touchend', (e) => {
-            touchEndX = e.changedTouches[0].screenX;
-            handleSwipe();
-        }, { passive: true });
-        
-        const handleSwipe = () => {
-            const swipeThreshold = 50;
-            const diff = touchStartX - touchEndX;
-            
-            if (Math.abs(diff) > swipeThreshold) {
-                if (diff > 0) {
-                    // Swiped left = go to next image
-                    goNext();
-                } else {
-                    // Swiped right = go to previous image
-                    goPrev();
+        // Scroll listener for mobile (CSS enables scroll-snap on touch devices)
+        let scrollTimeout;
+        carousel.addEventListener('scroll', () => {
+            clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(() => {
+                const scrollLeft = carousel.scrollLeft;
+                const slideWidth = carousel.offsetWidth;
+                const newIndex = Math.round(scrollLeft / slideWidth);
+                if (newIndex !== currentIndex && newIndex >= 0 && newIndex < totalSlides) {
+                    currentIndex = newIndex;
+                    dots.forEach((dot, i) => {
+                        dot.classList.toggle('active', i === currentIndex);
+                    });
+                    carousel.dataset.current = currentIndex;
                 }
-            }
-        };
+            }, 50);
+        }, { passive: true });
     }
 }
 
