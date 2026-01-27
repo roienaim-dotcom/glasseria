@@ -405,6 +405,7 @@ body {
     width: 100%;
     height: 100%;
     transition: transform 0.3s ease;
+    direction: ltr; /* Force LTR for consistent transform behavior */
 }
 
 .product-image-slide {
@@ -477,6 +478,7 @@ body {
     display: none;
     gap: 6px;
     z-index: 5;
+    direction: ltr; /* Force LTR for consistent dot ordering */
 }
 
 .product-image.has-multiple .carousel-dots {
@@ -639,6 +641,7 @@ body {
     width: 100%;
     height: 100%;
     transition: transform 0.3s ease;
+    direction: ltr; /* Force LTR for consistent transform behavior */
 }
 
 .modal-image-slide {
@@ -714,6 +717,7 @@ body {
     background: rgba(255,255,255,0.8);
     padding: 6px 12px;
     border-radius: 20px;
+    direction: ltr; /* Force LTR for consistent dot ordering */
 }
 
 .modal-product-image.has-multiple .modal-carousel-dots {
@@ -939,6 +943,7 @@ body {
     padding: 8px 16px;
     border-radius: 20px;
     z-index: 10;
+    direction: ltr; /* Keep counter in LTR format: "1 / 3" */
 }
 
 /* ===== Favorites Panel ===== */
