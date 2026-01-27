@@ -355,24 +355,24 @@ function createLightbox() {
         }
     });
     
-    // Navigation
+    // Navigation - RTL: right arrow (prev) goes forward, left arrow (next) goes backward
     lightboxPrev.addEventListener('click', (e) => {
-        e.stopPropagation();
-        navigateLightbox(-1);
-    });
-    
-    lightboxNext.addEventListener('click', (e) => {
         e.stopPropagation();
         navigateLightbox(1);
     });
     
-    // Keyboard navigation
+    lightboxNext.addEventListener('click', (e) => {
+        e.stopPropagation();
+        navigateLightbox(-1);
+    });
+    
+    // Keyboard navigation - RTL adjusted
     document.addEventListener('keydown', (e) => {
         if (!lightboxEl.classList.contains('active')) return;
         
         if (e.key === 'Escape') closeLightbox();
-        if (e.key === 'ArrowRight') navigateLightbox(-1); // RTL
-        if (e.key === 'ArrowLeft') navigateLightbox(1); // RTL
+        if (e.key === 'ArrowRight') navigateLightbox(1); // RTL: right = next
+        if (e.key === 'ArrowLeft') navigateLightbox(-1); // RTL: left = prev
     });
     
     // Swipe support for mobile
@@ -394,10 +394,10 @@ function createLightbox() {
         
         if (Math.abs(diff) > swipeThreshold) {
             if (diff > 0) {
-                // Swipe left - next (RTL)
+                // Swipe left - next in RTL
                 navigateLightbox(1);
             } else {
-                // Swipe right - prev (RTL)
+                // Swipe right - prev in RTL
                 navigateLightbox(-1);
             }
         }
