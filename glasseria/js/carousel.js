@@ -65,7 +65,7 @@ class ProductCarousel {
         // Create slides
         const slides = images.map((img, index) => `
             <div class="${slideClass}" data-index="${index}">
-                <img src="${img}" alt="תמונת מוצר ${index + 1}" loading="lazy">
+                <img src="${img}" alt="×ª×ž×•× ×ª ×ž×•×¦×¨ ${index + 1}" loading="lazy">
             </div>
         `).join('');
         
@@ -76,10 +76,10 @@ class ProductCarousel {
         
         // Create arrows (only for multiple images)
         const arrows = images.length > 1 ? `
-            <button class="${arrowClass} prev" aria-label="תמונה קודמת">
+            <button class="${arrowClass} prev" aria-label="×ª×ž×•× ×” ×§×•×“×ž×ª">
                 <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
             </button>
-            <button class="${arrowClass} next" aria-label="תמונה הבאה">
+            <button class="${arrowClass} next" aria-label="×ª×ž×•× ×” ×”×‘××”">
                 <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></svg>
             </button>
         ` : '';
@@ -119,7 +119,7 @@ class ProductCarousel {
                     slide.scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' });
                 }
             } else {
-                // On desktop, use transform
+                // On desktop, use transform (positive for RTL direction)
                 carousel.style.transform = `translateX(${index * 100}%)`;
             }
             
@@ -131,11 +131,11 @@ class ProductCarousel {
             carousel.dataset.current = index;
         };
         
-        // Arrow click handlers
+        // Arrow click handlers - RTL: right arrow (prev) goes forward, left arrow (next) goes backward
         if (prevBtn) {
             prevBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                const newIndex = (currentIndex + 1) % totalSlides; // RTL: prev goes forward
+                const newIndex = (currentIndex + 1) % totalSlides;
                 updateCarousel(newIndex);
             });
         }
@@ -143,7 +143,7 @@ class ProductCarousel {
         if (nextBtn) {
             nextBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                const newIndex = (currentIndex - 1 + totalSlides) % totalSlides; // RTL: next goes backward
+                const newIndex = (currentIndex - 1 + totalSlides) % totalSlides;
                 updateCarousel(newIndex);
             });
         }
@@ -195,12 +195,12 @@ class ProductCarousel {
             
             if (Math.abs(diff) > swipeThreshold) {
                 if (diff > 0) {
-                    // Swipe left - next in RTL
-                    const newIndex = (currentIndex - 1 + totalSlides) % totalSlides;
+                    // Swipe left in RTL - go to next image
+                    const newIndex = (currentIndex + 1) % totalSlides;
                     updateCarousel(newIndex);
                 } else {
-                    // Swipe right - prev in RTL
-                    const newIndex = (currentIndex + 1) % totalSlides;
+                    // Swipe right in RTL - go to previous image
+                    const newIndex = (currentIndex - 1 + totalSlides) % totalSlides;
                     updateCarousel(newIndex);
                 }
             }
@@ -234,10 +234,10 @@ function renderProductCardWithCarousel(product) {
             </svg>
         </button>
         <div class="product-info">
-            <h3 class="product-name">${product.name || 'ללא שם'}</h3>
-            <p class="product-sku">מק"ט: ${product.sku || '-'}</p>
+            <h3 class="product-name">${product.name || '×œ×œ× ×©×'}</h3>
+            <p class="product-sku">×ž×§"×˜: ${product.sku || '-'}</p>
             ${product.type ? `<p class="product-type">${product.type}</p>` : ''}
-            <p class="product-price">${product.price ? product.price.toLocaleString() + ' ₪' : 'צור קשר'}</p>
+            <p class="product-price">${product.price ? product.price.toLocaleString() + ' â‚ª' : '×¦×•×¨ ×§×©×¨'}</p>
         </div>
     `;
     
@@ -261,11 +261,11 @@ function openProductModalWithCarousel(product) {
     
     // Update modal content
     modal.querySelector('.modal-product-category').textContent = product.category || '';
-    modal.querySelector('.modal-product-name').textContent = product.name || 'ללא שם';
-    modal.querySelector('.modal-product-sku').textContent = `מק"ט: ${product.sku || '-'}`;
+    modal.querySelector('.modal-product-name').textContent = product.name || '×œ×œ× ×©×';
+    modal.querySelector('.modal-product-sku').textContent = `×ž×§"×˜: ${product.sku || '-'}`;
     modal.querySelector('.modal-product-type').textContent = product.type || '';
     modal.querySelector('.modal-product-description').textContent = product.description || '';
-    modal.querySelector('.modal-product-price').textContent = product.price ? product.price.toLocaleString() + ' ₪' : 'צור קשר';
+    modal.querySelector('.modal-product-price').textContent = product.price ? product.price.toLocaleString() + ' â‚ª' : '×¦×•×¨ ×§×©×¨';
     
     // Update sizes
     const sizesContainer = modal.querySelector('.size-options');
@@ -303,16 +303,16 @@ Product document structure with multiple images:
 
 {
     id: "product_123",
-    name: "ארון אמבטיה רומנטיק",
+    name: "××¨×•×Ÿ ××ž×‘×˜×™×” ×¨×•×ž× ×˜×™×§",
     sku: "ROM-120",
     price: 6670,
     categoryId: "cat_1",
     subcategoryId: "subcat_1",
-    category: "ארונות אמבטיה",
-    type: "פורמייקה",
-    description: "ארון תלוי בגימור צבע אפוקסי...",
+    category: "××¨×•× ×•×ª ××ž×‘×˜×™×”",
+    type: "×¤×•×¨×ž×™×™×§×”",
+    description: "××¨×•×Ÿ ×ª×œ×•×™ ×‘×’×™×ž×•×¨ ×¦×‘×¢ ××¤×•×§×¡×™...",
     sizes: ["120", "130-150"],
-    colors: ["לבן", "שחור", "אפור"],
+    colors: ["×œ×‘×Ÿ", "×©×—×•×¨", "××¤×•×¨"],
     
     // Single image (backward compatible)
     image: "https://firebase-storage-url/main-image.jpg",
