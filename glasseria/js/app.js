@@ -599,6 +599,9 @@ function showSubcategories(categoryId, subs) {
     subcategoriesSection.style.display = 'block';
     subcategoriesTitle.textContent = category ? category.name : '';
     
+    // Hide products section when showing subcategories
+    document.getElementById('products').style.display = 'none';
+    
     subcategoriesGrid.innerHTML = subs.map(sub => {
         const productCount = products.filter(p => p.subcategoryId === sub.id).length;
         return `
@@ -642,7 +645,7 @@ function showSubcategories(categoryId, subs) {
     });
     
     setActiveNav(categoryId);
-    document.getElementById('products').scrollIntoView({ behavior: 'smooth' });
+    subcategoriesSection.scrollIntoView({ behavior: 'smooth' });
 }
 
 // ===== Show Products =====
@@ -653,6 +656,9 @@ function showProducts(categoryId, subcategoryId) {
     
     categoriesSection.style.display = 'none';
     subcategoriesSection.style.display = 'none';
+    
+    // Show products section
+    document.getElementById('products').style.display = 'block';
     
     let filtered = products;
     let title = 'כל המוצרים';
@@ -861,6 +867,7 @@ function setupEventListeners() {
         currentView = 'categories';
         categoriesSection.style.display = 'block';
         subcategoriesSection.style.display = 'none';
+        document.getElementById('products').style.display = 'block';
         currentCategoryTitle.textContent = 'כל המוצרים';
         renderProducts();
         setActiveNav('all');
@@ -893,6 +900,7 @@ function handleNavClick(e) {
         currentSubcategoryId = null;
         categoriesSection.style.display = 'block';
         subcategoriesSection.style.display = 'none';
+        document.getElementById('products').style.display = 'block';
         currentCategoryTitle.textContent = 'כל המוצרים';
         renderProducts();
         setActiveNav('all');
