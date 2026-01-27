@@ -531,14 +531,16 @@ function renderNavigation() {
     mainNav.innerHTML = `
         <a href="#" class="nav-link active" data-category="all">הכל</a>
         ${navLinks}
+        <a href="about.html" class="nav-link nav-about">אודות</a>
     `;
     
     mobileNav.innerHTML = `
         <a href="#" class="nav-link active" data-category="all">הכל</a>
         ${navLinks}
+        <a href="about.html" class="nav-link nav-about">אודות</a>
     `;
     
-    document.querySelectorAll('.nav-link').forEach(link => {
+    document.querySelectorAll('.nav-link:not(.nav-about)').forEach(link => {
         link.addEventListener('click', handleNavClick);
     });
 }
