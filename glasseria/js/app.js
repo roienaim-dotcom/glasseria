@@ -185,6 +185,12 @@ function openSelectionModal(product, sourceButton) {
     }
     
     modal.classList.add('active');
+    // Lock body scroll - improved for mobile
+    document.body.dataset.scrollY = window.scrollY;
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${window.scrollY}px`;
+    document.body.style.width = '100%';
+    document.body.style.overflow = 'hidden';
 }
 
 // ===== Close Selection Modal =====
@@ -192,6 +198,14 @@ function closeSelectionModal() {
     const modal = document.getElementById('selection-modal');
     modal.classList.remove('active');
     pendingFavoriteProduct = null;
+    
+    // Restore body scroll
+    const scrollY = document.body.dataset.scrollY || '0';
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.width = '';
+    document.body.style.overflow = '';
+    window.scrollTo(0, parseInt(scrollY));
     
     // Clear selections
     document.querySelectorAll('#selection-modal .selection-option').forEach(btn => {
@@ -434,18 +448,14 @@ function openLightbox(images, startIndex = 0) {
     
     // Show lightbox
     lightbox.classList.add('active');
-    document.body.style.overflow = 'hidden';
+    // Note: body scroll is already locked by the modal that opened this lightbox
 }
 
 // ===== Close Lightbox =====
 function closeLightbox() {
     const lightbox = document.getElementById('image-lightbox');
     lightbox.classList.remove('active');
-    
-    // Only restore scroll if modal is not open
-    if (!productModal.classList.contains('active')) {
-        document.body.style.overflow = '';
-    }
+    // Note: don't restore body scroll here - the modal handles it
 }
 
 // ===== Navigate Lightbox =====
@@ -867,12 +877,23 @@ function openProductModal(product) {
     });
     
     productModal.classList.add('active');
+    // Lock body scroll - improved for mobile
+    document.body.dataset.scrollY = window.scrollY;
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${window.scrollY}px`;
+    document.body.style.width = '100%';
     document.body.style.overflow = 'hidden';
 }
 
 function closeProductModal() {
     productModal.classList.remove('active');
+    // Restore body scroll
+    const scrollY = document.body.dataset.scrollY || '0';
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.width = '';
     document.body.style.overflow = '';
+    window.scrollTo(0, parseInt(scrollY));
 }
 
 // ===== Event Listeners =====
@@ -951,13 +972,24 @@ function openFavoritesPanel() {
     renderFavoritesList();
     favoritesPanel.classList.add('active');
     overlay.classList.add('active');
+    // Lock body scroll - improved for mobile
+    document.body.dataset.scrollY = window.scrollY;
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${window.scrollY}px`;
+    document.body.style.width = '100%';
     document.body.style.overflow = 'hidden';
 }
 
 function closeFavoritesPanel() {
     favoritesPanel.classList.remove('active');
     overlay.classList.remove('active');
+    // Restore body scroll
+    const scrollY = document.body.dataset.scrollY || '0';
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.width = '';
     document.body.style.overflow = '';
+    window.scrollTo(0, parseInt(scrollY));
 }
 
 function renderFavoritesList() {
