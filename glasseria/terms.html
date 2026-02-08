@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glasseria - תנאי שימוש</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #1a1a1a;
+            --secondary: #666;
+            --light: #f5f5f5;
+            --white: #fff;
+            --shadow: 0 2px 10px rgba(0,0,0,0.1);
+            --radius: 12px;
+        }
+
+        body {
+            font-family: 'Heebo', sans-serif;
+            background: var(--light);
+            color: var(--primary);
+            line-height: 1.8;
+            direction: rtl;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .header {
+            background: var(--white);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            width: 100%;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .header .container {
+            display: flex;
+            flex-direction: row-reverse;
+            align-items: center;
+            justify-content: space-between;
+            height: 70px;
+            gap: 10px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .logo {
+            display: flex;
+            flex-direction: row-reverse;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: var(--primary);
+            flex-shrink: 0;
+        }
+
+        .logo img {
+            height: 40px;
+            width: auto;
+            max-width: 50px;
+        }
+
+        .logo-text {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            white-space: nowrap;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            text-decoration: none;
+            color: var(--secondary);
+            font-weight: 500;
+            border-radius: 25px;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .back-link:hover {
+            background: var(--primary);
+            color: var(--white);
+        }
+
+        .back-link svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Hero */
+        .hero {
+            background: var(--primary);
+            color: var(--white);
+            padding: 40px 20px;
+            text-align: center;
+            width: 100%;
+        }
+
+        .hero h1 {
+            font-size: clamp(24px, 6vw, 36px);
+            margin-bottom: 10px;
+            line-height: 1.3;
+        }
+
+        .hero p {
+            font-size: clamp(14px, 3.5vw, 16px);
+            opacity: 0.8;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .hero .page-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            display: block;
+        }
+
+        /* Content */
+        .content {
+            flex: 1;
+            padding: 40px 0;
+        }
+
+        .content-card {
+            background: var(--white);
+            border-radius: var(--radius);
+            padding: 32px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow);
+        }
+
+        .content-card h2 {
+            font-size: 20px;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--light);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .content-card h2 .icon {
+            font-size: 22px;
+        }
+
+        .content-card p {
+            color: #444;
+            margin-bottom: 12px;
+            font-size: 15px;
+        }
+
+        .content-card p:last-child {
+            margin-bottom: 0;
+        }
+
+        .content-card ul {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 12px 0;
+        }
+
+        .content-card ul li {
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 15px;
+            color: #444;
+        }
+
+        .content-card ul li:last-child {
+            border-bottom: none;
+        }
+
+        .content-card ul li .bullet {
+            color: var(--primary);
+            font-weight: bold;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .content-card a {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .section-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            background: var(--primary);
+            color: var(--white);
+            border-radius: 50%;
+            font-size: 14px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .update-date {
+            text-align: center;
+            color: var(--secondary);
+            font-size: 13px;
+            margin-top: 10px;
+            padding: 16px;
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--primary);
+            color: var(--white);
+            text-align: center;
+            padding: 24px 20px;
+            font-size: 14px;
+            width: 100%;
+        }
+
+        .footer a {
+            color: rgba(255,255,255,0.7);
+            font-size: 13px;
+            text-decoration: none;
+            margin-top: 8px;
+            display: inline-block;
+        }
+
+        .footer a:hover {
+            color: #fff;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 16px;
+            }
+
+            .header .container {
+                height: 60px;
+            }
+
+            .logo img {
+                height: 36px;
+            }
+
+            .logo-text {
+                font-size: 18px;
+                letter-spacing: 1px;
+            }
+
+            .hero {
+                padding: 30px 16px;
+            }
+
+            .content {
+                padding: 24px 0;
+            }
+
+            .content-card {
+                padding: 20px;
+                margin-bottom: 16px;
+            }
+
+            .content-card h2 {
+                font-size: 17px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .container {
+                padding: 0 12px;
+            }
+
+            .content-card {
+                padding: 16px;
+            }
+
+            .logo-text {
+                font-size: 16px;
+            }
+
+            .logo img {
+                height: 32px;
+            }
+        }
+
+        @supports (padding: max(0px)) {
+            body {
+                padding-top: env(safe-area-inset-top);
+            }
+            .header {
+                padding-top: env(safe-area-inset-top);
+            }
+            .footer {
+                padding-bottom: max(20px, calc(env(safe-area-inset-bottom) + 10px));
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <a href="index.html" class="logo">
+                <img src="images/logo.png" alt="Glasseria">
+                <span class="logo-text">GLASSERIA</span>
+            </a>
+            <a href="index.html" class="back-link">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M15 18l-6-6 6-6"/>
+                </svg>
+                חזרה לקטלוג
+            </a>
+        </div>
+    </header>
+
+    <!-- Hero -->
+    <section class="hero">
+        <span class="page-icon">📄</span>
+        <h1>תנאי שימוש</h1>
+        <p>תנאי השימוש באתר Glasseria</p>
+    </section>
+
+    <!-- Content -->
+    <main class="content">
+        <div class="container">
+
+            <!-- 1. כללי -->
+            <div class="content-card">
+                <h2><span class="section-number">1</span> כללי</h2>
+                <p>
+                    ברוכים הבאים לאתר Glasseria (להלן: "האתר"). האתר משמש כקטלוג מוצרים דיגיטלי להצגת מוצרי זכוכית, כלי סניטריה ומוצרי אמבטיה.
+                </p>
+                <p>
+                    השימוש באתר ובתכניו מהווה הסכמה לתנאי שימוש אלה. אם אינך מסכים/ה לתנאים, הנך מתבקש/ת שלא לעשות שימוש באתר.
+                </p>
+                <p>
+                    תנאי שימוש אלה חלים על כל משתמשי האתר, לרבות גולשים, לקוחות ומבקרים מזדמנים.
+                </p>
+            </div>
+
+            <!-- 2. השימוש באתר -->
+            <div class="content-card">
+                <h2><span class="section-number">2</span> השימוש באתר</h2>
+                <p>
+                    האתר מאפשר צפייה בקטלוג מוצרים, סימון מוצרים מועדפים ושליחת רשימת מוצרים באמצעות WhatsApp. השימוש באתר מיועד למטרות חוקיות בלבד.
+                </p>
+                <p>המשתמש מתחייב שלא:</p>
+                <ul>
+                    <li>
+                        <span class="bullet">•</span>
+                        <span>לעשות שימוש באתר למטרות בלתי חוקיות או בניגוד לתנאי שימוש אלה</span>
+                    </li>
+                    <li>
+                        <span class="bullet">•</span>
+                        <span>להפריע או לשבש את פעילות האתר או השרתים המאחסנים אותו</span>
+                    </li>
+                    <li>
+                        <span class="bullet">•</span>
+                        <span>להעתיק, לשכפל, להפיץ או לעשות שימוש מסחרי בתכני האתר ללא אישור מראש ובכתב</span>
+                    </li>
+                    <li>
+                        <span class="bullet">•</span>
+                        <span>לאסוף מידע על משתמשים אחרים ללא הסכמתם</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- 3. קניין רוחני -->
+            <div class="content-card">
+                <h2><span class="section-number">3</span> קניין רוחני</h2>
+                <p>
+                    כל הזכויות באתר, לרבות זכויות יוצרים, סימני מסחר, עיצוב, תמונות, טקסטים, גרפיקה ותכנים אחרים, שייכות לבעלי האתר ו/או לצדדים שלישיים שהעניקו רישיון שימוש.
+                </p>
+                <p>
+                    אין להעתיק, לשנות, להפיץ, לשדר, להציג, לבצע, לשכפל, לפרסם, או למכור כל חלק מתכני האתר ללא קבלת אישור מראש ובכתב מבעלי האתר.
+                </p>
+                <p>
+                    שם המותג "Glasseria", הלוגו וכל סימני המסחר המופיעים באתר הם קניינם הבלעדי של בעלי האתר.
+                </p>
+            </div>
+
+            <!-- 4. מוצרים ומחירים -->
+            <div class="content-card">
+                <h2><span class="section-number">4</span> מוצרים ומחירים</h2>
+                <p>
+                    האתר משמש כקטלוג להצגת מוצרים בלבד ואינו מהווה חנות מקוונת. המחירים המוצגים באתר הם לצורך התרשמות כללית בלבד ואינם מהווים הצעה מחייבת למכירה.
+                </p>
+                <p>
+                    המחירים, המפרטים, זמינות המוצרים והתמונות עשויים להשתנות ללא הודעה מוקדמת. תמונות המוצרים באתר מוצגות לצורך המחשה בלבד, וייתכנו הבדלים בין התמונה למוצר בפועל.
+                </p>
+                <p>
+                    לקבלת מחיר מדויק ובדיקת זמינות, יש ליצור קשר ישירות עם העסק.
+                </p>
+            </div>
+
+            <!-- 5. שליחת מוצרים ב-WhatsApp -->
+            <div class="content-card">
+                <h2><span class="section-number">5</span> שליחת מוצרים ב-WhatsApp</h2>
+                <p>
+                    האתר מאפשר שליחת רשימת מוצרים מועדפים באמצעות WhatsApp. שליחת הרשימה אינה מהווה הזמנה מחייבת ואינה מחייבת את העסק לספק את המוצרים במחירים המוצגים.
+                </p>
+                <p>
+                    ההתקשרות המסחרית בין הלקוח לעסק תתבצע ישירות ביניהם, ותנאי העסקה ייקבעו בהתאם להסכמה ישירה.
+                </p>
+            </div>
+
+            <!-- 6. הגבלת אחריות -->
+            <div class="content-card">
+                <h2><span class="section-number">6</span> הגבלת אחריות</h2>
+                <p>
+                    האתר ותכניו מוצעים כפי שהם ("AS IS") ללא כל אחריות, מפורשת או משתמעת.
+                </p>
+                <p>
+                    בעלי האתר אינם אחראים לכל נזק ישיר, עקיף, מקרי או תוצאתי הנובע משימוש באתר או מהסתמכות על המידע המוצג בו, לרבות אך לא רק: מחירים שגויים, מידע לא מעודכן, תקלות טכניות, או חוסר זמינות של מוצרים.
+                </p>
+                <p>
+                    בעלי האתר אינם אחראים לתכנים חיצוניים, לאתרים מקושרים, או לשירותי צד שלישי (כגון WhatsApp) המשולבים באתר.
+                </p>
+            </div>
+
+            <!-- 7. פרטיות ומידע אישי -->
+            <div class="content-card">
+                <h2><span class="section-number">7</span> פרטיות ומידע אישי</h2>
+                <p>
+                    האתר אינו אוסף מידע אישי מזהה מהמשתמשים. מוצרים מועדפים נשמרים באופן מקומי בדפדפן המשתמש בלבד (localStorage) ואינם נשלחים לשרתים כלשהם.
+                </p>
+                <p>
+                    בעת שליחת רשימת מוצרים באמצעות WhatsApp, המידע נשלח ישירות לעסק דרך אפליקציית WhatsApp, בהתאם לתנאי השימוש ומדיניות הפרטיות של WhatsApp.
+                </p>
+                <p>
+                    האתר עשוי להשתמש בעוגיות (Cookies) לצורך תפקוד תקין בלבד, ללא מעקב או פרסום.
+                </p>
+            </div>
+
+            <!-- 8. זמינות האתר -->
+            <div class="content-card">
+                <h2><span class="section-number">8</span> זמינות האתר</h2>
+                <p>
+                    בעלי האתר אינם מתחייבים לזמינות רציפה ותקינה של האתר, ורשאים לשנות, להשעות או להפסיק את פעילות האתר בכל עת, ללא הודעה מוקדמת.
+                </p>
+                <p>
+                    בעלי האתר רשאים לעדכן ולשנות את תכני האתר, לרבות מוצרים, מחירים ותמונות, בכל עת וללא הודעה מוקדמת.
+                </p>
+            </div>
+
+            <!-- 9. שינויים בתנאי השימוש -->
+            <div class="content-card">
+                <h2><span class="section-number">9</span> שינויים בתנאי השימוש</h2>
+                <p>
+                    בעלי האתר רשאים לעדכן את תנאי השימוש מעת לעת, לפי שיקול דעתם הבלעדי. שינויים ייכנסו לתוקף עם פרסומם באתר.
+                </p>
+                <p>
+                    המשך השימוש באתר לאחר עדכון תנאי השימוש מהווה הסכמה לתנאים המעודכנים.
+                </p>
+            </div>
+
+            <!-- 10. דין וסמכות שיפוט -->
+            <div class="content-card">
+                <h2><span class="section-number">10</span> דין וסמכות שיפוט</h2>
+                <p>
+                    על תנאי שימוש אלה יחולו דיני מדינת ישראל בלבד. סמכות השיפוט הבלעדית בכל עניין הנוגע לתנאי שימוש אלה תהא נתונה לבתי המשפט המוסמכים במחוז מרכז בישראל.
+                </p>
+            </div>
+
+            <!-- 11. יצירת קשר -->
+            <div class="content-card">
+                <h2><span class="section-number">11</span> יצירת קשר</h2>
+                <p>
+                    לכל שאלה, בקשה או בירור בנוגע לתנאי שימוש אלה, ניתן לפנות אלינו:
+                </p>
+                <p>
+                    📞 טלפון: <a href="tel:+972524048371">052-4048371</a>
+                </p>
+                <p>
+                    💬 WhatsApp: <a href="https://wa.me/972524048371">052-4048371</a>
+                </p>
+            </div>
+
+            <!-- תאריך עדכון -->
+            <div class="update-date">
+                תנאי שימוש אלה עודכנו לאחרונה בתאריך: פברואר 2026
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 Glasseria. כל הזכויות שמורות.</p>
+            <a href="accessibility.html">♿ הצהרת נגישות</a>
+        </div>
+    </footer>
+
+</body>
+</html>
