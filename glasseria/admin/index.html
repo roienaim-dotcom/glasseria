@@ -267,19 +267,53 @@
             gap: 8px;
         }
         
+        /* ===== Action Buttons - UPDATED ===== */
         .btn-icon {
-            width: 32px;
-            height: 32px;
-            border-radius: 6px;
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 0;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s;
         }
         
         .btn-icon svg {
             width: 16px;
             height: 16px;
+            stroke-width: 2;
+            fill: none;
+        }
+        
+        .btn-icon.btn-edit {
+            background: #f0f4ff;
+            border-color: #c5d4f7;
+        }
+        
+        .btn-icon.btn-edit:hover {
+            background: #dce6fc;
+            border-color: #a3bef5;
+        }
+        
+        .btn-icon.btn-edit svg {
+            stroke: #3b6cdb;
+        }
+        
+        .btn-icon.btn-delete {
+            background: #fff0f0;
+            border-color: #f5c5c5;
+        }
+        
+        .btn-icon.btn-delete:hover {
+            background: #fce0e0;
+            border-color: #f0a5a5;
+        }
+        
+        .btn-icon.btn-delete svg {
+            stroke: #d64545;
         }
         
         /* Modal */
@@ -913,7 +947,7 @@
         const subcategoriesCollection = db.collection('glasseria_subcategories');
         const productsCollection = db.collection('glasseria_products');
         
-        // ===== Image Compression - NEW =====
+        // ===== Image Compression =====
         async function compressImage(file, options = {}) {
             const {
                 maxWidth = 1200,
@@ -969,7 +1003,7 @@
         let currentUser = null;
         let productsSortable = null;
         
-        // Custom sizes and colors - NEW
+        // Custom sizes and colors
         let customSizes = [];
         let customColors = [];
         
@@ -1048,13 +1082,12 @@
                 document.getElementById('stat-subcategories').textContent = subcategories.length;
             });
             
-            // Load products - NO orderBy to support existing products without order field
+            // Load products
             productsCollection.onSnapshot((snapshot) => {
                 products = [];
                 snapshot.forEach((doc) => {
                     products.push({ id: doc.id, ...doc.data() });
                 });
-                // Sort in memory - products with order come first, then by createdAt
                 products.sort((a, b) => {
                     if (a.order !== undefined && b.order !== undefined) {
                         return a.order - b.order;
@@ -1083,8 +1116,12 @@
                     <td>${cat.name}</td>
                     <td>${cat.order || 0}</td>
                     <td class="actions">
-                        <button class="btn btn-icon btn-secondary" onclick="editCategory('${cat.id}')">✏️</button>
-                        <button class="btn btn-icon btn-danger" onclick="deleteCategory('${cat.id}')">🗑️</button>
+                        <button class="btn btn-icon btn-edit" onclick="editCategory('${cat.id}')" title="עריכה">
+                            <svg viewBox="0 0 24 24" stroke-width="2"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+                        </button>
+                        <button class="btn btn-icon btn-delete" onclick="deleteCategory('${cat.id}')" title="מחיקה">
+                            <svg viewBox="0 0 24 24" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                        </button>
                     </td>
                 </tr>
             `).join('');
@@ -1215,8 +1252,12 @@
                         <td>${cat ? cat.name : '-'}</td>
                         <td>${sub.order || 0}</td>
                         <td class="actions">
-                            <button class="btn btn-icon btn-secondary" onclick="editSubcategory('${sub.id}')">✏️</button>
-                            <button class="btn btn-icon btn-danger" onclick="deleteSubcategory('${sub.id}')">🗑️</button>
+                            <button class="btn btn-icon btn-edit" onclick="editSubcategory('${sub.id}')" title="עריכה">
+                                <svg viewBox="0 0 24 24" stroke-width="2"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+                            </button>
+                            <button class="btn btn-icon btn-delete" onclick="deleteSubcategory('${sub.id}')" title="מחיקה">
+                                <svg viewBox="0 0 24 24" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                            </button>
                         </td>
                     </tr>
                 `;
@@ -1227,7 +1268,6 @@
             document.getElementById('subcategory-modal').classList.add('active');
             document.getElementById('subcategory-modal-title').textContent = subcategory ? 'עריכת תת-קטגוריה' : 'הוסף תת-קטגוריה';
             
-            // Populate categories select
             const select = document.getElementById('subcategory-category');
             select.innerHTML = categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
             
@@ -1364,14 +1404,18 @@
                         <td>₪${product.price || 0}</td>
                         <td>${cat ? cat.name : '-'}</td>
                         <td class="actions">
-                            <button class="btn btn-icon btn-secondary" onclick="editProduct('${product.id}')">✏️</button>
-                            <button class="btn btn-icon btn-danger" onclick="deleteProduct('${product.id}')">🗑️</button>
+                            <button class="btn btn-icon btn-edit" onclick="editProduct('${product.id}')" title="עריכה">
+                                <svg viewBox="0 0 24 24" stroke-width="2"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+                            </button>
+                            <button class="btn btn-icon btn-delete" onclick="deleteProduct('${product.id}')" title="מחיקה">
+                                <svg viewBox="0 0 24 24" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                            </button>
                         </td>
                     </tr>
                 `;
             }).join('');
             
-            // Initialize drag and drop - NEW
+            // Initialize drag and drop
             if (productsSortable) {
                 productsSortable.destroy();
             }
@@ -1386,7 +1430,7 @@
             });
         }
         
-        // Update products order after drag - NEW
+        // Update products order after drag
         async function updateProductsOrder() {
             const tbody = document.getElementById('products-tbody');
             const rows = tbody.querySelectorAll('tr[data-id]');
@@ -1430,7 +1474,7 @@
                 subs.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
         }
         
-        // ===== Custom Sizes & Colors - NEW =====
+        // ===== Custom Sizes & Colors =====
         function addCustomSize() {
             const input = document.getElementById('custom-size-input');
             const value = input.value.trim();
@@ -1493,7 +1537,6 @@
             document.getElementById('product-modal').classList.add('active');
             document.getElementById('product-modal-title').textContent = product ? 'עריכת מוצר' : 'הוסף מוצר';
             
-            // Reset custom sizes/colors
             customSizes = [];
             customColors = [];
             
@@ -1509,22 +1552,18 @@
                 document.getElementById('product-type').value = product.type || '';
                 document.getElementById('product-description').value = product.description || '';
                 
-                // Set sizes - predefined checkboxes
                 const predefinedSizes = ['50', '60', '70', '80', '90', '100', '120', '150'];
                 document.querySelectorAll('input[name="sizes"]').forEach(cb => {
                     cb.checked = product.sizes && product.sizes.includes(cb.value);
                 });
-                // Custom sizes (not in predefined)
                 if (product.sizes) {
                     customSizes = product.sizes.filter(s => !predefinedSizes.includes(s));
                 }
                 
-                // Set colors - predefined checkboxes
                 const predefinedColors = ['לבן', 'שחור', 'אפור', 'אלון', 'אגוז', 'ונגה'];
                 document.querySelectorAll('input[name="colors"]').forEach(cb => {
                     cb.checked = product.colors && product.colors.includes(cb.value);
                 });
-                // Custom colors (not in predefined)
                 if (product.colors) {
                     customColors = product.colors.filter(c => !predefinedColors.includes(c));
                 }
@@ -1590,11 +1629,9 @@
                 return;
             }
             
-            // Collect sizes (checkboxes + custom)
             const checkedSizes = Array.from(document.querySelectorAll('input[name="sizes"]:checked')).map(cb => cb.value);
             const sizes = [...checkedSizes, ...customSizes];
             
-            // Collect colors (checkboxes + custom)
             const checkedColors = Array.from(document.querySelectorAll('input[name="colors"]:checked')).map(cb => cb.value);
             const colors = [...checkedColors, ...customColors];
             
