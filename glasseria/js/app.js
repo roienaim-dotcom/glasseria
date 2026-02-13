@@ -1121,7 +1121,7 @@ function setupWelcomePopup() {
     const dontShowAgain = document.getElementById('dont-show-again');
     
     // משתמש ב-sessionStorage - הפופאפ יופיע פעם אחת בכל סשן
-    if (!sessionStorage.getItem('glasseria_welcome_shown')) {
+    if (!localStorage.getItem('glasseria_welcome_dismissed') && !sessionStorage.getItem('glasseria_welcome_shown')) {
         setTimeout(() => {
             welcomePopup.classList.add('active');
             sessionStorage.setItem('glasseria_welcome_shown', 'true');
