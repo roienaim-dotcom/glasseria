@@ -1,5 +1,5 @@
 /* ===== Glasseria Accessibility Widget Styles ===== */
-/* ×ª×§×Ÿ ×™×©×¨××œ×™ 5568 / WCAG 2.0 AA */
+/* תקן ישראלי 5568 / WCAG 2.0 AA */
 
 /* ===== Screen Reader Only ===== */
 .sr-only {
@@ -54,7 +54,7 @@ textarea:focus-visible {
 .accessibility-widget-btn {
     position: fixed;
     bottom: 100px;
-    left: 20px;
+    right: 20px;
     width: 56px;
     height: 56px;
     border-radius: 50%;
@@ -84,7 +84,7 @@ textarea:focus-visible {
 .accessibility-panel {
     position: fixed;
     bottom: 170px;
-    left: 20px;
+    right: 20px;
     width: 320px;
     max-width: calc(100vw - 40px);
     background: #fff;
@@ -203,7 +203,7 @@ textarea:focus-visible {
 }
 
 .accessibility-toggle.active .accessibility-option-status::after {
-    content: 'âœ“';
+    content: '✓';
     position: absolute;
     top: 50%;
     left: 50%;
@@ -350,7 +350,7 @@ textarea:focus-visible {
 @media (max-width: 768px) {
     .accessibility-widget-btn {
         bottom: 90px;
-        left: 16px;
+        right: 16px;
         width: 50px;
         height: 50px;
     }
@@ -362,8 +362,8 @@ textarea:focus-visible {
     
     .accessibility-panel {
         bottom: 150px;
-        left: 16px;
         right: 16px;
+        left: 16px;
         width: auto;
         max-width: none;
     }
@@ -378,7 +378,7 @@ textarea:focus-visible {
 @supports (padding: max(0px)) {
     .accessibility-widget-btn {
         bottom: max(100px, calc(env(safe-area-inset-bottom) + 90px));
-        left: max(20px, env(safe-area-inset-left));
+        right: max(20px, env(safe-area-inset-right));
     }
     
     .accessibility-panel {
@@ -388,7 +388,7 @@ textarea:focus-visible {
     @media (max-width: 768px) {
         .accessibility-widget-btn {
             bottom: max(90px, calc(env(safe-area-inset-bottom) + 80px));
-            left: max(16px, env(safe-area-inset-left));
+            right: max(16px, env(safe-area-inset-right));
         }
         
         .accessibility-panel {
