@@ -53,10 +53,10 @@ textarea:focus-visible {
 /* ===== Accessibility Button ===== */
 .accessibility-widget-btn {
     position: fixed;
-    bottom: 100px;
+    bottom: 160px;
     right: 20px;
-    width: 56px;
-    height: 56px;
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
     background: #1a1a1a;
     color: #fff;
@@ -68,8 +68,6 @@ textarea:focus-visible {
     align-items: center;
     justify-content: center;
     transition: transform 0.3s, background 0.3s;
-    zoom: 1 !important;
-    -moz-transform: none !important;
 }
 
 .accessibility-widget-btn:hover {
@@ -85,7 +83,7 @@ textarea:focus-visible {
 /* ===== Accessibility Panel ===== */
 .accessibility-panel {
     position: fixed;
-    bottom: 170px;
+    bottom: 220px;
     right: 20px;
     width: 320px;
     max-width: calc(100vw - 40px);
@@ -98,17 +96,14 @@ textarea:focus-visible {
     transform: translateY(20px);
     transition: all 0.3s ease;
     direction: rtl;
-    max-height: calc(100vh - 200px);
+    max-height: calc(100vh - 250px);
     overflow-y: auto;
-    zoom: 1 !important;
-    -moz-transform: translateY(20px) !important;
 }
 
 .accessibility-panel.active {
     opacity: 1;
     visibility: visible;
     transform: translateY(0);
-    -moz-transform: translateY(0) !important;
 }
 
 .accessibility-panel-header {
@@ -354,23 +349,24 @@ textarea:focus-visible {
 /* ===== Mobile Responsive ===== */
 @media (max-width: 768px) {
     .accessibility-widget-btn {
-        bottom: 90px;
+        bottom: 150px;
         right: 16px;
-        width: 50px;
-        height: 50px;
+        width: 46px;
+        height: 46px;
     }
     
     .accessibility-widget-btn svg {
-        width: 24px;
-        height: 24px;
+        width: 22px;
+        height: 22px;
     }
     
     .accessibility-panel {
-        bottom: 150px;
+        bottom: 210px;
         right: 16px;
         left: 16px;
         width: auto;
         max-width: none;
+        max-height: calc(100vh - 240px);
     }
     
     .accessibility-option {
@@ -382,22 +378,23 @@ textarea:focus-visible {
 /* ===== iPhone Safe Areas ===== */
 @supports (padding: max(0px)) {
     .accessibility-widget-btn {
-        bottom: max(100px, calc(env(safe-area-inset-bottom) + 90px));
+        bottom: max(160px, calc(env(safe-area-inset-bottom) + 150px));
         right: max(20px, env(safe-area-inset-right));
     }
     
     .accessibility-panel {
-        bottom: max(170px, calc(env(safe-area-inset-bottom) + 160px));
+        bottom: max(220px, calc(env(safe-area-inset-bottom) + 210px));
+        right: max(20px, env(safe-area-inset-right));
     }
     
     @media (max-width: 768px) {
         .accessibility-widget-btn {
-            bottom: max(90px, calc(env(safe-area-inset-bottom) + 80px));
+            bottom: max(150px, calc(env(safe-area-inset-bottom) + 140px));
             right: max(16px, env(safe-area-inset-right));
         }
         
         .accessibility-panel {
-            bottom: max(150px, calc(env(safe-area-inset-bottom) + 140px));
+            bottom: max(210px, calc(env(safe-area-inset-bottom) + 200px));
         }
     }
 }
