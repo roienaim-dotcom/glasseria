@@ -1,6 +1,61 @@
 // ===== Glasseria Catalog App with Dynamic Categories =====
 // Updated with Size & Color Selection before adding to favorites
 
+// הוספת סגנונות לאנימציית המועדפים
+const favoritesAnimationStyles = document.createElement('style');
+favoritesAnimationStyles.textContent = `
+    .favorites-success-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    .favorites-success-overlay.active {
+        opacity: 1;
+    }
+    .favorites-success-content {
+        background: white;
+        padding: 40px 50px;
+        border-radius: 20px;
+        text-align: center;
+        transform: scale(0.5);
+        transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .favorites-success-overlay.active .favorites-success-content {
+        transform: scale(1);
+    }
+    .favorites-success-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 20px;
+        animation: heartPulse 0.6s ease-in-out;
+    }
+    .favorites-success-icon svg {
+        width: 100%;
+        height: 100%;
+        color: #e74c3c;
+    }
+    .favorites-success-text {
+        font-size: 22px;
+        font-weight: 600;
+        color: #333;
+    }
+    @keyframes heartPulse {
+        0% { transform: scale(0); }
+        50% { transform: scale(1.3); }
+        100% { transform: scale(1); }
+    }
+`;
+document.head.appendChild(favoritesAnimationStyles);
+
 // WhatsApp Number
 const WHATSAPP_NUMBER = '972524048371';
 
@@ -281,10 +336,45 @@ function confirmAddToFavorites() {
     
     closeSelectionModal();
     
-    // סגירת מודל המוצר אם פתוח
+    // הצגת אנימציית הצלחה וסגירת מודל המוצר
     if (productModal.classList.contains('active')) {
-        closeProductModal();
+        showAddedToFavoritesAnimation(() => {
+            closeProductModal();
+        });
     }
+}
+
+// ===== Added to Favorites Animation =====
+function showAddedToFavoritesAnimation(callback) {
+    // יצירת אלמנט האנימציה
+    const overlay = document.createElement('div');
+    overlay.className = 'favorites-success-overlay';
+    overlay.innerHTML = `
+        <div class="favorites-success-content">
+            <div class="favorites-success-icon">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                </svg>
+            </div>
+            <div class="favorites-success-text">נוסף למועדפים!</div>
+        </div>
+    `;
+    
+    document.body.appendChild(overlay);
+    
+    // הפעלת האנימציה
+    requestAnimationFrame(() => {
+        overlay.classList.add('active');
+    });
+    
+    // סגירה אחרי 1.2 שניות
+    setTimeout(() => {
+        overlay.classList.remove('active');
+        setTimeout(() => {
+            overlay.remove();
+            if (callback) callback();
+        }, 300);
+    }, 1200);
 }
 
 // ===== Helper: Check if product is in favorites =====
@@ -955,9 +1045,16 @@ function openProductModal(product) {
         toggleFavorite(product.id, modalFavBtn, product);
         const isNowFavorite = isProductInFavorites(product.id);
         
-        // אם המוצר נוסף (ולא נפתח selection modal) - סגור את המודל
+        // אם המוצר נוסף (ולא נפתח selection modal) - הצג אנימציה וסגור
         if (!wasInFavorites && isNowFavorite) {
-            closeProductModal();
+            showAddedToFavoritesAnimation(() => {
+                closeProductModal();
+            });
+            return;
+        }
+        
+        // אם נפתח selection modal, לא לעשות כלום כאן
+        if (!wasInFavorites && !isNowFavorite) {
             return;
         }
         
