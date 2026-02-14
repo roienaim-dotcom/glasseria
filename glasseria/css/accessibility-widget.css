@@ -53,10 +53,10 @@ textarea:focus-visible {
 /* ===== Accessibility Button ===== */
 .accessibility-widget-btn {
     position: fixed;
-    bottom: 160px;
-    right: 20px;
-    width: 50px;
-    height: 50px;
+    bottom: 96px;  /* 24px (לב) + 56px (גובה לב) + 16px (רווח) */
+    right: 24px;   /* אותו מיקום כמו כפתור הלב */
+    width: 56px;   /* אותו גודל כמו כפתור הלב */
+    height: 56px;
     border-radius: 50%;
     background: #1a1a1a;
     color: #fff;
@@ -83,8 +83,8 @@ textarea:focus-visible {
 /* ===== Accessibility Panel ===== */
 .accessibility-panel {
     position: fixed;
-    bottom: 220px;
-    right: 20px;
+    bottom: 168px;  /* 96px (כפתור נגישות) + 56px (גובה) + 16px (רווח) */
+    right: 24px;
     width: 320px;
     max-width: calc(100vw - 40px);
     background: #fff;
@@ -96,7 +96,7 @@ textarea:focus-visible {
     transform: translateY(20px);
     transition: all 0.3s ease;
     direction: rtl;
-    max-height: calc(100vh - 250px);
+    max-height: calc(100vh - 200px);
     overflow-y: auto;
 }
 
@@ -349,24 +349,24 @@ textarea:focus-visible {
 /* ===== Mobile Responsive ===== */
 @media (max-width: 768px) {
     .accessibility-widget-btn {
-        bottom: 150px;
-        right: 16px;
-        width: 46px;
-        height: 46px;
+        bottom: 96px;
+        right: 20px;
+        width: 50px;
+        height: 50px;
     }
     
     .accessibility-widget-btn svg {
-        width: 22px;
-        height: 22px;
+        width: 24px;
+        height: 24px;
     }
     
     .accessibility-panel {
-        bottom: 210px;
+        bottom: 162px;  /* 96 + 50 + 16 */
         right: 16px;
         left: 16px;
         width: auto;
         max-width: none;
-        max-height: calc(100vh - 240px);
+        max-height: calc(100vh - 200px);
     }
     
     .accessibility-option {
@@ -378,23 +378,25 @@ textarea:focus-visible {
 /* ===== iPhone Safe Areas ===== */
 @supports (padding: max(0px)) {
     .accessibility-widget-btn {
-        bottom: max(160px, calc(env(safe-area-inset-bottom) + 150px));
-        right: max(20px, env(safe-area-inset-right));
+        bottom: calc(max(20px, calc(env(safe-area-inset-bottom) + 10px)) + 56px + 16px);
+        right: max(24px, env(safe-area-inset-right));
     }
     
     .accessibility-panel {
-        bottom: max(220px, calc(env(safe-area-inset-bottom) + 210px));
-        right: max(20px, env(safe-area-inset-right));
+        bottom: calc(max(20px, calc(env(safe-area-inset-bottom) + 10px)) + 56px + 16px + 56px + 16px);
+        right: max(24px, env(safe-area-inset-right));
     }
     
     @media (max-width: 768px) {
         .accessibility-widget-btn {
-            bottom: max(150px, calc(env(safe-area-inset-bottom) + 140px));
-            right: max(16px, env(safe-area-inset-right));
+            bottom: calc(max(20px, calc(env(safe-area-inset-bottom) + 10px)) + 50px + 12px);
+            right: max(20px, env(safe-area-inset-right));
         }
         
         .accessibility-panel {
-            bottom: max(210px, calc(env(safe-area-inset-bottom) + 200px));
+            bottom: calc(max(20px, calc(env(safe-area-inset-bottom) + 10px)) + 50px + 12px + 50px + 12px);
+            right: max(16px, env(safe-area-inset-right));
+            left: max(16px, env(safe-area-inset-left));
         }
     }
 }
