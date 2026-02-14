@@ -211,18 +211,7 @@
     function applyFontSize() {
         const scale = 1 + (settings.fontSize * 0.1); // כל שלב = 10%
         document.documentElement.style.setProperty('--accessibility-font-scale', scale);
-        
-        if (settings.fontSize !== 0) {
-            // zoom עובד ברוב הדפדפנים
-            document.body.style.zoom = scale;
-            // fallback ל-Firefox שלא תומך ב-zoom
-            document.body.style.MozTransform = `scale(${scale})`;
-            document.body.style.MozTransformOrigin = 'top right';
-        } else {
-            document.body.style.zoom = '';
-            document.body.style.MozTransform = '';
-            document.body.style.MozTransformOrigin = '';
-        }
+        document.documentElement.style.fontSize = `${scale * 100}%`;
     }
     
     function applyHighContrast() {
