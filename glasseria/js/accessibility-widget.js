@@ -33,8 +33,8 @@
         btn.setAttribute('aria-label', 'פתח תפריט נגישות');
         btn.setAttribute('title', 'נגישות');
         btn.innerHTML = `
-            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9H15V22H13V16H11V22H9V9H3V7H21V9Z"/>
+            <svg viewBox="0 0 512 512" fill="currentColor" aria-hidden="true">
+                <path d="M192 96a48 48 0 1 0 0-96 48 48 0 1 0 0 96zM120.5 247.2c12.4-4.7 18.7-18.5 14-30.9s-18.5-18.7-30.9-14C43.1 225.1 0 283.5 0 352c0 88.4 71.6 160 160 160c61.2 0 114.3-34.3 141.2-84.7c6.2-11.7 1.8-26.2-9.9-32.5s-26.2-1.8-32.5 9.9C240 434.6 204.4 464 160 464c-61.9 0-112-50.1-112-112c0-47.9 30.1-88.8 72.5-104.8zM259.8 176l-1.9-9.7c-4.5-22.3-24-38.3-46.8-38.3c-30.1 0-52.7 27.5-46.8 57l23.1 115.5c6 29.9 32.2 51.4 62.8 51.4h5.1c.4 0 .8 0 1.3 0h94.1c6.7 0 12.6 4.1 15 10.4L402 476.3c8.2 21.2 32.2 31.8 53.6 23.6s31.8-32.2 23.6-53.6l-64.2-165.6c-9.5-24.5-33.2-40.7-59.6-40.7H304v-64h50.7c17.6 0 35.5-2.7 52.5-8.3l42.4-14.1c13.8-4.6 21.3-19.5 16.7-33.3s-19.5-21.3-33.3-16.7l-42.4 14.1c-10.4 3.5-21.3 5.3-32.4 5.3H259.8z"/>
             </svg>
         `;
         
@@ -168,7 +168,7 @@
     }
     
     function changeFontSize(delta) {
-        settings.fontSize = Math.max(-2, Math.min(4, settings.fontSize + delta));
+        settings.fontSize = Math.max(-2, Math.min(10, settings.fontSize + delta));
         saveSettings();
         applyFontSize();
         updateUI();
