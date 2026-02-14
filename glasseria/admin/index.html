@@ -648,8 +648,8 @@
     <!-- Login Screen -->
     <div class="login-container" id="login-screen">
         <div class="login-box">
-            <h1>ðŸ” פאנל ניהול</h1>
-            <p>Glasseria - מערכת ניהול ק×˜לוב</p>
+            <h1>🔐 פאנל ניהול</h1>
+            <p>Glasseria - מערכת ניהול קטלוג</p>
             <div class="error-message" id="login-error"></div>
             <form id="login-form">
                 <div class="form-group">
@@ -658,9 +658,9 @@
                 </div>
                 <div class="form-group">
                     <label>סיסמה</label>
-                    <input type="password" id="login-password" required placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢">
+                    <input type="password" id="login-password" required placeholder="••••••••">
                 </div>
-                <button type="submit" class="btn btn-primary">התדבר</button>
+                <button type="submit" class="btn btn-primary">התחבר</button>
             </form>
         </div>
     </div>
@@ -668,15 +668,15 @@
     <!-- Admin Panel -->
     <div class="admin-container" id="admin-panel">
         <header class="admin-header">
-            <h1>ðŸ“¦ Glasseria - ניהול</h1>
+            <h1>📦 Glasseria - ניהול</h1>
             <button class="btn btn-secondary" id="logout-btn">התנתק</button>
         </header>
         
         <nav class="admin-nav">
-            <button class="active" data-section="dashboard">ðŸ“Š דשבורד</button>
-            <button data-section="categories">ðŸ“ ק×˜בוריות</button>
-            <button data-section="subcategories">ðŸ“‚ תת-ק×˜בוריות</button>
-            <button data-section="products">ðŸ“¦ מוצרים</button>
+            <button class="active" data-section="dashboard">📊 דשבורד</button>
+            <button data-section="categories">📁 קטגוריות</button>
+            <button data-section="subcategories">📂 תת-קטגוריות</button>
+            <button data-section="products">📦 מוצרים</button>
         </nav>
         
         <main class="admin-content">
@@ -685,11 +685,11 @@
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-number" id="stat-categories">0</div>
-                        <div class="stat-label">ק×˜בוריות</div>
+                        <div class="stat-label">קטגוריות</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-number" id="stat-subcategories">0</div>
-                        <div class="stat-label">תת-ק×˜בוריות</div>
+                        <div class="stat-label">תת-קטגוריות</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-number" id="stat-products">0</div>
@@ -700,10 +700,10 @@
                 <div class="card">
                     <h2> ברוך הבא לפאנל הניהול</h2>
                     <p style="margin-top: 10px; color: var(--secondary);">
-                        כאן תוכל לנהל את הק×˜לוב שלך - להוסיף ק×˜בוריות, תת-ק×˜בוריות ומוצרים.
+                        כאן תוכל לנהל את הקטלוג שלך - להוסיף קטגוריות, תת-קטגוריות ומוצרים.
                     </p>
                     <p style="margin-top: 10px; color: var(--success);">
-                         <strong>דחיסת תמונות או×˜ומ×˜ית:</strong> כל תמונה שתעלה תיכווץ או×˜ומ×˜ית לגודל אופ×˜ימלי!
+                         <strong>דחיסת תמונות אוטומטית:</strong> כל תמונה שתעלה תכווץ אוטומטית לגודל אופטימלי!
                     </p>
                 </div>
             </section>
@@ -712,12 +712,12 @@
             <section class="section" id="section-categories">
                 <div class="card">
                     <div class="card-header">
-                        <h2>ðŸ“ ק×˜בוריות</h2>
-                        <button class="btn btn-primary" onclick="openCategoryModal()">+ הוסף ק×˜בוריה</button>
+                        <h2>📁 קטגוריות</h2>
+                        <button class="btn btn-primary" onclick="openCategoryModal()">+ הוסף קטגוריה</button>
                     </div>
                     <div id="categories-loading" class="loading">
                         <div class="spinner"></div>
-                        ×˜וען...
+                        טוען...
                     </div>
                     <table id="categories-table" style="display: none;">
                         <thead>
@@ -737,19 +737,19 @@
             <section class="section" id="section-subcategories">
                 <div class="card">
                     <div class="card-header">
-                        <h2>ðŸ“‚ תת-ק×˜בוריות</h2>
-                        <button class="btn btn-primary" onclick="openSubcategoryModal()">+ הוסף תת-ק×˜בוריה</button>
+                        <h2>📂 תת-קטגוריות</h2>
+                        <button class="btn btn-primary" onclick="openSubcategoryModal()">+ הוסף תת-קטגוריה</button>
                     </div>
                     <div id="subcategories-loading" class="loading">
                         <div class="spinner"></div>
-                        ×˜וען...
+                        טוען...
                     </div>
                     <table id="subcategories-table" style="display: none;">
                         <thead>
                             <tr>
                                 <th>תמונה</th>
                                 <th>שם</th>
-                                <th>ק×˜בוריה</th>
+                                <th>קטגוריה</th>
                                 <th>סדר</th>
                                 <th>פעולות</th>
                             </tr>
@@ -763,20 +763,20 @@
             <section class="section" id="section-products">
                 <div class="card">
                     <div class="card-header">
-                        <h2>ðŸ“¦ מוצרים</h2>
+                        <h2>📦 מוצרים</h2>
                         <div style="display: flex; gap: 10px; align-items: center;">
                             <select id="filter-category" onchange="filterProducts()" style="padding: 8px; border-radius: 6px; border: 1px solid #ddd;">
-                                <option value="">כל הק×˜בוריות</option>
+                                <option value="">כל הקטגוריות</option>
                             </select>
                             <button class="btn btn-primary" onclick="openProductModal()">+ הוסף מוצר</button>
                         </div>
                     </div>
                     <p style="background: #e3f2fd; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 13px; color: #1565c0;">
-                        ðŸ’¡ ברור את השורות (â‹®â‹®) כדי לשנות את סדר המוצרים באתר
+                        💡 גרור את השורות (⋮⋮) כדי לשנות את סדר המוצרים באתר
                     </p>
                     <div id="products-loading" class="loading">
                         <div class="spinner"></div>
-                        ×˜וען...
+                        טוען...
                     </div>
                     <table id="products-table" style="display: none;">
                         <thead>
@@ -784,9 +784,9 @@
                                 <th style="width: 30px;"></th>
                                 <th>תמונה</th>
                                 <th>שם</th>
-                                <th>מק"×˜</th>
-                                <th>מדיר</th>
-                                <th>ק×˜בוריה</th>
+                                <th>מק"ט</th>
+                                <th>מחיר</th>
+                                <th>קטגוריה</th>
                                 <th>פעולות</th>
                             </tr>
                         </thead>
@@ -801,25 +801,25 @@
     <div class="modal-overlay" id="category-modal">
         <div class="modal">
             <div class="modal-header">
-                <h3 id="category-modal-title">הוסף ק×˜בוריה</h3>
+                <h3 id="category-modal-title">הוסף קטגוריה</h3>
                 <button class="modal-close" onclick="closeCategoryModal()">&times;</button>
             </div>
             <div class="modal-body">
                 <form id="category-form">
                     <input type="hidden" id="category-id">
                     <div class="form-group">
-                        <label>שם הק×˜בוריה *</label>
+                        <label>שם הקטגוריה *</label>
                         <input type="text" id="category-name" required>
                     </div>
                     <div class="form-group">
-                        <label>סדר תצובה</label>
+                        <label>סדר תצוגה</label>
                         <input type="number" id="category-order" value="0">
                     </div>
                     <div class="form-group">
-                        <label>תמונות (ניתן לבחור מספר תמונות)</label>
+                        <label>תמונה</label>
                         <div class="image-upload" onclick="document.getElementById('category-image').click()">
                             <input type="file" id="category-image" accept="image/*" onchange="previewCategoryImage(this)">
-                            <p>ðŸ“· לדץ לבדירת תמונה</p>
+                            <p>📷 לחץ לבחירת תמונה</p>
                             <div class="image-preview" id="category-image-preview"></div>
                         </div>
                         <div class="compression-status" id="category-compression-status" style="display: none;"></div>
@@ -827,7 +827,7 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeCategoryModal()">בי×˜ול</button>
+                <button class="btn btn-secondary" onclick="closeCategoryModal()">ביטול</button>
                 <button class="btn btn-primary" onclick="saveCategory()">שמור</button>
             </div>
         </div>
@@ -837,29 +837,29 @@
     <div class="modal-overlay" id="subcategory-modal">
         <div class="modal">
             <div class="modal-header">
-                <h3 id="subcategory-modal-title">הוסף תת-ק×˜בוריה</h3>
+                <h3 id="subcategory-modal-title">הוסף תת-קטגוריה</h3>
                 <button class="modal-close" onclick="closeSubcategoryModal()">&times;</button>
             </div>
             <div class="modal-body">
                 <form id="subcategory-form">
                     <input type="hidden" id="subcategory-id">
                     <div class="form-group">
-                        <label>ק×˜בוריה ראשית *</label>
+                        <label>קטגוריה ראשית *</label>
                         <select id="subcategory-category" required></select>
                     </div>
                     <div class="form-group">
-                        <label>שם תת-הק×˜בוריה *</label>
+                        <label>שם תת-הקטגוריה *</label>
                         <input type="text" id="subcategory-name" required>
                     </div>
                     <div class="form-group">
-                        <label>סדר תצובה</label>
+                        <label>סדר תצוגה</label>
                         <input type="number" id="subcategory-order" value="0">
                     </div>
                     <div class="form-group">
                         <label>תמונה</label>
                         <div class="image-upload" onclick="document.getElementById('subcategory-image').click()">
                             <input type="file" id="subcategory-image" accept="image/*" onchange="previewSubcategoryImage(this)">
-                            <p>ðŸ“· לדץ לבדירת תמונה</p>
+                            <p>📷 לחץ לבחירת תמונה</p>
                             <div class="image-preview" id="subcategory-image-preview"></div>
                         </div>
                         <div class="compression-status" id="subcategory-compression-status" style="display: none;"></div>
@@ -867,7 +867,7 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeSubcategoryModal()">בי×˜ול</button>
+                <button class="btn btn-secondary" onclick="closeSubcategoryModal()">ביטול</button>
                 <button class="btn btn-primary" onclick="saveSubcategory()">שמור</button>
             </div>
         </div>
@@ -889,25 +889,25 @@
                         <input type="text" id="product-name" required>
                     </div>
                     <div class="form-group">
-                        <label>מק"×˜</label>
+                        <label>מק"ט</label>
                         <input type="text" id="product-sku">
                     </div>
                     <div class="form-group">
-                        <label>מדיר</label>
+                        <label>מחיר</label>
                         <input type="number" id="product-price" step="0.01">
                     </div>
                     <div class="form-group">
-                        <label>ק×˜בוריה *</label>
+                        <label>קטגוריה *</label>
                         <select id="product-category" required onchange="updateProductSubcategories()"></select>
                     </div>
                     <div class="form-group">
-                        <label>תת-ק×˜בוריה</label>
+                        <label>תת-קטגוריה</label>
                         <select id="product-subcategory">
-                            <option value="">ללא תת-ק×˜בוריה</option>
+                            <option value="">ללא תת-קטגוריה</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>סוב/דבם</label>
+                        <label>סוג/דגם</label>
                         <input type="text" id="product-type">
                     </div>
                     <div class="form-group">
@@ -949,11 +949,10 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label>תמונה</label>
+                        <label>תמונות (ניתן לבחור מספר תמונות)</label>
                         <div class="image-upload" onclick="document.getElementById('product-images').click()">
                             <input type="file" id="product-images" accept="image/*" multiple onchange="previewProductImages(this)">
-                            <p>ðŸ“· לדץ לבדירת תמונה</p>
-                            
+                            <p>📷 לחץ לבחירת תמונות</p>
                         </div>
                         <p class="images-upload-hint">התמונה הראשונה תוצג כתמונה הראשית של המוצר</p>
                         <div class="images-preview-grid" id="product-images-preview"></div>
@@ -962,7 +961,7 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeProductModal()">בי×˜ול</button>
+                <button class="btn btn-secondary" onclick="closeProductModal()">ביטול</button>
                 <button class="btn btn-primary" id="save-product-btn" onclick="saveProduct()">שמור</button>
             </div>
         </div>
@@ -972,15 +971,15 @@
     <div class="modal-overlay" id="delete-modal">
         <div class="modal" style="max-width: 400px;">
             <div class="modal-header">
-                <h3>אישור מדיקה</h3>
+                <h3>אישור מחיקה</h3>
                 <button class="modal-close" onclick="closeDeleteModal()">&times;</button>
             </div>
             <div class="modal-body">
-                <p id="delete-message">האם אתה ב×˜וד שברצונך למדוק פרי×˜ זה?</p>
+                <p id="delete-message">האם אתה בטוח שברצונך למחוק פריט זה?</p>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeDeleteModal()">בי×˜ול</button>
-                <button class="btn btn-danger" id="confirm-delete-btn">מדק</button>
+                <button class="btn btn-secondary" onclick="closeDeleteModal()">ביטול</button>
+                <button class="btn btn-danger" id="confirm-delete-btn">מחק</button>
             </div>
         </div>
     </div>
@@ -1044,20 +1043,20 @@
                         canvas.toBlob(
                             (blob) => {
                                 if (blob) {
-                                    console.log(`âœ… דדיסה: ${(file.size/1024).toFixed(1)}KB â†’ ${(blob.size/1024).toFixed(1)}KB`);
+                                    console.log(`✅ דחיסה: ${(file.size/1024).toFixed(1)}KB → ${(blob.size/1024).toFixed(1)}KB`);
                                     resolve(blob);
                                 } else {
-                                    reject(new Error('שביאה בדחיסת התמונה'));
+                                    reject(new Error('שגיאה בדחיסת התמונה'));
                                 }
                             },
                             outputType,
                             quality
                         );
                     };
-                    img.onerror = () => reject(new Error('שביאה ב×˜עינת התמונה'));
+                    img.onerror = () => reject(new Error('שגיאה בטעינת התמונה'));
                     img.src = e.target.result;
                 };
-                reader.onerror = () => reject(new Error('שביאה בקריאת הקובץ'));
+                reader.onerror = () => reject(new Error('שגיאה בקריאת הקובץ'));
                 reader.readAsDataURL(file);
             });
         }
@@ -1099,7 +1098,7 @@
                 await auth.signInWithEmailAndPassword(email, password);
                 errorEl.classList.remove('show');
             } catch (error) {
-                errorEl.textContent = 'אימייל או סיסמה שבויים';
+                errorEl.textContent = 'אימייל או סיסמה שגויים';
                 errorEl.classList.add('show');
             }
         });
@@ -1189,7 +1188,7 @@
                         <button class="btn btn-icon btn-edit" onclick="editCategory('${cat.id}')" title="עריכה">
                             <svg viewBox="0 0 24 24" stroke-width="2"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
                         </button>
-                        <button class="btn btn-icon btn-delete" onclick="deleteCategory('${cat.id}')" title="מדיקה">
+                        <button class="btn btn-icon btn-delete" onclick="deleteCategory('${cat.id}')" title="מחיקה">
                             <svg viewBox="0 0 24 24" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                         </button>
                     </td>
@@ -1199,7 +1198,7 @@
         
         function openCategoryModal(category = null) {
             document.getElementById('category-modal').classList.add('active');
-            document.getElementById('category-modal-title').textContent = category ? 'עריכת ק×˜בוריה' : 'הוסף ק×˜בוריה';
+            document.getElementById('category-modal-title').textContent = category ? 'עריכת קטגוריה' : 'הוסף קטגוריה';
             
             if (category) {
                 document.getElementById('category-id').value = category.id;
@@ -1238,7 +1237,7 @@
                 reader.readAsDataURL(file);
                 
                 const originalSize = (file.size / 1024).toFixed(1);
-                statusEl.textContent = `ðŸ“· בודל מקורי: ${originalSize}KB - יידדס בשמירה`;
+                statusEl.textContent = `📷 גודל מקורי: ${originalSize}KB - יידחס בשמירה`;
                 statusEl.className = 'compression-status';
                 statusEl.style.display = 'block';
             }
@@ -1251,7 +1250,7 @@
             const imageFile = document.getElementById('category-image').files[0];
             
             if (!name) {
-                alert('נא למלא שם ק×˜בוריה');
+                alert('נא למלא שם קטגוריה');
                 return;
             }
             
@@ -1261,7 +1260,7 @@
                 let imageUrl = null;
                 
                 if (imageFile) {
-                    statusEl.textContent = 'â³ דודס ומעלה תמונה...';
+                    statusEl.textContent = '⏳ דוחס ומעלה תמונה...';
                     statusEl.className = 'compression-status compressing';
                     statusEl.style.display = 'block';
                     
@@ -1272,7 +1271,7 @@
                     imageUrl = await ref.getDownloadURL();
                     
                     const newSize = (compressedBlob.size / 1024).toFixed(1);
-                    statusEl.textContent = `âœ… תמונה נדדסה ל-${newSize}KB`;
+                    statusEl.textContent = `✅ תמונה נדחסה ל-${newSize}KB`;
                     statusEl.className = 'compression-status';
                 }
                 
@@ -1294,12 +1293,12 @@
                 closeCategoryModal();
             } catch (error) {
                 console.error('Error saving category:', error);
-                alert('שביאה בשמירה: ' + error.message);
+                alert('שגיאה בשמירה: ' + error.message);
             }
         }
         
         function deleteCategory(id) {
-            openDeleteModal('האם אתה ב×˜וד שברצונך למדוק ק×˜בוריה זו?', async () => {
+            openDeleteModal('האם אתה בטוח שברצונך למחוק קטגוריה זו?', async () => {
                 await categoriesCollection.doc(id).delete();
             });
         }
@@ -1325,7 +1324,7 @@
                             <button class="btn btn-icon btn-edit" onclick="editSubcategory('${sub.id}')" title="עריכה">
                                 <svg viewBox="0 0 24 24" stroke-width="2"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
                             </button>
-                            <button class="btn btn-icon btn-delete" onclick="deleteSubcategory('${sub.id}')" title="מדיקה">
+                            <button class="btn btn-icon btn-delete" onclick="deleteSubcategory('${sub.id}')" title="מחיקה">
                                 <svg viewBox="0 0 24 24" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                             </button>
                         </td>
@@ -1336,7 +1335,7 @@
         
         function openSubcategoryModal(subcategory = null) {
             document.getElementById('subcategory-modal').classList.add('active');
-            document.getElementById('subcategory-modal-title').textContent = subcategory ? 'עריכת תת-ק×˜בוריה' : 'הוסף תת-ק×˜בוריה';
+            document.getElementById('subcategory-modal-title').textContent = subcategory ? 'עריכת תת-קטגוריה' : 'הוסף תת-קטגוריה';
             
             const select = document.getElementById('subcategory-category');
             select.innerHTML = categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
@@ -1379,7 +1378,7 @@
                 reader.readAsDataURL(file);
                 
                 const originalSize = (file.size / 1024).toFixed(1);
-                statusEl.textContent = `ðŸ“· בודל מקורי: ${originalSize}KB - יידדס בשמירה`;
+                statusEl.textContent = `📷 גודל מקורי: ${originalSize}KB - יידחס בשמירה`;
                 statusEl.className = 'compression-status';
                 statusEl.style.display = 'block';
             }
@@ -1403,7 +1402,7 @@
                 let imageUrl = null;
                 
                 if (imageFile) {
-                    statusEl.textContent = 'â³ דודס ומעלה תמונה...';
+                    statusEl.textContent = '⏳ דוחס ומעלה תמונה...';
                     statusEl.className = 'compression-status compressing';
                     statusEl.style.display = 'block';
                     
@@ -1414,7 +1413,7 @@
                     imageUrl = await ref.getDownloadURL();
                     
                     const newSize = (compressedBlob.size / 1024).toFixed(1);
-                    statusEl.textContent = `âœ… תמונה נדדסה ל-${newSize}KB`;
+                    statusEl.textContent = `✅ תמונה נדחסה ל-${newSize}KB`;
                     statusEl.className = 'compression-status';
                 }
                 
@@ -1437,12 +1436,12 @@
                 closeSubcategoryModal();
             } catch (error) {
                 console.error('Error saving subcategory:', error);
-                alert('שביאה בשמירה: ' + error.message);
+                alert('שגיאה בשמירה: ' + error.message);
             }
         }
         
         function deleteSubcategory(id) {
-            openDeleteModal('האם אתה ב×˜וד שברצונך למדוק תת-ק×˜בוריה זו?', async () => {
+            openDeleteModal('האם אתה בטוח שברצונך למחוק תת-קטגוריה זו?', async () => {
                 await subcategoriesCollection.doc(id).delete();
             });
         }
@@ -1467,17 +1466,17 @@
                 const cat = categories.find(c => c.id === product.categoryId);
                 return `
                     <tr data-id="${product.id}">
-                        <td><span class="drag-handle">â‹®â‹®</span></td>
+                        <td><span class="drag-handle">⋮⋮</span></td>
                         <td><img src="${product.image || '../images/placeholder.svg'}" class="table-image" onerror="this.src='../images/placeholder.svg'"></td>
                         <td>${product.name}</td>
                         <td>${product.sku || '-'}</td>
-                        <td>â‚ª${product.price || 0}</td>
+                        <td>₪${product.price || 0}</td>
                         <td>${cat ? cat.name : '-'}</td>
                         <td class="actions">
                             <button class="btn btn-icon btn-edit" onclick="editProduct('${product.id}')" title="עריכה">
                                 <svg viewBox="0 0 24 24" stroke-width="2"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
                             </button>
-                            <button class="btn btn-icon btn-delete" onclick="deleteProduct('${product.id}')" title="מדיקה">
+                            <button class="btn btn-icon btn-delete" onclick="deleteProduct('${product.id}')" title="מחיקה">
                                 <svg viewBox="0 0 24 24" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                             </button>
                         </td>
@@ -1514,10 +1513,10 @@
             
             try {
                 await batch.commit();
-                console.log('âœ… סדר המוצרים עודכן');
+                console.log('✅ סדר המוצרים עודכן');
             } catch (error) {
-                console.error('שביאה בעדכון הסדר:', error);
-                alert('שביאה בעדכון הסדר');
+                console.error('שגיאה בעדכון הסדר:', error);
+                alert('שגיאה בעדכון הסדר');
             }
         }
         
@@ -1531,8 +1530,8 @@
             
             const options = categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
             
-            filterSelect.innerHTML = '<option value="">כל הק×˜בוריות</option>' + options;
-            productSelect.innerHTML = '<option value="">בדר ק×˜בוריה</option>' + options;
+            filterSelect.innerHTML = '<option value="">כל הקטגוריות</option>' + options;
+            productSelect.innerHTML = '<option value="">בחר קטגוריה</option>' + options;
         }
         
         function updateProductSubcategories() {
@@ -1540,7 +1539,7 @@
             const select = document.getElementById('product-subcategory');
             
             const subs = subcategories.filter(s => s.categoryId === categoryId);
-            select.innerHTML = '<option value="">ללא תת-ק×˜בוריה</option>' + 
+            select.innerHTML = '<option value="">ללא תת-קטגוריה</option>' + 
                 subs.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
         }
         
@@ -1565,7 +1564,7 @@
             container.innerHTML = customSizes.map((size, index) => `
                 <span class="custom-tag">
                     ${size}
-                    <span class="remove-tag" onclick="removeCustomSize(${index})">Ã—</span>
+                    <span class="remove-tag" onclick="removeCustomSize(${index})">×</span>
                 </span>
             `).join('');
         }
@@ -1590,7 +1589,7 @@
             container.innerHTML = customColors.map((color, index) => `
                 <span class="custom-tag">
                     ${color}
-                    <span class="remove-tag" onclick="removeCustomColor(${index})">Ã—</span>
+                    <span class="remove-tag" onclick="removeCustomColor(${index})">×</span>
                 </span>
             `).join('');
         }
@@ -1672,7 +1671,6 @@
             const product = products.find(p => p.id === id);
             if (product) openProductModal(product);
         }
-        
         
         // ===== Multiple Product Images Functions =====
         function previewProductImages(input) {
@@ -1836,7 +1834,7 @@
         }
         
         function deleteProduct(id) {
-            openDeleteModal('האם אתה ב×˜וד שברצונך למדוק מוצר זה?', async () => {
+            openDeleteModal('האם אתה בטוח שברצונך למחוק מוצר זה?', async () => {
                 await productsCollection.doc(id).delete();
             });
         }
