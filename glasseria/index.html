@@ -13,11 +13,15 @@
 <meta property="og:type" content="website">
 <meta property="og:locale" content="he_IL">
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/accessibility-widget.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+    <!-- Skip Link for Accessibility -->
+    <a href="#main-content" class="skip-link">דלג לתוכן הראשי</a>
+    
     <!-- Header -->
     <header class="header">
         <div class="container">
@@ -44,6 +48,7 @@
     </div>
 
     <!-- Hero Section -->
+    <main id="main-content" role="main">
     <section class="hero">
         <div class="container">
             <h1>קטלוג מוצרים</h1>
@@ -162,6 +167,9 @@
         </div>
     </div>
 
+    </main>
+    <!-- End Main Content -->
+
     <!-- Footer -->
     <footer class="footer">
     <div class="container">
@@ -229,5 +237,6 @@
     <script src="js/firebase-config.js"></script>
     <script src="js/carousel.js"></script>
     <script src="js/app.js"></script>
+    <script src="js/accessibility-widget.js"></script>
 </body>
 </html>
