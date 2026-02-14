@@ -62,7 +62,57 @@ document.addEventListener('DOMContentLoaded', () => {
     setupWelcomePopup();
     createLightbox();
     createSelectionModal();
+    setupHistoryNavigation();
 });
+
+// ===== History Navigation =====
+function setupHistoryNavigation() {
+    // שמירת המצב ההתחלתי
+    history.replaceState({ view: 'categories', categoryId: null, subcategoryId: null }, '', window.location.pathname);
+    
+    // האזנה ללחיצה על כפתור "קודם" בדפדפן
+    window.addEventListener('popstate', (e) => {
+        if (e.state) {
+            restoreState(e.state);
+        } else {
+            // אם אין state, חזרה לקטגוריות
+            showCategoriesView();
+        }
+    });
+}
+
+function pushHistoryState(view, categoryId = null, subcategoryId = null) {
+    const state = { view, categoryId, subcategoryId };
+    history.pushState(state, '', window.location.pathname);
+}
+
+function restoreState(state) {
+    if (state.view === 'categories') {
+        showCategoriesView();
+    } else if (state.view === 'subcategories' && state.categoryId) {
+        const subs = subcategories.filter(s => s.categoryId === state.categoryId);
+        if (subs.length > 0) {
+            showSubcategoriesWithoutHistory(state.categoryId, subs);
+        } else {
+            showCategoriesView();
+        }
+    } else if (state.view === 'products') {
+        showProductsWithoutHistory(state.categoryId, state.subcategoryId);
+    }
+}
+
+function showCategoriesView() {
+    currentView = 'categories';
+    currentCategoryId = null;
+    currentSubcategoryId = null;
+    categoriesSection.style.display = 'block';
+    subcategoriesSection.style.display = 'none';
+    document.getElementById('products').style.display = 'block';
+    currentCategoryTitle.textContent = 'כל המוצרים';
+    hideProductsBackButton();
+    renderProducts();
+    setActiveNav('all');
+}
 
 // ===== Create Selection Modal =====
 function createSelectionModal() {
@@ -620,9 +670,15 @@ function handleCategoryClick(categoryId) {
 
 // ===== Show Subcategories =====
 function showSubcategories(categoryId, subs) {
+    showSubcategoriesWithoutHistory(categoryId, subs);
+    pushHistoryState('subcategories', categoryId, null);
+}
+
+function showSubcategoriesWithoutHistory(categoryId, subs) {
     const category = categories.find(c => c.id === categoryId);
     
     currentView = 'subcategories';
+    currentCategoryId = categoryId;
     categoriesSection.style.display = 'none';
     subcategoriesSection.style.display = 'block';
     subcategoriesTitle.textContent = category ? category.name : '';
@@ -678,6 +734,11 @@ function showSubcategories(categoryId, subs) {
 
 // ===== Show Products =====
 function showProducts(categoryId, subcategoryId) {
+    showProductsWithoutHistory(categoryId, subcategoryId);
+    pushHistoryState('products', categoryId, subcategoryId);
+}
+
+function showProductsWithoutHistory(categoryId, subcategoryId) {
     currentView = 'products';
     currentCategoryId = categoryId;
     currentSubcategoryId = subcategoryId;
@@ -701,11 +762,56 @@ function showProducts(categoryId, subcategoryId) {
             const sub = subcategories.find(s => s.id === subcategoryId);
             title = sub ? `${cat ? cat.name + ' - ' : ''}${sub.name}` : title;
         }
+        
+        // הצגת כפתור חזרה כשאנחנו בתוך קטגוריה
+        showProductsBackButton(categoryId);
+    } else {
+        hideProductsBackButton();
     }
     
     currentCategoryTitle.textContent = title;
     renderProducts(filtered);
     setActiveNav(categoryId);
+}
+
+// ===== Products Back Button =====
+function showProductsBackButton(categoryId) {
+    const sectionHeader = document.querySelector('#products .section-header');
+    let backBtn = document.getElementById('products-back-btn');
+    
+    if (!backBtn) {
+        backBtn = document.createElement('button');
+        backBtn.id = 'products-back-btn';
+        backBtn.className = 'back-btn';
+        backBtn.innerHTML = `
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M15 18l-6-6 6-6"/>
+            </svg>
+            חזרה לקטגוריות
+        `;
+        backBtn.addEventListener('click', () => {
+            // בדיקה אם יש תתי-קטגוריות לקטגוריה הנוכחית
+            const subs = subcategories.filter(s => s.categoryId === currentCategoryId);
+            if (subs.length > 0) {
+                // חזרה לתתי-קטגוריות
+                showSubcategories(currentCategoryId, subs);
+            } else {
+                // חזרה לקטגוריות הראשיות
+                showCategoriesView();
+                pushHistoryState('categories');
+            }
+        });
+        sectionHeader.insertBefore(backBtn, sectionHeader.firstChild);
+    }
+    
+    backBtn.style.display = 'flex';
+}
+
+function hideProductsBackButton() {
+    const backBtn = document.getElementById('products-back-btn');
+    if (backBtn) {
+        backBtn.style.display = 'none';
+    }
 }
 
 // ===== Render Products =====
@@ -903,13 +1009,8 @@ function setupEventListeners() {
     });
     
     backToCategories.addEventListener('click', () => {
-        currentView = 'categories';
-        categoriesSection.style.display = 'block';
-        subcategoriesSection.style.display = 'none';
-        document.getElementById('products').style.display = 'block';
-        currentCategoryTitle.textContent = 'כל המוצרים';
-        renderProducts();
-        setActiveNav('all');
+        showCategoriesView();
+        pushHistoryState('categories');
     });
     
     favoritesBtn.addEventListener('click', openFavoritesPanel);
@@ -934,15 +1035,8 @@ function handleNavClick(e) {
     closeMobileMenu();
     
     if (categoryId === 'all') {
-        currentView = 'categories';
-        currentCategoryId = null;
-        currentSubcategoryId = null;
-        categoriesSection.style.display = 'block';
-        subcategoriesSection.style.display = 'none';
-        document.getElementById('products').style.display = 'block';
-        currentCategoryTitle.textContent = 'כל המוצרים';
-        renderProducts();
-        setActiveNav('all');
+        showCategoriesView();
+        pushHistoryState('categories');
     } else {
         handleCategoryClick(categoryId);
     }
