@@ -776,35 +776,10 @@ function showProductsWithoutHistory(categoryId, subcategoryId) {
 
 // ===== Products Back Button =====
 function showProductsBackButton(categoryId) {
-    const sectionHeader = document.querySelector('#products .section-header');
-    let backBtn = document.getElementById('products-back-btn');
-    
-    if (!backBtn) {
-        backBtn = document.createElement('button');
-        backBtn.id = 'products-back-btn';
-        backBtn.className = 'back-btn';
-        backBtn.innerHTML = `
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M15 18l-6-6 6-6"/>
-            </svg>
-            חזרה לקטגוריות
-        `;
-        backBtn.addEventListener('click', () => {
-            // בדיקה אם יש תתי-קטגוריות לקטגוריה הנוכחית
-            const subs = subcategories.filter(s => s.categoryId === currentCategoryId);
-            if (subs.length > 0) {
-                // חזרה לתתי-קטגוריות
-                showSubcategories(currentCategoryId, subs);
-            } else {
-                // חזרה לקטגוריות הראשיות
-                showCategoriesView();
-                pushHistoryState('categories');
-            }
-        });
-        sectionHeader.insertBefore(backBtn, sectionHeader.firstChild);
+    const backBtn = document.getElementById('products-back-btn');
+    if (backBtn) {
+        backBtn.style.display = 'flex';
     }
-    
-    backBtn.style.display = 'flex';
 }
 
 function hideProductsBackButton() {
@@ -1012,6 +987,23 @@ function setupEventListeners() {
         showCategoriesView();
         pushHistoryState('categories');
     });
+    
+    // כפתור חזרה בדף המוצרים
+    const productsBackBtn = document.getElementById('products-back-btn');
+    if (productsBackBtn) {
+        productsBackBtn.addEventListener('click', () => {
+            // בדיקה אם יש תתי-קטגוריות לקטגוריה הנוכחית
+            const subs = subcategories.filter(s => s.categoryId === currentCategoryId);
+            if (subs.length > 0) {
+                // חזרה לתתי-קטגוריות
+                showSubcategories(currentCategoryId, subs);
+            } else {
+                // חזרה לקטגוריות הראשיות
+                showCategoriesView();
+                pushHistoryState('categories');
+            }
+        });
+    }
     
     favoritesBtn.addEventListener('click', openFavoritesPanel);
     closePanel.addEventListener('click', closeFavoritesPanel);
