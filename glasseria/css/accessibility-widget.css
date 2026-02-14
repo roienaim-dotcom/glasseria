@@ -68,6 +68,8 @@ textarea:focus-visible {
     align-items: center;
     justify-content: center;
     transition: transform 0.3s, background 0.3s;
+    zoom: 1 !important;
+    -moz-transform: none !important;
 }
 
 .accessibility-widget-btn:hover {
@@ -98,12 +100,15 @@ textarea:focus-visible {
     direction: rtl;
     max-height: calc(100vh - 200px);
     overflow-y: auto;
+    zoom: 1 !important;
+    -moz-transform: translateY(20px) !important;
 }
 
 .accessibility-panel.active {
     opacity: 1;
     visibility: visible;
     transform: translateY(0);
+    -moz-transform: translateY(0) !important;
 }
 
 .accessibility-panel-header {
