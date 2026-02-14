@@ -6,6 +6,7 @@
     <title>Glasseria - אודות</title>
     <link rel="icon" href="images/logo.png" type="image/png">
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/accessibility-widget.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -311,6 +312,9 @@
     </style>
 </head>
 <body>
+    <!-- Skip Link for Accessibility -->
+    <a href="#main-content" class="skip-link">דלג לתוכן הראשי</a>
+    
     <!-- Header -->
     <header class="header">
         <div class="container">
@@ -345,7 +349,7 @@
     </section>
 
     <!-- About Content -->
-    <main class="about-content">
+    <main id="main-content" role="main" class="about-content">
         <!-- About Us Section -->
         <section class="about-section">
             <h2>
@@ -481,5 +485,6 @@
             mobileNav.classList.toggle('active');
         });
     </script>
+    <script src="js/accessibility-widget.js"></script>
 </body>
 </html>
