@@ -280,6 +280,11 @@ function confirmAddToFavorites() {
     addToFavorites(product.id, selectedSize, selectedColor, sourceButton);
     
     closeSelectionModal();
+    
+    // סגירת מודל המוצר אם פתוח
+    if (productModal.classList.contains('active')) {
+        closeProductModal();
+    }
 }
 
 // ===== Helper: Check if product is in favorites =====
@@ -946,8 +951,17 @@ function openProductModal(product) {
     // כפתור מועדפים במודל
     const modalFavBtn = modalContent.querySelector('.modal-favorite-btn');
     modalFavBtn.addEventListener('click', () => {
+        const wasInFavorites = isProductInFavorites(product.id);
         toggleFavorite(product.id, modalFavBtn, product);
         const isNowFavorite = isProductInFavorites(product.id);
+        
+        // אם המוצר נוסף (ולא נפתח selection modal) - סגור את המודל
+        if (!wasInFavorites && isNowFavorite) {
+            closeProductModal();
+            return;
+        }
+        
+        // אם המוצר הוסר - עדכן את הכפתור
         modalFavBtn.innerHTML = `
             <svg viewBox="0 0 24 24">
                 <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
