@@ -63,7 +63,7 @@ textarea:focus-visible {
     border: none;
     cursor: pointer;
     box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-    z-index: 9998;
+    z-index: 90;  /* אותו z-index כמו כפתור הלב */
     display: flex;
     align-items: center;
     justify-content: center;
