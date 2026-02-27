@@ -420,6 +420,10 @@
             overflow: hidden;
             aspect-ratio: 1;
             background: var(--light);
+            cursor: grab;
+        }
+        .image-preview-item.sortable-ghost {
+            opacity: 0.3;
         }
         
         .image-preview-item img {
@@ -1598,7 +1602,7 @@
                             <input type="file" id="product-images" accept="image/*" multiple onchange="previewProductImages(this)">
                             <p>📷 לחץ לבחירת תמונות</p>
                         </div>
-                        <p class="images-upload-hint">התמונה הראשונה תוצג כתמונה הראשית של המוצר</p>
+                        <p class="images-upload-hint">התמונה הראשונה תוצג כתמונה הראשית של המוצר | גרור תמונות כדי לשנות סדר</p>
                         <div class="images-preview-grid" id="product-images-preview"></div>
                         <div class="compression-status" id="product-compression-status" style="display: none;"></div>
                     </div>
@@ -1718,6 +1722,8 @@
         
         // Multiple product images
         let pendingProductImages = [];
+        let productImagesOrder = []; // unified: [{type:'existing',url}, {type:'pending',file,dataUrl}]
+        let imagesSortable = null;
         let existingProductImages = [];
         
         // ===== Authentication =====
@@ -2409,7 +2415,8 @@
             currentSizesPrices = {};
             pendingProductImages = [];
             existingProductImages = [];
-            
+            productImagesOrder = [];
+
             if (product) {
                 document.getElementById('product-id').value = product.id;
                 document.getElementById('product-name').value = product.name;
@@ -2451,6 +2458,7 @@
                 } else if (product.image) {
                     existingProductImages = [product.image];
                 }
+                productImagesOrder = existingProductImages.map(url => ({ type: 'existing', url }));
             } else {
                 document.getElementById('product-form').reset();
                 document.getElementById('product-id').value = '';
@@ -2470,6 +2478,8 @@
             customColors = [];
             pendingProductImages = [];
             existingProductImages = [];
+            productImagesOrder = [];
+            if (imagesSortable) { imagesSortable.destroy(); imagesSortable = null; }
             document.getElementById('product-images-preview').innerHTML = '';
         }
         
@@ -2483,15 +2493,10 @@
             if (input.files && input.files.length > 0) {
                 for (let file of input.files) {
                     pendingProductImages.push(file);
+                    productImagesOrder.push({ type: 'pending', file });
                 }
                 renderProductImagesPreview();
-                
-                const statusEl = document.getElementById('product-compression-status');
-                const totalFiles = pendingProductImages.length + existingProductImages.length;
-                statusEl.textContent = '📷 ' + totalFiles + ' תמונות נבחרו - יידחסו בשמירה';
-                statusEl.className = 'compression-status';
-                statusEl.style.display = 'block';
-                
+                updateImagesStatus();
                 input.value = '';
             }
         }
@@ -2499,49 +2504,57 @@
         function renderProductImagesPreview() {
             const container = document.getElementById('product-images-preview');
             container.innerHTML = '';
-            
-            existingProductImages.forEach((url, index) => {
-                const isMain = index === 0 && pendingProductImages.length === 0;
+
+            productImagesOrder.forEach((img, idx) => {
+                const isMain = idx === 0;
                 const div = document.createElement('div');
                 div.className = 'image-preview-item' + (isMain ? ' main-image' : '');
-                div.innerHTML = '<img src="' + url + '" alt="תמונה ' + (index + 1) + '">' +
-                    '<button type="button" class="remove-image" onclick="removeExistingImage(' + index + ')">×</button>';
+                div.dataset.orderIdx = idx;
+
+                if (img.type === 'existing') {
+                    div.innerHTML = '<img src="' + img.url + '" alt="תמונה ' + (idx + 1) + '">' +
+                        '<button type="button" class="remove-image" onclick="removeProductImage(' + idx + ')">×</button>';
+                } else {
+                    div.innerHTML = '<img src="" alt="תמונה חדשה">' +
+                        '<button type="button" class="remove-image" onclick="removeProductImage(' + idx + ')">×</button>';
+                    const reader = new FileReader();
+                    reader.onload = (e) => { div.querySelector('img').src = e.target.result; };
+                    reader.readAsDataURL(img.file);
+                }
                 container.appendChild(div);
             });
-            
-            pendingProductImages.forEach((file, index) => {
-                const isMain = index === 0 && existingProductImages.length === 0;
-                const div = document.createElement('div');
-                div.className = 'image-preview-item' + (isMain ? ' main-image' : '');
-                div.innerHTML = '<img src="" alt="תמונה חדשה ' + (index + 1) + '">' +
-                    '<button type="button" class="remove-image" onclick="removePendingImage(' + index + ')">×</button>';
-                container.appendChild(div);
-                
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    div.querySelector('img').src = e.target.result;
-                };
-                reader.readAsDataURL(file);
-            });
+
+            // Init drag and drop
+            if (imagesSortable) imagesSortable.destroy();
+            if (productImagesOrder.length > 1) {
+                imagesSortable = new Sortable(container, {
+                    animation: 150,
+                    ghostClass: 'sortable-ghost',
+                    onEnd: function() {
+                        const items = container.querySelectorAll('.image-preview-item');
+                        const newOrder = [];
+                        items.forEach(item => {
+                            newOrder.push(productImagesOrder[parseInt(item.dataset.orderIdx)]);
+                        });
+                        productImagesOrder = newOrder;
+                        renderProductImagesPreview();
+                    }
+                });
+            }
         }
         
-        function removeExistingImage(index) {
-            existingProductImages.splice(index, 1);
-            renderProductImagesPreview();
-            updateImagesStatus();
-        }
-        
-        function removePendingImage(index) {
-            pendingProductImages.splice(index, 1);
+        function removeProductImage(idx) {
+            productImagesOrder.splice(idx, 1);
             renderProductImagesPreview();
             updateImagesStatus();
         }
         
         function updateImagesStatus() {
             const statusEl = document.getElementById('product-compression-status');
-            const totalFiles = pendingProductImages.length + existingProductImages.length;
-            if (totalFiles > 0) {
-                statusEl.textContent = '📷 ' + totalFiles + ' תמונות - ' + pendingProductImages.length + ' חדשות יידחסו בשמירה';
+            const total = productImagesOrder.length;
+            const pendingCount = productImagesOrder.filter(img => img.type === 'pending').length;
+            if (total > 0) {
+                statusEl.textContent = '📷 ' + total + ' תמונות' + (pendingCount > 0 ? ' - ' + pendingCount + ' חדשות יידחסו בשמירה' : '');
                 statusEl.style.display = 'block';
             } else {
                 statusEl.style.display = 'none';
@@ -2577,28 +2590,36 @@
             saveBtn.textContent = 'שומר...';
             
             try {
-                let allImageUrls = [...existingProductImages];
-                
-                if (pendingProductImages.length > 0) {
-                    statusEl.textContent = '⏳ דוחס ומעלה תמונות... (0/' + pendingProductImages.length + ')';
+                // Upload pending images first, then build final URL list in order
+                const pendingItems = productImagesOrder.filter(img => img.type === 'pending');
+                const uploadedMap = new Map();
+
+                if (pendingItems.length > 0) {
+                    statusEl.textContent = '⏳ דוחס ומעלה תמונות... (0/' + pendingItems.length + ')';
                     statusEl.className = 'compression-status compressing';
                     statusEl.style.display = 'block';
-                    
-                    for (let i = 0; i < pendingProductImages.length; i++) {
-                        const file = pendingProductImages[i];
-                        statusEl.textContent = '⏳ דוחס ומעלה תמונות... (' + (i + 1) + '/' + pendingProductImages.length + ')';
-                        
-                        const compressedBlob = await compressImage(file);
-                        const fileName = Date.now() + '_' + i + '_' + file.name.replace(/\.[^.]+$/, '') + '.webp';
+
+                    for (let i = 0; i < pendingItems.length; i++) {
+                        const item = pendingItems[i];
+                        statusEl.textContent = '⏳ דוחס ומעלה תמונות... (' + (i + 1) + '/' + pendingItems.length + ')';
+
+                        const compressedBlob = await compressImage(item.file);
+                        const fileName = Date.now() + '_' + i + '_' + item.file.name.replace(/\.[^.]+$/, '') + '.webp';
                         const ref = storage.ref('glasseria/products/' + fileName);
                         await ref.put(compressedBlob);
                         const imageUrl = await ref.getDownloadURL();
-                        allImageUrls.push(imageUrl);
+                        uploadedMap.set(item, imageUrl);
                     }
-                    
-                    statusEl.textContent = '✅ ' + pendingProductImages.length + ' תמונות הועלו בהצלחה';
+
+                    statusEl.textContent = '✅ ' + pendingItems.length + ' תמונות הועלו בהצלחה';
                     statusEl.className = 'compression-status';
                 }
+
+                // Build final URL array respecting drag-and-drop order
+                const allImageUrls = productImagesOrder.map(img => {
+                    if (img.type === 'existing') return img.url;
+                    return uploadedMap.get(img) || '';
+                }).filter(Boolean);
                 
                 const cat = categories.find(c => c.id === categoryId);
                 
