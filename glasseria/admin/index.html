@@ -827,6 +827,195 @@
             color: #c62828;
         }
 
+        /* Merge Toggle */
+        .csv-import-merge-toggle {
+            background: #fff8e1;
+            border: 1px solid #ffcc80;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .csv-merge-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .csv-merge-label input {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .csv-merge-hint {
+            font-size: 12px;
+            color: #e65100;
+        }
+
+        /* ===== Image Matcher Styles ===== */
+        .im-info-bar {
+            background: #e3f2fd;
+            padding: 10px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 13px;
+            color: #1565c0;
+        }
+
+        .im-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            min-height: 500px;
+        }
+
+        .im-products-panel,
+        .im-images-panel {
+            border: 1px solid #eee;
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .im-products-panel h3,
+        .im-images-panel h3 {
+            padding: 12px 16px;
+            background: var(--light);
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+            margin: 0;
+        }
+
+        #im-products-list {
+            overflow-y: auto;
+            max-height: 500px;
+            padding: 8px;
+        }
+
+        .im-product-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.15s;
+            border: 2px solid transparent;
+            margin-bottom: 4px;
+        }
+
+        .im-product-group:hover {
+            background: #f5f5f5;
+        }
+
+        .im-product-group.selected {
+            border-color: #1565c0;
+            background: #e3f2fd;
+        }
+
+        .im-product-group.matched {
+            background: #e8f5e9;
+            border-color: #a5d6a7;
+        }
+
+        .im-product-group-thumb {
+            width: 50px;
+            height: 50px;
+            border-radius: 6px;
+            object-fit: cover;
+            background: var(--light);
+            flex-shrink: 0;
+        }
+
+        .im-product-group-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .im-product-group-name {
+            font-weight: 600;
+            font-size: 13px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .im-product-group-meta {
+            font-size: 11px;
+            color: var(--secondary);
+        }
+
+        .im-product-group-badge {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            background: #e8f5e9;
+            color: #2e7d32;
+            white-space: nowrap;
+        }
+
+        .im-images-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+            gap: 8px;
+            padding: 8px;
+            overflow-y: auto;
+            max-height: 500px;
+        }
+
+        .im-image-card {
+            position: relative;
+            aspect-ratio: 1;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.15s;
+        }
+
+        .im-image-card:hover {
+            border-color: #90caf9;
+        }
+
+        .im-image-card.active {
+            border-color: #1565c0;
+            box-shadow: 0 0 0 2px #1565c0;
+        }
+
+        .im-image-card.used {
+            opacity: 0.5;
+        }
+
+        .im-image-card.used::after {
+            content: '\2713';
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            width: 20px;
+            height: 20px;
+            background: var(--success);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        .im-image-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
         @media (max-width: 768px) {
             .csv-import-assignment-row {
                 grid-template-columns: 1fr;
@@ -840,6 +1029,10 @@
             .csv-import-toolbar-right,
             .csv-import-toolbar-left {
                 flex-wrap: wrap;
+            }
+
+            .im-layout {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -878,6 +1071,7 @@
             <button data-section="subcategories">📂 תת-קטגוריות</button>
             <button data-section="products">📦 מוצרים</button>
             <button data-section="csv-import">📥 ייבוא CSV</button>
+            <button data-section="image-matcher">🖼️ שיוך תמונות</button>
         </nav>
         
         <main class="admin-content">
@@ -1016,6 +1210,15 @@
                         <!-- File info -->
                         <div class="csv-import-file-info" id="csv-file-info"></div>
 
+                        <!-- Merge toggle -->
+                        <div class="csv-import-merge-toggle">
+                            <label class="csv-merge-label">
+                                <input type="checkbox" id="csv-merge-toggle" onchange="onMergeToggleChange()">
+                                <span>איחוד מוצרים לפי דגם</span>
+                            </label>
+                            <span class="csv-merge-hint">מאחד שורות עם אותו דגם למוצר אחד עם מידות/צבעים כאפשרויות. מחיר התחלתי מוצג.</span>
+                        </div>
+
                         <!-- Category Assignment -->
                         <div class="csv-import-assignment">
                             <h3 style="margin-bottom: 12px;">שיוך קטגוריה למוצרים שנבחרו</h3>
@@ -1093,6 +1296,64 @@
 
                         <!-- Result -->
                         <div id="csv-import-result" style="display: none;"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Image Matcher -->
+            <section class="section" id="section-image-matcher">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>🖼️ שיוך תמונות למוצרים</h2>
+                    </div>
+
+                    <!-- Step 1: Select category -->
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label>בחר קטגוריה להצגת מוצרים</label>
+                        <select id="im-category-filter" onchange="loadMatcherProducts()">
+                            <option value="">בחר קטגוריה...</option>
+                        </select>
+                    </div>
+
+                    <!-- Step 2: Upload images -->
+                    <div id="im-upload-area" class="csv-import-upload" onclick="document.getElementById('im-file-input').click()" style="margin-bottom: 16px;">
+                        <input type="file" id="im-file-input" accept="image/*" multiple onchange="handleMatcherImages(this.files)" style="display:none;">
+                        <p style="font-size: 16px; margin-bottom: 6px;">📷 לחץ לבחירת תמונות (או גרור לכאן)</p>
+                        <p style="font-size: 13px; color: var(--secondary);">בחר את כל תמונות הקטלוג בבת אחת</p>
+                    </div>
+
+                    <!-- Matcher UI (hidden until both loaded) -->
+                    <div id="im-matcher-content" style="display: none;">
+                        <div class="im-info-bar" id="im-info-bar"></div>
+
+                        <div class="im-layout">
+                            <!-- Left: Product groups -->
+                            <div class="im-products-panel">
+                                <h3>מוצרים (לפי דגם)</h3>
+                                <div id="im-products-list"></div>
+                            </div>
+
+                            <!-- Right: Image gallery -->
+                            <div class="im-images-panel">
+                                <h3>תמונות</h3>
+                                <div class="im-images-grid" id="im-images-grid"></div>
+                            </div>
+                        </div>
+
+                        <div class="csv-import-actions" style="margin-top: 16px;">
+                            <button class="btn btn-success" id="im-save-btn" onclick="saveImageMatches()" disabled>
+                                שמור והעלה תמונות
+                            </button>
+                            <span id="im-match-count" style="color: var(--secondary); font-size: 13px;"></span>
+                        </div>
+
+                        <div id="im-progress" style="display: none;">
+                            <div class="csv-import-progress-bar">
+                                <div class="csv-import-progress-fill" id="im-progress-fill"></div>
+                            </div>
+                            <p id="im-progress-text" style="text-align: center; margin-top: 8px; font-size: 13px;"></p>
+                        </div>
+                        <div id="im-result" style="display: none;"></div>
                     </div>
                 </div>
             </section>
@@ -2585,9 +2846,11 @@
 
         function resetCSVImport() {
             csvAllRows = [];
+            csvRawRows = [];
             csvFilteredRows = [];
             csvSelectedIds.clear();
             csvDisplayLimit = 100;
+            csvMergeEnabled = false;
 
             document.getElementById('csv-upload-area').style.display = 'block';
             document.getElementById('csv-import-content').style.display = 'none';
@@ -2597,6 +2860,478 @@
             document.getElementById('csv-search').value = '';
             document.getElementById('csv-import-new-category').value = '';
             document.getElementById('csv-import-new-subcategory').value = '';
+            document.getElementById('csv-merge-toggle').checked = false;
+        }
+
+        // ===== CSV Merge by Model =====
+        let csvRawRows = [];       // Original unmarged rows
+        let csvMergeEnabled = false;
+
+        function onMergeToggleChange() {
+            csvMergeEnabled = document.getElementById('csv-merge-toggle').checked;
+            if (csvRawRows.length > 0) {
+                csvAllRows = csvMergeEnabled ? mergeRowsByModel(csvRawRows) : csvRawRows.map((r, i) => ({ ...r, _index: i }));
+                csvSelectedIds.clear();
+                csvDisplayLimit = 100;
+                updateOriginalCategoryFilter();
+                filterImportProducts();
+            }
+        }
+
+        function mergeRowsByModel(rows) {
+            const groups = {};
+            rows.forEach(row => {
+                const key = row.type || row.name || 'unknown';
+                if (!groups[key]) {
+                    groups[key] = {
+                        name: row.name,
+                        sku: row.type || row.sku,
+                        type: row.type || '',
+                        originalCategory: row.originalCategory,
+                        originalSubcategory: row.originalSubcategory,
+                        baseDescription: row.description.split('\n')[0] || '',
+                        sizes: [],
+                        colors: new Set(),
+                        prices: [],
+                        sizesPrices: [],
+                        allRows: []
+                    };
+                }
+                const g = groups[key];
+                g.allRows.push(row);
+                if (row.size) g.sizes.push(row.size);
+                if (row.color) g.colors.add(row.color);
+                if (row.price) {
+                    g.prices.push(row.price);
+                    g.sizesPrices.push({ size: row.size || '-', price: row.price });
+                }
+            });
+
+            return Object.values(groups).map((g, idx) => {
+                const minPrice = Math.min(...g.prices);
+                const maxPrice = Math.max(...g.prices);
+                const uniqueSizes = [...new Set(g.sizes)];
+                const uniqueColors = [...g.colors];
+
+                // Build description with price table if prices vary
+                let desc = g.baseDescription;
+                if (minPrice !== maxPrice) {
+                    const priceTable = g.sizesPrices
+                        .filter((v, i, a) => a.findIndex(x => x.size === v.size) === i)
+                        .map(sp => 'מידה ' + sp.size + ': ₪' + sp.price.toLocaleString())
+                        .join(' | ');
+                    desc += '\n\nמחירון לפי מידה:\n' + priceTable;
+                }
+
+                return {
+                    _index: idx,
+                    name: g.name,
+                    sku: g.sku,
+                    type: g.type,
+                    price: minPrice,
+                    originalCategory: g.originalCategory,
+                    originalSubcategory: g.originalSubcategory,
+                    description: desc,
+                    color: uniqueColors.join(', '),
+                    size: uniqueSizes.join(', '),
+                    sizes: uniqueSizes,
+                    colors: uniqueColors,
+                    _mergedCount: g.allRows.length
+                };
+            });
+        }
+
+        function updateOriginalCategoryFilter() {
+            const origCats = [...new Set(csvAllRows.map(r => r.originalCategory).filter(Boolean))];
+            const filterSelect = document.getElementById('csv-filter-category');
+            filterSelect.innerHTML = '<option value="">כל הקטגוריות (מקור)</option>' +
+                origCats.map(c => '<option value="' + c + '">' + c + '</option>').join('');
+        }
+
+        // Override handleCSVUpload to store raw rows
+        const _origHandleCSVUpload = handleCSVUpload;
+        handleCSVUpload = function(file) {
+            if (!file) return;
+            if (!file.name.endsWith('.csv')) {
+                alert('נא לבחור קובץ CSV');
+                return;
+            }
+
+            Papa.parse(file, {
+                header: true,
+                encoding: 'UTF-8',
+                skipEmptyLines: true,
+                complete: function(results) {
+                    if (results.errors.length > 0) {
+                        console.warn('CSV parse warnings:', results.errors);
+                    }
+
+                    const headers = results.meta.fields;
+                    const columnMapping = {};
+                    for (const [field, possibleNames] of Object.entries(CSV_COLUMN_MAP)) {
+                        columnMapping[field] = findColumn(headers, possibleNames);
+                    }
+
+                    csvRawRows = results.data
+                        .map((row, idx) => ({ ...mapCSVRow(row, columnMapping), _index: idx }))
+                        .filter(r => r.name);
+
+                    csvMergeEnabled = document.getElementById('csv-merge-toggle').checked;
+                    csvAllRows = csvMergeEnabled ? mergeRowsByModel(csvRawRows) : csvRawRows;
+                    csvSelectedIds = new Set();
+                    csvDisplayLimit = 100;
+
+                    document.getElementById('csv-file-info').innerHTML =
+                        '<span>📄 <strong>' + file.name + '</strong> — ' + csvRawRows.length + ' שורות (' + csvAllRows.length + ' מוצרים)</span>' +
+                        '<span>עמודות: ' + headers.join(', ') + '</span>';
+
+                    updateOriginalCategoryFilter();
+                    updateImportCategorySelect();
+
+                    document.getElementById('csv-upload-area').style.display = 'none';
+                    document.getElementById('csv-import-content').style.display = 'block';
+
+                    filterImportProducts();
+                },
+                error: function(error) {
+                    alert('שגיאה בקריאת הקובץ: ' + error.message);
+                }
+            });
+        };
+
+        // Override renderImportTable to show merged info
+        const _origRenderImportTable = renderImportTable;
+        renderImportTable = function() {
+            const tbody = document.getElementById('csv-import-tbody');
+            const rowsToShow = csvFilteredRows.slice(0, csvDisplayLimit);
+
+            tbody.innerHTML = rowsToShow.map(row => {
+                const isSelected = csvSelectedIds.has(row._index);
+                const mergedBadge = row._mergedCount ? ' <span style="background:#e3f2fd;color:#1565c0;padding:1px 6px;border-radius:10px;font-size:11px;">' + row._mergedCount + ' שורות</span>' : '';
+                const sizesDisplay = row.sizes ? row.sizes.join(', ') : (row.size || '-');
+                return '<tr class="' + (isSelected ? 'selected' : '') + '" onclick="toggleImportRow(' + row._index + ', event)">' +
+                    '<td><input type="checkbox" ' + (isSelected ? 'checked' : '') + ' onclick="event.stopPropagation(); toggleImportRow(' + row._index + ', event)"></td>' +
+                    '<td>' + row.name + mergedBadge + '</td>' +
+                    '<td>' + (row.sku || '-') + '</td>' +
+                    '<td>' + (row.price ? '₪' + row.price.toLocaleString() : '-') + '</td>' +
+                    '<td>' + (row.originalCategory || '-') + '</td>' +
+                    '<td>' + (csvMergeEnabled ? sizesDisplay : (row.originalSubcategory || '-')) + '</td>' +
+                    '</tr>';
+            }).join('');
+
+            // Update header for merged mode
+            const headerRow = document.querySelector('#csv-import-table thead tr');
+            const headers = headerRow.querySelectorAll('th');
+            if (headers.length >= 6) {
+                headers[5].textContent = csvMergeEnabled ? 'מידות' : 'תת-קטגוריה (מקור)';
+            }
+
+            const loadMoreEl = document.getElementById('csv-load-more');
+            if (csvFilteredRows.length > csvDisplayLimit) {
+                loadMoreEl.style.display = 'block';
+                document.getElementById('csv-showing-count').textContent =
+                    'מציג ' + Math.min(csvDisplayLimit, csvFilteredRows.length) + ' מתוך ' + csvFilteredRows.length;
+            } else {
+                loadMoreEl.style.display = 'none';
+            }
+
+            updateSelectionCount();
+        };
+
+        // Override importSelectedProducts for merged products
+        const _origImportSelected = importSelectedProducts;
+        importSelectedProducts = async function() {
+            if (csvSelectedIds.size === 0) return;
+
+            const btn = document.getElementById('csv-import-btn');
+            const progressEl = document.getElementById('csv-import-progress');
+            const progressFill = document.getElementById('csv-progress-fill');
+            const progressText = document.getElementById('csv-progress-text');
+            const resultEl = document.getElementById('csv-import-result');
+
+            btn.disabled = true;
+            btn.textContent = 'מייבא...';
+            progressEl.style.display = 'block';
+            resultEl.style.display = 'none';
+
+            try {
+                let categoryId = document.getElementById('csv-import-category').value;
+                let categoryName = '';
+
+                if (categoryId === '__new__') {
+                    const newName = document.getElementById('csv-import-new-category').value.trim();
+                    if (!newName) { alert('נא להזין שם לקטגוריה החדשה'); btn.disabled = false; btn.textContent = 'ייבא מוצרים נבחרים'; progressEl.style.display = 'none'; return; }
+                    progressText.textContent = 'יוצר קטגוריה חדשה...';
+                    const docRef = await categoriesCollection.add({ name: newName, order: categories.length, createdAt: firebase.firestore.FieldValue.serverTimestamp(), updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+                    categoryId = docRef.id;
+                    categoryName = newName;
+                } else {
+                    const cat = categories.find(c => c.id === categoryId);
+                    categoryName = cat ? cat.name : '';
+                }
+
+                let subcategoryId = document.getElementById('csv-import-subcategory').value;
+                if (subcategoryId === '__new__') {
+                    const newSubName = document.getElementById('csv-import-new-subcategory').value.trim();
+                    if (newSubName) {
+                        progressText.textContent = 'יוצר תת-קטגוריה חדשה...';
+                        const subRef = await subcategoriesCollection.add({ categoryId, name: newSubName, order: subcategories.filter(s => s.categoryId === categoryId).length, createdAt: firebase.firestore.FieldValue.serverTimestamp(), updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+                        subcategoryId = subRef.id;
+                    } else { subcategoryId = null; }
+                } else if (!subcategoryId) { subcategoryId = null; }
+
+                const selectedRows = csvAllRows.filter(r => csvSelectedIds.has(r._index));
+                const total = selectedRows.length;
+                let imported = 0, errors = 0;
+                const BATCH_SIZE = 400;
+                const existingProductCount = products.length;
+
+                for (let i = 0; i < total; i += BATCH_SIZE) {
+                    const batchRows = selectedRows.slice(i, i + BATCH_SIZE);
+                    const batch = db.batch();
+
+                    batchRows.forEach((row, batchIdx) => {
+                        const docRef = productsCollection.doc();
+                        const sizesArr = row.sizes || (row.size ? [row.size] : []);
+                        const colorsArr = row.colors || (row.color ? [row.color] : []);
+                        batch.set(docRef, {
+                            name: row.name,
+                            sku: row.sku || '',
+                            price: row.price || 0,
+                            categoryId,
+                            subcategoryId,
+                            category: categoryName,
+                            type: row.type || '',
+                            description: row.description || '',
+                            sizes: sizesArr,
+                            colors: colorsArr,
+                            images: [],
+                            image: '',
+                            order: existingProductCount + i + batchIdx,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    });
+
+                    try { await batch.commit(); imported += batchRows.length; }
+                    catch (err) { console.error('Batch error:', err); errors += batchRows.length; }
+
+                    progressFill.style.width = Math.round(((i + batchRows.length) / total) * 100) + '%';
+                    progressText.textContent = 'מייבא... ' + (i + batchRows.length) + ' / ' + total;
+                }
+
+                progressFill.style.width = '100%';
+                resultEl.style.display = 'block';
+                if (errors === 0) { resultEl.className = 'csv-import-result success'; resultEl.textContent = '✅ ' + imported + ' מוצרים יובאו בהצלחה!'; }
+                else { resultEl.className = 'csv-import-result error'; resultEl.textContent = '⚠️ ' + imported + ' יובאו, ' + errors + ' נכשלו'; }
+
+                const importedIndices = new Set(selectedRows.map(r => r._index));
+                csvAllRows = csvAllRows.filter(r => !importedIndices.has(r._index));
+                csvSelectedIds.clear();
+                filterImportProducts();
+
+            } catch (error) {
+                console.error('Import error:', error);
+                resultEl.style.display = 'block';
+                resultEl.className = 'csv-import-result error';
+                resultEl.textContent = '❌ שגיאה: ' + error.message;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'ייבא מוצרים נבחרים';
+                updateImportButton();
+            }
+        };
+
+        // ===== Image Matcher =====
+        let imImages = [];           // { file, dataUrl, matchedTo }
+        let imProductGroups = [];    // { type, name, productIds, currentImage }
+        let imSelectedImage = null;  // index of currently clicked image
+
+        // Drag and drop for image matcher
+        const imUploadArea = document.getElementById('im-upload-area');
+        if (imUploadArea) {
+            imUploadArea.addEventListener('dragover', (e) => { e.preventDefault(); imUploadArea.classList.add('dragover'); });
+            imUploadArea.addEventListener('dragleave', () => { imUploadArea.classList.remove('dragover'); });
+            imUploadArea.addEventListener('drop', (e) => { e.preventDefault(); imUploadArea.classList.remove('dragover'); handleMatcherImages(e.dataTransfer.files); });
+        }
+
+        function loadMatcherProducts() {
+            const categoryId = document.getElementById('im-category-filter').value;
+            if (!categoryId) { imProductGroups = []; renderMatcher(); return; }
+
+            const catProducts = products.filter(p => p.categoryId === categoryId);
+            const groups = {};
+            catProducts.forEach(p => {
+                const key = p.type || p.name;
+                if (!groups[key]) {
+                    groups[key] = { type: key, name: p.name, productIds: [], currentImage: p.image || '' };
+                }
+                groups[key].productIds.push(p.id);
+            });
+            imProductGroups = Object.values(groups).sort((a, b) => a.type.localeCompare(b.type));
+            renderMatcher();
+        }
+
+        function handleMatcherImages(files) {
+            if (!files || files.length === 0) return;
+            imImages = [];
+            imSelectedImage = null;
+
+            const promises = Array.from(files).map((file, idx) => {
+                return new Promise(resolve => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        imImages.push({ file, dataUrl: e.target.result, matchedTo: null, name: file.name });
+                        resolve();
+                    };
+                    reader.readAsDataURL(file);
+                });
+            });
+
+            Promise.all(promises).then(() => {
+                imImages.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+                renderMatcher();
+            });
+        }
+
+        function renderMatcher() {
+            const content = document.getElementById('im-matcher-content');
+            if (imProductGroups.length === 0 && imImages.length === 0) {
+                content.style.display = 'none';
+                return;
+            }
+            content.style.display = 'block';
+
+            // Info bar
+            const matchedCount = imImages.filter(img => img.matchedTo !== null).length;
+            document.getElementById('im-info-bar').innerHTML =
+                '📊 ' + imProductGroups.length + ' דגמים | ' + imImages.length + ' תמונות | ' + matchedCount + ' שויכו';
+
+            // Products list
+            const listEl = document.getElementById('im-products-list');
+            listEl.innerHTML = imProductGroups.map((g, idx) => {
+                const matchedImg = imImages.find(img => img.matchedTo === idx);
+                const thumbSrc = matchedImg ? matchedImg.dataUrl : (g.currentImage || '');
+                const isMatched = !!matchedImg;
+                const isSelected = imSelectedImage !== null;
+                return '<div class="im-product-group ' + (isMatched ? 'matched' : '') + '" onclick="assignImageToGroup(' + idx + ')">' +
+                    (thumbSrc ? '<img class="im-product-group-thumb" src="' + thumbSrc + '">' : '<div class="im-product-group-thumb" style="display:flex;align-items:center;justify-content:center;color:#ccc;font-size:20px;">?</div>') +
+                    '<div class="im-product-group-info">' +
+                    '<div class="im-product-group-name">' + g.name + '</div>' +
+                    '<div class="im-product-group-meta">' + g.type + ' · ' + g.productIds.length + ' מוצרים</div>' +
+                    '</div>' +
+                    (isMatched ? '<span class="im-product-group-badge">✓ שויך</span>' : '') +
+                    '</div>';
+            }).join('');
+
+            // Images grid
+            const gridEl = document.getElementById('im-images-grid');
+            gridEl.innerHTML = imImages.map((img, idx) => {
+                const isActive = imSelectedImage === idx;
+                const isUsed = img.matchedTo !== null;
+                return '<div class="im-image-card ' + (isActive ? 'active' : '') + ' ' + (isUsed ? 'used' : '') + '" onclick="selectMatcherImage(' + idx + ')">' +
+                    '<img src="' + img.dataUrl + '" alt="' + img.name + '">' +
+                    '</div>';
+            }).join('');
+
+            // Save button
+            document.getElementById('im-save-btn').disabled = matchedCount === 0;
+            document.getElementById('im-match-count').textContent = matchedCount > 0 ? matchedCount + ' תמונות מוכנות להעלאה' : '';
+        }
+
+        function selectMatcherImage(idx) {
+            imSelectedImage = (imSelectedImage === idx) ? null : idx;
+            renderMatcher();
+        }
+
+        function assignImageToGroup(groupIdx) {
+            if (imSelectedImage === null) return;
+
+            // Clear previous assignment if this image was assigned elsewhere
+            const img = imImages[imSelectedImage];
+            img.matchedTo = groupIdx;
+
+            imSelectedImage = null;
+            renderMatcher();
+        }
+
+        // Update category filter for image matcher when categories load
+        const _origUpdateCatSelects = updateCategorySelects;
+        updateCategorySelects = function() {
+            _origUpdateCatSelects();
+            const imSelect = document.getElementById('im-category-filter');
+            if (imSelect) {
+                const val = imSelect.value;
+                imSelect.innerHTML = '<option value="">בחר קטגוריה...</option>' +
+                    categories.map(c => '<option value="' + c.id + '">' + c.name + '</option>').join('');
+                if (val) imSelect.value = val;
+            }
+        };
+
+        async function saveImageMatches() {
+            const matchedImages = imImages.filter(img => img.matchedTo !== null);
+            if (matchedImages.length === 0) return;
+
+            const btn = document.getElementById('im-save-btn');
+            const progressEl = document.getElementById('im-progress');
+            const progressFill = document.getElementById('im-progress-fill');
+            const progressText = document.getElementById('im-progress-text');
+            const resultEl = document.getElementById('im-result');
+
+            btn.disabled = true;
+            btn.textContent = 'מעלה...';
+            progressEl.style.display = 'block';
+            resultEl.style.display = 'none';
+            progressFill.style.width = '0%';
+
+            let uploaded = 0, errors = 0;
+
+            for (let i = 0; i < matchedImages.length; i++) {
+                const img = matchedImages[i];
+                const group = imProductGroups[img.matchedTo];
+
+                try {
+                    progressText.textContent = 'דוחס ומעלה ' + (i + 1) + ' / ' + matchedImages.length + '...';
+
+                    // Compress and upload
+                    const compressed = await compressImage(img.file);
+                    const fileName = Date.now() + '_' + img.file.name.replace(/\.[^.]+$/, '') + '.webp';
+                    const ref = storage.ref('glasseria/products/' + fileName);
+                    await ref.put(compressed);
+                    const imageUrl = await ref.getDownloadURL();
+
+                    // Update all products in this group
+                    const batch = db.batch();
+                    group.productIds.forEach(pid => {
+                        batch.update(productsCollection.doc(pid), {
+                            image: imageUrl,
+                            images: [imageUrl],
+                            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    });
+                    await batch.commit();
+                    uploaded++;
+                } catch (err) {
+                    console.error('Error uploading image for group ' + group.type + ':', err);
+                    errors++;
+                }
+
+                progressFill.style.width = Math.round(((i + 1) / matchedImages.length) * 100) + '%';
+            }
+
+            progressFill.style.width = '100%';
+            resultEl.style.display = 'block';
+            if (errors === 0) {
+                resultEl.className = 'csv-import-result success';
+                resultEl.textContent = '✅ ' + uploaded + ' תמונות הועלו ושויכו בהצלחה!';
+            } else {
+                resultEl.className = 'csv-import-result error';
+                resultEl.textContent = '⚠️ ' + uploaded + ' הועלו, ' + errors + ' נכשלו';
+            }
+
+            btn.disabled = false;
+            btn.textContent = 'שמור והעלה תמונות';
+            loadMatcherProducts();
         }
     </script>
 </body>
