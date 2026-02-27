@@ -809,6 +809,29 @@ body {
     font-size: 12px;
 }
 
+.size-option.has-price {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 2px solid transparent;
+}
+
+.size-option.has-price:hover {
+    background: #e3f2fd;
+    border-color: var(--primary);
+}
+
+.size-option.has-price.active {
+    background: var(--primary);
+    color: var(--white);
+    border-color: var(--primary);
+}
+
+.price-prefix {
+    font-size: 16px;
+    font-weight: 400;
+    opacity: 0.7;
+}
+
 .modal-favorite-btn {
     display: flex;
     align-items: center;

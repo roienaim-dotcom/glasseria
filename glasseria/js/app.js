@@ -929,7 +929,7 @@ function createProductCard(product, isFavorite) {
             <h3 class="product-name">${product.name}</h3>
             <p class="product-sku">מק"ט: ${product.sku || '-'}</p>
             ${product.type ? `<p class="product-type">${product.type}</p>` : ''}
-            <p class="product-price">₪${product.price || '0'}</p>
+            <p class="product-price">${product.sizesPrices && product.sizesPrices.length > 1 && new Set(product.sizesPrices.map(sp => sp.price)).size > 1 ? 'החל מ-' : ''}₪${product.price || '0'}</p>
         </div>
     `;
     
@@ -979,13 +979,18 @@ function openProductModal(product) {
                 <p class="modal-product-sku">מק"ט: ${product.sku || '-'}</p>
                 ${product.type ? `<p class="modal-product-type">${product.type}</p>` : ''}
                 ${product.description ? `<p class="modal-product-description">${product.description}</p>` : ''}
-                <div class="modal-product-price">₪${product.price || '0'}</div>
-                
+                <div class="modal-product-price" id="modal-dynamic-price">
+                    ${product.sizesPrices && product.sizesPrices.length > 1 && new Set(product.sizesPrices.map(sp => sp.price)).size > 1 ? '<span class="price-prefix">החל מ-</span>' : ''}₪${product.price || '0'}
+                </div>
+
                 ${product.sizes && product.sizes.length > 0 ? `
                     <div class="modal-product-sizes">
                         <strong>מידות זמינות:</strong>
                         <div class="size-options">
-                            ${product.sizes.map(s => `<span class="size-option">${s}</span>`).join('')}
+                            ${product.sizes.map(s => {
+                                const sp = product.sizesPrices && product.sizesPrices.find(sp => sp.size === s);
+                                return `<span class="size-option ${sp ? 'has-price' : ''}" data-size="${s}" ${sp ? `data-price="${sp.price}"` : ''}>${s}</span>`;
+                            }).join('')}
                         </div>
                     </div>
                 ` : ''}
@@ -1038,6 +1043,22 @@ function openProductModal(product) {
         }
     }, 10);
     
+    // Size option click handlers - update price on click
+    const sizeOptions = modalContent.querySelectorAll('.size-option.has-price');
+    sizeOptions.forEach(opt => {
+        opt.addEventListener('click', () => {
+            // Toggle active state
+            sizeOptions.forEach(o => o.classList.remove('active'));
+            opt.classList.add('active');
+            // Update price display
+            const price = parseFloat(opt.dataset.price);
+            const priceEl = document.getElementById('modal-dynamic-price');
+            if (priceEl && !isNaN(price)) {
+                priceEl.innerHTML = '₪' + price.toLocaleString();
+            }
+        });
+    });
+
     // כפתור מועדפים במודל
     const modalFavBtn = modalContent.querySelector('.modal-favorite-btn');
     modalFavBtn.addEventListener('click', () => {
@@ -1220,7 +1241,7 @@ function renderFavoritesList() {
                 <div class="favorite-item-name">${product.name}</div>
                 <div class="favorite-item-sku">מק"ט: ${product.sku || '-'}</div>
                 ${selectionInfo}
-                <div class="favorite-item-price">₪${product.price || 0}</div>
+                <div class="favorite-item-price">${product.sizesPrices && product.sizesPrices.length > 1 && new Set(product.sizesPrices.map(sp => sp.price)).size > 1 ? 'החל מ-' : ''}₪${product.price || 0}</div>
             </div>
             <button class="favorite-item-remove" data-id="${product.id}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

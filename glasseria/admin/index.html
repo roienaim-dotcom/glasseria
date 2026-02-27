@@ -827,6 +827,32 @@
             color: #c62828;
         }
 
+        /* Sizes-Prices table in product modal */
+        .sizes-prices-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 6px;
+        }
+        .sizes-prices-row .sp-label {
+            min-width: 80px;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        .sizes-prices-row input {
+            width: 120px;
+            padding: 6px 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 14px;
+            direction: ltr;
+        }
+        .sizes-prices-hint {
+            font-size: 12px;
+            color: var(--secondary);
+            margin-top: 4px;
+        }
+
         /* Merge Toggle */
         .csv-import-merge-toggle {
             background: #fff8e1;
@@ -1495,6 +1521,10 @@
                             <button type="button" class="btn btn-secondary btn-small" onclick="addCustomSize()">+ הוסף</button>
                         </div>
                     </div>
+                    <div class="form-group" id="sizes-prices-section" style="display: none;">
+                        <label>מחיר לפי מידה</label>
+                        <div id="sizes-prices-table"></div>
+                    </div>
                     <div class="form-group">
                         <label>צבעים זמינים</label>
                         <div class="checkbox-group">
@@ -1685,9 +1715,14 @@
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.admin-nav button').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
-                
+
                 document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
                 document.getElementById(`section-${btn.dataset.section}`).classList.add('active');
+
+                // Populate image matcher category dropdown when switching to that tab
+                if (btn.dataset.section === 'image-matcher' && typeof updateIMCategoryFilter === 'function') {
+                    updateIMCategoryFilter();
+                }
             });
         });
         
@@ -2164,7 +2199,66 @@
         document.getElementById('custom-color-input').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') { e.preventDefault(); addCustomColor(); }
         });
-        
+
+        // ===== Sizes-Prices Management =====
+        let currentSizesPrices = {}; // { size: price }
+
+        function updateSizesPricesTable() {
+            const checkedSizes = Array.from(document.querySelectorAll('input[name="sizes"]:checked')).map(cb => cb.value);
+            const allSizes = [...checkedSizes, ...customSizes];
+            const section = document.getElementById('sizes-prices-section');
+            const table = document.getElementById('sizes-prices-table');
+
+            if (allSizes.length === 0) {
+                section.style.display = 'none';
+                return;
+            }
+
+            section.style.display = 'block';
+            table.innerHTML = allSizes.map(size => {
+                const price = currentSizesPrices[size] || '';
+                return '<div class="sizes-prices-row">' +
+                    '<span class="sp-label">מידה ' + size + ':</span>' +
+                    '<input type="number" step="0.01" placeholder="מחיר (ריק = מחיר ראשי)" value="' + price + '" data-size="' + size + '" onchange="onSizePriceChange(this)">' +
+                    '<span style="font-size:12px;color:var(--secondary);">₪</span>' +
+                    '</div>';
+            }).join('') +
+            '<p class="sizes-prices-hint">השאר ריק לשימוש במחיר הראשי. מחירים שונים יציגו "החל מ-" באתר.</p>';
+        }
+
+        function onSizePriceChange(input) {
+            const size = input.dataset.size;
+            const val = parseFloat(input.value);
+            if (!isNaN(val) && val > 0) {
+                currentSizesPrices[size] = val;
+            } else {
+                delete currentSizesPrices[size];
+            }
+        }
+
+        function collectSizesPrices() {
+            const checkedSizes = Array.from(document.querySelectorAll('input[name="sizes"]:checked')).map(cb => cb.value);
+            const allSizes = [...checkedSizes, ...customSizes];
+            const result = [];
+            allSizes.forEach(size => {
+                if (currentSizesPrices[size]) {
+                    result.push({ size: size, price: currentSizesPrices[size] });
+                }
+            });
+            return result;
+        }
+
+        // Listen for size checkbox changes to update pricing table
+        document.querySelectorAll('input[name="sizes"]').forEach(cb => {
+            cb.addEventListener('change', updateSizesPricesTable);
+        });
+
+        // Override addCustomSize/removeCustomSize to also update pricing table
+        const _origAddCustomSize = addCustomSize;
+        addCustomSize = function() { _origAddCustomSize(); updateSizesPricesTable(); };
+        const _origRemoveCustomSize = removeCustomSize;
+        removeCustomSize = function(idx) { _origRemoveCustomSize(idx); updateSizesPricesTable(); };
+
         function openProductModal(product = null) {
             document.getElementById('product-modal').classList.add('active');
             document.getElementById('product-modal-title').textContent = product ? 'עריכת מוצר' : 'הוסף מוצר';
@@ -2172,6 +2266,7 @@
             // Reset arrays
             customSizes = [];
             customColors = [];
+            currentSizesPrices = {};
             pendingProductImages = [];
             existingProductImages = [];
             
@@ -2203,6 +2298,13 @@
                     customColors = product.colors.filter(c => !predefinedColors.includes(c));
                 }
                 
+                // Load sizesPrices
+                if (product.sizesPrices && product.sizesPrices.length > 0) {
+                    product.sizesPrices.forEach(sp => {
+                        currentSizesPrices[sp.size] = sp.price;
+                    });
+                }
+
                 // Load existing images
                 if (product.images && product.images.length > 0) {
                     existingProductImages = [...product.images];
@@ -2217,6 +2319,7 @@
             
             renderCustomSizes();
             renderCustomColors();
+            updateSizesPricesTable();
             renderProductImagesPreview();
             document.getElementById('product-compression-status').style.display = 'none';
         }
@@ -2359,6 +2462,8 @@
                 
                 const cat = categories.find(c => c.id === categoryId);
                 
+                const sizesPrices = collectSizesPrices();
+
                 const data = {
                     name,
                     sku,
@@ -2370,6 +2475,7 @@
                     description,
                     sizes,
                     colors,
+                    sizesPrices,
                     order,
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 };
@@ -2923,6 +3029,11 @@
                     desc += '\n\nמחירון לפי מידה:\n' + priceTable;
                 }
 
+                // Build sizesPrices array (unique by size, with price)
+                const sizesPrices = g.sizesPrices
+                    .filter((v, i, a) => a.findIndex(x => x.size === v.size) === i)
+                    .map(sp => ({ size: sp.size, price: sp.price }));
+
                 return {
                     _index: idx,
                     name: g.name,
@@ -2936,6 +3047,7 @@
                     size: uniqueSizes.join(', '),
                     sizes: uniqueSizes,
                     colors: uniqueColors,
+                    sizesPrices: sizesPrices,
                     _mergedCount: g.allRows.length
                 };
             });
@@ -3094,7 +3206,7 @@
                         const docRef = productsCollection.doc();
                         const sizesArr = row.sizes || (row.size ? [row.size] : []);
                         const colorsArr = row.colors || (row.color ? [row.color] : []);
-                        batch.set(docRef, {
+                        const productData = {
                             name: row.name,
                             sku: row.sku || '',
                             price: row.price || 0,
@@ -3105,12 +3217,14 @@
                             description: row.description || '',
                             sizes: sizesArr,
                             colors: colorsArr,
+                            sizesPrices: row.sizesPrices || [],
                             images: [],
                             image: '',
                             order: existingProductCount + i + batchIdx,
                             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                        });
+                        };
+                        batch.set(docRef, productData);
                     });
 
                     try { await batch.commit(); imported += batchRows.length; }
@@ -3255,17 +3369,22 @@
             renderMatcher();
         }
 
-        // Update category filter for image matcher when categories load
-        const _origUpdateCatSelects = updateCategorySelects;
-        updateCategorySelects = function() {
-            _origUpdateCatSelects();
+        // Standalone function to populate image matcher category dropdown
+        function updateIMCategoryFilter() {
             const imSelect = document.getElementById('im-category-filter');
-            if (imSelect) {
+            if (imSelect && categories.length > 0) {
                 const val = imSelect.value;
                 imSelect.innerHTML = '<option value="">בחר קטגוריה...</option>' +
                     categories.map(c => '<option value="' + c.id + '">' + c.name + '</option>').join('');
                 if (val) imSelect.value = val;
             }
+        }
+
+        // Update category filter for image matcher when categories load
+        const _origUpdateCatSelects = updateCategorySelects;
+        updateCategorySelects = function() {
+            _origUpdateCatSelects();
+            updateIMCategoryFilter();
         };
 
         async function saveImageMatches() {
