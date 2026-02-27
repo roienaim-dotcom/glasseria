@@ -3127,7 +3127,9 @@
         function mergeRowsByModel(rows) {
             const groups = {};
             rows.forEach(row => {
-                const key = row.type || row.name || 'unknown';
+                // Smart merge key: name + subcategory to avoid over-merging
+                // Products with same name but different subcategories stay separate
+                const key = (row.name || 'unknown') + '|' + (row.originalSubcategory || '');
                 if (!groups[key]) {
                     groups[key] = {
                         name: row.name,
