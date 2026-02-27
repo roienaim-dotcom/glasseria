@@ -7,6 +7,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- SortableJS for drag and drop -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <!-- PapaParse for CSV parsing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -642,6 +644,204 @@
                 flex-direction: column;
             }
         }
+
+        /* ===== CSV Import Styles ===== */
+        .csv-import-upload {
+            border: 2px dashed #ccc;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #fafafa;
+        }
+
+        .csv-import-upload:hover,
+        .csv-import-upload.dragover {
+            border-color: var(--primary);
+            background: #f0f0f0;
+        }
+
+        .csv-import-file-info {
+            background: #e3f2fd;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            color: #1565c0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .csv-import-assignment {
+            background: var(--white);
+            border: 1px solid #eee;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+
+        .csv-import-assignment-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .csv-import-assignment-field label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .csv-import-assignment-field select,
+        .csv-import-assignment-field input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 2px solid #eee;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+        }
+
+        .csv-import-assignment-field select:focus,
+        .csv-import-assignment-field input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .csv-import-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .csv-import-toolbar-right {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .csv-import-toolbar-right select,
+        .csv-import-toolbar-right input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 13px;
+        }
+
+        .csv-import-toolbar-right input {
+            min-width: 200px;
+        }
+
+        .csv-import-toolbar-left {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .csv-import-counter {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--primary);
+            padding: 6px 12px;
+            background: var(--light);
+            border-radius: 6px;
+        }
+
+        .csv-import-table-wrapper {
+            max-height: 500px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            border-radius: 8px;
+        }
+
+        #csv-import-table thead {
+            position: sticky;
+            top: 0;
+            background: var(--white);
+            z-index: 1;
+        }
+
+        #csv-import-table tbody tr {
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        #csv-import-table tbody tr:hover {
+            background: #f5f5f5;
+        }
+
+        #csv-import-table tbody tr.selected {
+            background: #e8f5e9;
+        }
+
+        .csv-import-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+            align-items: center;
+        }
+
+        .csv-import-actions .btn-success {
+            font-size: 15px;
+            padding: 12px 28px;
+        }
+
+        .csv-import-progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #eee;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 16px;
+        }
+
+        .csv-import-progress-fill {
+            height: 100%;
+            background: var(--success);
+            border-radius: 4px;
+            transition: width 0.3s;
+            width: 0%;
+        }
+
+        .csv-import-result {
+            margin-top: 16px;
+            padding: 16px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .csv-import-result.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .csv-import-result.error {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        @media (max-width: 768px) {
+            .csv-import-assignment-row {
+                grid-template-columns: 1fr;
+            }
+
+            .csv-import-toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .csv-import-toolbar-right,
+            .csv-import-toolbar-left {
+                flex-wrap: wrap;
+            }
+        }
     </style>
 </head>
 <body>
@@ -677,6 +877,7 @@
             <button data-section="categories">📁 קטגוריות</button>
             <button data-section="subcategories">📂 תת-קטגוריות</button>
             <button data-section="products">📦 מוצרים</button>
+            <button data-section="csv-import">📥 ייבוא CSV</button>
         </nav>
         
         <main class="admin-content">
@@ -794,9 +995,110 @@
                     </table>
                 </div>
             </section>
+
+            <!-- CSV Import -->
+            <section class="section" id="section-csv-import">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>📥 ייבוא מוצרים מקובץ CSV</h2>
+                    </div>
+
+                    <!-- Step 1: Upload -->
+                    <div id="csv-upload-area" class="csv-import-upload" onclick="document.getElementById('csv-file-input').click()">
+                        <input type="file" id="csv-file-input" accept=".csv" onchange="handleCSVUpload(this.files[0])" style="display:none;">
+                        <p style="font-size: 18px; margin-bottom: 8px;">📁 לחץ לבחירת קובץ CSV</p>
+                        <p style="font-size: 13px; color: var(--secondary);">או גרור קובץ לכאן</p>
+                    </div>
+
+                    <!-- Step 2+3: Assignment + Table (hidden until file loaded) -->
+                    <div id="csv-import-content" style="display: none;">
+
+                        <!-- File info -->
+                        <div class="csv-import-file-info" id="csv-file-info"></div>
+
+                        <!-- Category Assignment -->
+                        <div class="csv-import-assignment">
+                            <h3 style="margin-bottom: 12px;">שיוך קטגוריה למוצרים שנבחרו</h3>
+                            <div class="csv-import-assignment-row">
+                                <div class="csv-import-assignment-field">
+                                    <label>קטגוריה *</label>
+                                    <select id="csv-import-category" onchange="onImportCategoryChange()">
+                                        <option value="">בחר קטגוריה</option>
+                                    </select>
+                                    <input type="text" id="csv-import-new-category" placeholder="שם הקטגוריה החדשה..." style="display:none; margin-top: 8px;">
+                                </div>
+                                <div class="csv-import-assignment-field">
+                                    <label>תת-קטגוריה</label>
+                                    <select id="csv-import-subcategory" onchange="onImportSubcategoryChange()">
+                                        <option value="">ללא תת-קטגוריה</option>
+                                    </select>
+                                    <input type="text" id="csv-import-new-subcategory" placeholder="שם תת-הקטגוריה החדשה..." style="display:none; margin-top: 8px;">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Filters & Actions -->
+                        <div class="csv-import-toolbar">
+                            <div class="csv-import-toolbar-right">
+                                <select id="csv-filter-category" onchange="filterImportProducts()">
+                                    <option value="">כל הקטגוריות (מקור)</option>
+                                </select>
+                                <input type="text" id="csv-search" placeholder="חיפוש לפי שם מוצר..." oninput="filterImportProducts()">
+                            </div>
+                            <div class="csv-import-toolbar-left">
+                                <button class="btn btn-secondary btn-small" onclick="toggleSelectAll(true)">בחר הכל</button>
+                                <button class="btn btn-secondary btn-small" onclick="toggleSelectAll(false)">נקה בחירה</button>
+                                <span class="csv-import-counter" id="csv-selected-count">0 מתוך 0 נבחרו</span>
+                            </div>
+                        </div>
+
+                        <!-- Products Table -->
+                        <div class="csv-import-table-wrapper">
+                            <table id="csv-import-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 40px;"><input type="checkbox" id="csv-select-all-checkbox" onchange="toggleSelectAll(this.checked)"></th>
+                                        <th>שם מוצר</th>
+                                        <th>מק"ט</th>
+                                        <th>מחיר</th>
+                                        <th>קטגוריה (מקור)</th>
+                                        <th>תת-קטגוריה (מקור)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="csv-import-tbody"></tbody>
+                            </table>
+                        </div>
+
+                        <!-- Load More -->
+                        <div id="csv-load-more" style="display: none; text-align: center; padding: 16px;">
+                            <button class="btn btn-secondary" onclick="loadMoreImportRows()">טען עוד מוצרים</button>
+                            <span id="csv-showing-count" style="margin-right: 12px; color: var(--secondary); font-size: 13px;"></span>
+                        </div>
+
+                        <!-- Import Button -->
+                        <div class="csv-import-actions">
+                            <button class="btn btn-success" id="csv-import-btn" onclick="importSelectedProducts()" disabled>
+                                ייבא מוצרים נבחרים
+                            </button>
+                            <button class="btn btn-secondary" onclick="resetCSVImport()">נקה וטען קובץ חדש</button>
+                        </div>
+
+                        <!-- Progress -->
+                        <div id="csv-import-progress" style="display: none;">
+                            <div class="csv-import-progress-bar">
+                                <div class="csv-import-progress-fill" id="csv-progress-fill"></div>
+                            </div>
+                            <p id="csv-progress-text" style="text-align: center; margin-top: 8px; font-size: 13px;"></p>
+                        </div>
+
+                        <!-- Result -->
+                        <div id="csv-import-result" style="display: none;"></div>
+                    </div>
+                </div>
+            </section>
         </main>
     </div>
-    
+
     <!-- Category Modal -->
     <div class="modal-overlay" id="category-modal">
         <div class="modal">
@@ -1859,6 +2161,443 @@
                 closeDeleteModal();
             }
         });
+
+        // ===== CSV Import =====
+        let csvAllRows = [];          // All parsed rows from CSV
+        let csvFilteredRows = [];     // After filter applied
+        let csvSelectedIds = new Set(); // Set of selected row indices
+        let csvDisplayLimit = 100;    // How many rows to show at once
+
+        // Column mapping for different CSV formats
+        const CSV_COLUMN_MAP = {
+            name:            ['שם_מוצר'],
+            sku:             ['מק"ט'],
+            price:           ['מחיר'],
+            category:        ['קטגוריה', 'סוג'],
+            subcategory:     ['תת_קטגוריה'],
+            description:     ['תיאור'],
+            color:           ['צבע', 'גימור', 'צבע_גוון'],
+            type:            ['סדרה', 'דגם', 'קו_מוצרים'],
+            size:            ['מידה_ס"מ', 'מידה', 'רוחב_ס"מ'],
+            depth:           ['עומק_ס"מ', 'עומק'],
+            height:          ['גובה_ס"מ', 'גובה'],
+            includes:        ['כולל'],
+            notes:           ['הערות'],
+            thickness:       ['עובי_ס"מ'],
+            glass:           ['זכוכית'],
+            warranty:        ['אחריות_שנים'],
+            shippingCost:    ['עלות_הובלה_והתקנה']
+        };
+
+        function findColumn(headers, fieldNames) {
+            for (const fn of fieldNames) {
+                const idx = headers.indexOf(fn);
+                if (idx !== -1) return fn;
+            }
+            return null;
+        }
+
+        function mapCSVRow(row, columnMapping) {
+            const get = (field) => {
+                const col = columnMapping[field];
+                return col ? (row[col] || '').trim() : '';
+            };
+
+            const price = get('price').replace(/[₪,\s]/g, '');
+
+            // Build description from available fields
+            let descParts = [];
+            if (get('description')) descParts.push(get('description'));
+            if (get('includes')) descParts.push('כולל: ' + get('includes'));
+            if (get('notes')) descParts.push(get('notes'));
+            if (get('glass')) descParts.push('זכוכית: ' + get('glass'));
+            if (get('warranty')) descParts.push('אחריות: ' + get('warranty') + ' שנים');
+
+            // Build dimensions string
+            let dims = [];
+            if (get('size')) dims.push('מידה: ' + get('size'));
+            if (get('depth')) dims.push('עומק: ' + get('depth'));
+            if (get('height')) dims.push('גובה: ' + get('height'));
+            if (get('thickness')) dims.push('עובי: ' + get('thickness'));
+            if (dims.length > 0) descParts.push(dims.join(' | '));
+
+            return {
+                name: get('name'),
+                sku: get('sku'),
+                price: parseFloat(price) || 0,
+                originalCategory: get('category'),
+                originalSubcategory: get('subcategory'),
+                description: descParts.join('\n'),
+                color: get('color'),
+                type: get('type'),
+                size: get('size')
+            };
+        }
+
+        function handleCSVUpload(file) {
+            if (!file) return;
+            if (!file.name.endsWith('.csv')) {
+                alert('נא לבחור קובץ CSV');
+                return;
+            }
+
+            Papa.parse(file, {
+                header: true,
+                encoding: 'UTF-8',
+                skipEmptyLines: true,
+                complete: function(results) {
+                    if (results.errors.length > 0) {
+                        console.warn('CSV parse warnings:', results.errors);
+                    }
+
+                    const headers = results.meta.fields;
+
+                    // Build column mapping
+                    const columnMapping = {};
+                    for (const [field, possibleNames] of Object.entries(CSV_COLUMN_MAP)) {
+                        columnMapping[field] = findColumn(headers, possibleNames);
+                    }
+
+                    // Map all rows
+                    csvAllRows = results.data
+                        .map((row, idx) => ({ ...mapCSVRow(row, columnMapping), _index: idx }))
+                        .filter(r => r.name); // Skip rows without a name
+
+                    csvSelectedIds = new Set();
+                    csvDisplayLimit = 100;
+
+                    // Show file info
+                    document.getElementById('csv-file-info').innerHTML =
+                        '<span>📄 <strong>' + file.name + '</strong> — ' + csvAllRows.length + ' מוצרים נמצאו</span>' +
+                        '<span>עמודות: ' + headers.join(', ') + '</span>';
+
+                    // Populate original category filter
+                    const origCats = [...new Set(csvAllRows.map(r => r.originalCategory).filter(Boolean))];
+                    const filterSelect = document.getElementById('csv-filter-category');
+                    filterSelect.innerHTML = '<option value="">כל הקטגוריות (מקור)</option>' +
+                        origCats.map(c => '<option value="' + c + '">' + c + '</option>').join('');
+
+                    // Update import category dropdown
+                    updateImportCategorySelect();
+
+                    // Show content
+                    document.getElementById('csv-upload-area').style.display = 'none';
+                    document.getElementById('csv-import-content').style.display = 'block';
+
+                    filterImportProducts();
+                },
+                error: function(error) {
+                    alert('שגיאה בקריאת הקובץ: ' + error.message);
+                }
+            });
+        }
+
+        // Drag and drop support
+        const uploadArea = document.getElementById('csv-upload-area');
+        if (uploadArea) {
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                const file = e.dataTransfer.files[0];
+                if (file) handleCSVUpload(file);
+            });
+        }
+
+        function updateImportCategorySelect() {
+            const select = document.getElementById('csv-import-category');
+            select.innerHTML = '<option value="">בחר קטגוריה</option>' +
+                categories.map(c => '<option value="' + c.id + '">' + c.name + '</option>').join('') +
+                '<option value="__new__">➕ צור קטגוריה חדשה</option>';
+
+            document.getElementById('csv-import-new-category').style.display = 'none';
+            updateImportSubcategorySelect();
+        }
+
+        function onImportCategoryChange() {
+            const val = document.getElementById('csv-import-category').value;
+            document.getElementById('csv-import-new-category').style.display = val === '__new__' ? 'block' : 'none';
+            updateImportSubcategorySelect();
+            updateImportButton();
+        }
+
+        function updateImportSubcategorySelect() {
+            const categoryId = document.getElementById('csv-import-category').value;
+            const select = document.getElementById('csv-import-subcategory');
+
+            if (!categoryId || categoryId === '__new__') {
+                select.innerHTML = '<option value="">ללא תת-קטגוריה</option>' +
+                    '<option value="__new__">➕ צור תת-קטגוריה חדשה</option>';
+            } else {
+                const subs = subcategories.filter(s => s.categoryId === categoryId);
+                select.innerHTML = '<option value="">ללא תת-קטגוריה</option>' +
+                    subs.map(s => '<option value="' + s.id + '">' + s.name + '</option>').join('') +
+                    '<option value="__new__">➕ צור תת-קטגוריה חדשה</option>';
+            }
+
+            document.getElementById('csv-import-new-subcategory').style.display = 'none';
+        }
+
+        function onImportSubcategoryChange() {
+            const val = document.getElementById('csv-import-subcategory').value;
+            document.getElementById('csv-import-new-subcategory').style.display = val === '__new__' ? 'block' : 'none';
+            updateImportButton();
+        }
+
+        function filterImportProducts() {
+            const catFilter = document.getElementById('csv-filter-category').value;
+            const searchFilter = document.getElementById('csv-search').value.trim().toLowerCase();
+
+            csvFilteredRows = csvAllRows.filter(r => {
+                if (catFilter && r.originalCategory !== catFilter) return false;
+                if (searchFilter && !r.name.toLowerCase().includes(searchFilter)) return false;
+                return true;
+            });
+
+            csvDisplayLimit = 100;
+            renderImportTable();
+        }
+
+        function renderImportTable() {
+            const tbody = document.getElementById('csv-import-tbody');
+            const rowsToShow = csvFilteredRows.slice(0, csvDisplayLimit);
+
+            tbody.innerHTML = rowsToShow.map(row => {
+                const isSelected = csvSelectedIds.has(row._index);
+                return '<tr class="' + (isSelected ? 'selected' : '') + '" onclick="toggleImportRow(' + row._index + ', event)">' +
+                    '<td><input type="checkbox" ' + (isSelected ? 'checked' : '') + ' onclick="event.stopPropagation(); toggleImportRow(' + row._index + ', event)"></td>' +
+                    '<td>' + row.name + '</td>' +
+                    '<td>' + (row.sku || '-') + '</td>' +
+                    '<td>' + (row.price ? '₪' + row.price.toLocaleString() : '-') + '</td>' +
+                    '<td>' + (row.originalCategory || '-') + '</td>' +
+                    '<td>' + (row.originalSubcategory || '-') + '</td>' +
+                    '</tr>';
+            }).join('');
+
+            // Load more button
+            const loadMoreEl = document.getElementById('csv-load-more');
+            if (csvFilteredRows.length > csvDisplayLimit) {
+                loadMoreEl.style.display = 'block';
+                document.getElementById('csv-showing-count').textContent =
+                    'מציג ' + csvDisplayLimit + ' מתוך ' + csvFilteredRows.length;
+            } else {
+                loadMoreEl.style.display = 'none';
+            }
+
+            updateSelectionCount();
+        }
+
+        function loadMoreImportRows() {
+            csvDisplayLimit += 100;
+            renderImportTable();
+        }
+
+        function toggleImportRow(index, event) {
+            if (csvSelectedIds.has(index)) {
+                csvSelectedIds.delete(index);
+            } else {
+                csvSelectedIds.add(index);
+            }
+            renderImportTable();
+        }
+
+        function toggleSelectAll(select) {
+            const visibleRows = csvFilteredRows.slice(0, csvDisplayLimit);
+            if (select) {
+                visibleRows.forEach(r => csvSelectedIds.add(r._index));
+            } else {
+                visibleRows.forEach(r => csvSelectedIds.delete(r._index));
+            }
+            document.getElementById('csv-select-all-checkbox').checked = select;
+            renderImportTable();
+        }
+
+        function updateSelectionCount() {
+            const count = csvSelectedIds.size;
+            const total = csvAllRows.length;
+            document.getElementById('csv-selected-count').textContent = count + ' מתוך ' + total + ' נבחרו';
+            updateImportButton();
+        }
+
+        function updateImportButton() {
+            const btn = document.getElementById('csv-import-btn');
+            const count = csvSelectedIds.size;
+            const categoryVal = document.getElementById('csv-import-category').value;
+
+            const categoryOk = categoryVal && (categoryVal !== '__new__' || document.getElementById('csv-import-new-category').value.trim());
+
+            btn.disabled = count === 0 || !categoryOk;
+            btn.textContent = count > 0 ? 'ייבא ' + count + ' מוצרים נבחרים' : 'ייבא מוצרים נבחרים';
+        }
+
+        // Listen to new category/subcategory name inputs
+        document.getElementById('csv-import-new-category').addEventListener('input', updateImportButton);
+        document.getElementById('csv-import-new-subcategory').addEventListener('input', updateImportButton);
+
+        async function importSelectedProducts() {
+            if (csvSelectedIds.size === 0) return;
+
+            const btn = document.getElementById('csv-import-btn');
+            const progressEl = document.getElementById('csv-import-progress');
+            const progressFill = document.getElementById('csv-progress-fill');
+            const progressText = document.getElementById('csv-progress-text');
+            const resultEl = document.getElementById('csv-import-result');
+
+            btn.disabled = true;
+            btn.textContent = 'מייבא...';
+            progressEl.style.display = 'block';
+            resultEl.style.display = 'none';
+
+            try {
+                // Step 1: Resolve category
+                let categoryId = document.getElementById('csv-import-category').value;
+                let categoryName = '';
+
+                if (categoryId === '__new__') {
+                    const newName = document.getElementById('csv-import-new-category').value.trim();
+                    if (!newName) {
+                        alert('נא להזין שם לקטגוריה החדשה');
+                        btn.disabled = false;
+                        btn.textContent = 'ייבא מוצרים נבחרים';
+                        progressEl.style.display = 'none';
+                        return;
+                    }
+
+                    progressText.textContent = 'יוצר קטגוריה חדשה...';
+                    const docRef = await categoriesCollection.add({
+                        name: newName,
+                        order: categories.length,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    categoryId = docRef.id;
+                    categoryName = newName;
+                } else {
+                    const cat = categories.find(c => c.id === categoryId);
+                    categoryName = cat ? cat.name : '';
+                }
+
+                // Step 2: Resolve subcategory
+                let subcategoryId = document.getElementById('csv-import-subcategory').value;
+
+                if (subcategoryId === '__new__') {
+                    const newSubName = document.getElementById('csv-import-new-subcategory').value.trim();
+                    if (newSubName) {
+                        progressText.textContent = 'יוצר תת-קטגוריה חדשה...';
+                        const subRef = await subcategoriesCollection.add({
+                            categoryId: categoryId,
+                            name: newSubName,
+                            order: subcategories.filter(s => s.categoryId === categoryId).length,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        subcategoryId = subRef.id;
+                    } else {
+                        subcategoryId = null;
+                    }
+                } else if (!subcategoryId) {
+                    subcategoryId = null;
+                }
+
+                // Step 3: Import products in batches
+                const selectedRows = csvAllRows.filter(r => csvSelectedIds.has(r._index));
+                const total = selectedRows.length;
+                let imported = 0;
+                let errors = 0;
+                const BATCH_SIZE = 400; // Stay under Firestore 500 limit
+
+                const existingProductCount = products.length;
+
+                for (let i = 0; i < total; i += BATCH_SIZE) {
+                    const batchRows = selectedRows.slice(i, i + BATCH_SIZE);
+                    const batch = db.batch();
+
+                    batchRows.forEach((row, batchIdx) => {
+                        const docRef = productsCollection.doc();
+                        const productData = {
+                            name: row.name,
+                            sku: row.sku || '',
+                            price: row.price || 0,
+                            categoryId: categoryId,
+                            subcategoryId: subcategoryId,
+                            category: categoryName,
+                            type: row.type || '',
+                            description: row.description || '',
+                            sizes: row.size ? [row.size] : [],
+                            colors: row.color ? [row.color] : [],
+                            images: [],
+                            image: '',
+                            order: existingProductCount + i + batchIdx,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                        };
+                        batch.set(docRef, productData);
+                    });
+
+                    try {
+                        await batch.commit();
+                        imported += batchRows.length;
+                    } catch (err) {
+                        console.error('Batch error:', err);
+                        errors += batchRows.length;
+                    }
+
+                    const progress = Math.round(((i + batchRows.length) / total) * 100);
+                    progressFill.style.width = progress + '%';
+                    progressText.textContent = 'מייבא... ' + (i + batchRows.length) + ' / ' + total;
+                }
+
+                // Done
+                progressFill.style.width = '100%';
+                resultEl.style.display = 'block';
+
+                if (errors === 0) {
+                    resultEl.className = 'csv-import-result success';
+                    resultEl.textContent = '✅ ' + imported + ' מוצרים יובאו בהצלחה!';
+                } else {
+                    resultEl.className = 'csv-import-result error';
+                    resultEl.textContent = '⚠️ ' + imported + ' יובאו בהצלחה, ' + errors + ' נכשלו';
+                }
+
+                // Remove imported rows from selection and data
+                const importedIndices = new Set(selectedRows.map(r => r._index));
+                csvAllRows = csvAllRows.filter(r => !importedIndices.has(r._index));
+                csvSelectedIds.clear();
+                filterImportProducts();
+
+            } catch (error) {
+                console.error('Import error:', error);
+                resultEl.style.display = 'block';
+                resultEl.className = 'csv-import-result error';
+                resultEl.textContent = '❌ שגיאה בייבוא: ' + error.message;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'ייבא מוצרים נבחרים';
+                updateImportButton();
+            }
+        }
+
+        function resetCSVImport() {
+            csvAllRows = [];
+            csvFilteredRows = [];
+            csvSelectedIds.clear();
+            csvDisplayLimit = 100;
+
+            document.getElementById('csv-upload-area').style.display = 'block';
+            document.getElementById('csv-import-content').style.display = 'none';
+            document.getElementById('csv-import-progress').style.display = 'none';
+            document.getElementById('csv-import-result').style.display = 'none';
+            document.getElementById('csv-file-input').value = '';
+            document.getElementById('csv-search').value = '';
+            document.getElementById('csv-import-new-category').value = '';
+            document.getElementById('csv-import-new-subcategory').value = '';
+        }
     </script>
 </body>
 </html>
