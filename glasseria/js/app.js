@@ -82,6 +82,12 @@ let lightboxCurrentIndex = 0;
 // Selection Modal State
 let pendingFavoriteProduct = null;
 
+// Lazy Rendering State
+let renderedCount = 0;
+const PRODUCTS_PER_BATCH = 20;
+let currentFilteredProducts = [];
+let scrollObserver = null;
+
 // DOM Elements
 const mainNav = document.getElementById('main-nav');
 const mobileNav = document.getElementById('mobile-nav');
@@ -884,27 +890,69 @@ function hideProductsBackButton() {
     }
 }
 
-// ===== Render Products =====
+// ===== Render Products (Lazy Rendering) =====
 function renderProducts(filteredProducts = null) {
-    const productsToShow = filteredProducts !== null ? filteredProducts : products;
-    
+    currentFilteredProducts = filteredProducts !== null ? filteredProducts : products;
+    renderedCount = 0;
+
     productsGrid.innerHTML = '';
     productsGrid.style.display = 'grid';
-    
-    if (productsToShow.length === 0) {
+
+    // Disconnect previous observer
+    if (scrollObserver) {
+        scrollObserver.disconnect();
+        scrollObserver = null;
+    }
+
+    if (currentFilteredProducts.length === 0) {
         noProducts.style.display = 'block';
         productsGrid.style.display = 'none';
-    } else {
-        noProducts.style.display = 'none';
-        
-        productsToShow.forEach(product => {
-            const isFavorite = isProductInFavorites(product.id);
-            const card = createProductCard(product, isFavorite);
-            productsGrid.appendChild(card);
-        });
+        productsCountEl.textContent = '0';
+        return;
     }
-    
-    productsCountEl.textContent = productsToShow.length;
+
+    noProducts.style.display = 'none';
+    renderNextBatch();
+    setupScrollObserver();
+}
+
+function renderNextBatch() {
+    if (renderedCount >= currentFilteredProducts.length) return;
+
+    const end = Math.min(renderedCount + PRODUCTS_PER_BATCH, currentFilteredProducts.length);
+    for (let i = renderedCount; i < end; i++) {
+        const product = currentFilteredProducts[i];
+        const isFavorite = isProductInFavorites(product.id);
+        const card = createProductCard(product, isFavorite);
+        productsGrid.appendChild(card);
+    }
+    renderedCount = end;
+
+    // Update counter
+    if (renderedCount < currentFilteredProducts.length) {
+        productsCountEl.textContent = renderedCount + ' מתוך ' + currentFilteredProducts.length;
+    } else {
+        productsCountEl.textContent = currentFilteredProducts.length;
+    }
+
+    // Disconnect observer if all rendered
+    if (renderedCount >= currentFilteredProducts.length && scrollObserver) {
+        scrollObserver.disconnect();
+        scrollObserver = null;
+    }
+}
+
+function setupScrollObserver() {
+    const sentinel = document.getElementById('products-sentinel');
+    if (!sentinel) return;
+
+    scrollObserver = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && renderedCount < currentFilteredProducts.length) {
+            renderNextBatch();
+        }
+    }, { rootMargin: '0px 0px 300px 0px' });
+
+    scrollObserver.observe(sentinel);
 }
 
 // ===== Create Product Card (עם תמיכה בקרוסלה) =====
