@@ -574,7 +574,43 @@
         .sortable-chosen {
             background: #e8f5e9;
         }
-        
+
+        /* Bulk Edit */
+        .bulk-bar {
+            display: none;
+            background: #e3f2fd;
+            border: 1px solid #90caf9;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 12px;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .bulk-bar.active {
+            display: flex;
+        }
+        .bulk-bar .bulk-count {
+            font-weight: 600;
+            color: #1565c0;
+            white-space: nowrap;
+        }
+        .bulk-bar select {
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid #90caf9;
+            background: white;
+        }
+        .bulk-bar .btn {
+            padding: 6px 16px;
+            font-size: 13px;
+        }
+        .bulk-checkbox {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
         /* Loading */
         .loading {
             text-align: center;
@@ -1199,15 +1235,30 @@
                         <div class="spinner"></div>
                         טוען...
                     </div>
+                    <!-- Bulk Action Bar -->
+                    <div class="bulk-bar" id="bulk-bar">
+                        <span class="bulk-count" id="bulk-count">0 נבחרו</span>
+                        <select id="bulk-category" onchange="updateBulkSubcategories()">
+                            <option value="">בחר קטגוריה</option>
+                        </select>
+                        <select id="bulk-subcategory">
+                            <option value="">בחר תת-קטגוריה</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="bulkUpdateProducts()">עדכן נבחרים</button>
+                        <button class="btn" onclick="clearBulkSelection()" style="background: #eee;">בטל בחירה</button>
+                    </div>
+
                     <table id="products-table" style="display: none;">
                         <thead>
                             <tr>
+                                <th style="width: 30px;"><input type="checkbox" class="bulk-checkbox" id="select-all-products" onchange="toggleSelectAll(this.checked)"></th>
                                 <th style="width: 30px;"></th>
                                 <th>תמונה</th>
                                 <th>שם</th>
                                 <th>מק"ט</th>
                                 <th>מחיר</th>
                                 <th>קטגוריה</th>
+                                <th>תת-קטגוריה</th>
                                 <th>פעולות</th>
                             </tr>
                         </thead>
@@ -2062,14 +2113,17 @@
             
             tbody.innerHTML = filteredProducts.map(product => {
                 const cat = categories.find(c => c.id === product.categoryId);
+                const subcat = subcategories.find(s => s.id === product.subcategoryId);
                 return `
                     <tr data-id="${product.id}">
+                        <td><input type="checkbox" class="bulk-checkbox product-checkbox" data-id="${product.id}" onchange="updateBulkBar()"></td>
                         <td><span class="drag-handle">⋮⋮</span></td>
                         <td><img src="${product.image || '../images/placeholder.svg'}" class="table-image" onerror="this.src='../images/placeholder.svg'"></td>
                         <td>${product.name}</td>
                         <td>${product.sku || '-'}</td>
                         <td>₪${product.price || 0}</td>
                         <td>${cat ? cat.name : '-'}</td>
+                        <td>${subcat ? subcat.name : '-'}</td>
                         <td class="actions">
                             <button class="btn btn-icon btn-edit" onclick="editProduct('${product.id}')" title="עריכה">
                                 <svg viewBox="0 0 24 24" stroke-width="2"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
@@ -2081,6 +2135,10 @@
                     </tr>
                 `;
             }).join('');
+
+            // Reset bulk selection UI
+            document.getElementById('select-all-products').checked = false;
+            updateBulkBar();
             
             // Initialize drag and drop
             if (productsSortable) {
@@ -2115,6 +2173,88 @@
             } catch (error) {
                 console.error('שגיאה בעדכון הסדר:', error);
                 alert('שגיאה בעדכון הסדר');
+            }
+        }
+
+        // ===== Bulk Edit =====
+        function getSelectedProductIds() {
+            return Array.from(document.querySelectorAll('.product-checkbox:checked')).map(cb => cb.dataset.id);
+        }
+
+        function toggleSelectAll(checked) {
+            document.querySelectorAll('.product-checkbox').forEach(cb => cb.checked = checked);
+            updateBulkBar();
+        }
+
+        function clearBulkSelection() {
+            document.getElementById('select-all-products').checked = false;
+            toggleSelectAll(false);
+        }
+
+        function updateBulkBar() {
+            const selected = getSelectedProductIds();
+            const bar = document.getElementById('bulk-bar');
+            const count = document.getElementById('bulk-count');
+
+            if (selected.length > 0) {
+                bar.classList.add('active');
+                count.textContent = selected.length + ' נבחרו';
+                // Populate bulk category dropdown
+                const bulkCat = document.getElementById('bulk-category');
+                if (bulkCat.options.length <= 1) {
+                    bulkCat.innerHTML = '<option value="">בחר קטגוריה</option>' +
+                        categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+                }
+            } else {
+                bar.classList.remove('active');
+            }
+        }
+
+        function updateBulkSubcategories() {
+            const categoryId = document.getElementById('bulk-category').value;
+            const select = document.getElementById('bulk-subcategory');
+            const subs = subcategories.filter(s => s.categoryId === categoryId);
+            select.innerHTML = '<option value="">בחר תת-קטגוריה</option>' +
+                subs.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+        }
+
+        async function bulkUpdateProducts() {
+            const selectedIds = getSelectedProductIds();
+            if (selectedIds.length === 0) {
+                alert('לא נבחרו מוצרים');
+                return;
+            }
+
+            const categoryId = document.getElementById('bulk-category').value;
+            const subcategoryId = document.getElementById('bulk-subcategory').value;
+
+            if (!categoryId && !subcategoryId) {
+                alert('בחר קטגוריה או תת-קטגוריה לעדכון');
+                return;
+            }
+
+            const updateData = {};
+            if (categoryId) updateData.categoryId = categoryId;
+            if (subcategoryId) updateData.subcategoryId = subcategoryId;
+
+            const confirmMsg = `לעדכן ${selectedIds.length} מוצרים?`;
+            if (!confirm(confirmMsg)) return;
+
+            try {
+                // Firestore batch limited to 500, split if needed
+                for (let i = 0; i < selectedIds.length; i += 500) {
+                    const chunk = selectedIds.slice(i, i + 500);
+                    const batch = db.batch();
+                    chunk.forEach(id => {
+                        batch.update(productsCollection.doc(id), updateData);
+                    });
+                    await batch.commit();
+                }
+                alert(`✅ ${selectedIds.length} מוצרים עודכנו בהצלחה`);
+                clearBulkSelection();
+            } catch (error) {
+                console.error('שגיאה בעדכון מוצרים:', error);
+                alert('שגיאה בעדכון: ' + error.message);
             }
         }
         
