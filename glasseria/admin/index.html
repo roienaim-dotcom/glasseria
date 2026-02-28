@@ -659,29 +659,321 @@
             margin-bottom: 20px;
         }
         
-        /* Responsive */
+        /* ===== Mobile Responsive ===== */
         @media (max-width: 768px) {
-            .admin-nav button {
+            /* Header */
+            .admin-header {
                 padding: 12px 16px;
-                font-size: 13px;
             }
-            
+            .admin-header h1 {
+                font-size: 16px;
+            }
+
+            /* Navigation - scrollable tabs */
+            .admin-nav {
+                -webkit-overflow-scrolling: touch;
+            }
+            .admin-nav button {
+                padding: 10px 14px;
+                font-size: 12px;
+            }
+
+            /* Content area */
+            .admin-content {
+                padding: 12px;
+            }
+
+            /* Cards */
+            .card {
+                padding: 14px;
+                border-radius: 10px;
+            }
             .card-header {
                 flex-direction: column;
                 gap: 10px;
-                align-items: flex-start;
+                align-items: stretch;
             }
-            
-            table {
+            .card-header h2 {
+                font-size: 16px;
+            }
+            .card-header > div {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            .card-header > div select {
+                flex: 1;
+                min-width: 0;
+            }
+
+            /* Stats grid */
+            .stats-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 10px;
+            }
+            .stat-card {
+                padding: 14px 8px;
+            }
+            .stat-number {
+                font-size: 24px;
+            }
+            .stat-label {
+                font-size: 12px;
+            }
+
+            /* ===== Tables → Mobile Card Layout ===== */
+            #products-table thead,
+            #categories-table thead,
+            #subcategories-table thead {
+                display: none;
+            }
+
+            #products-table,
+            #categories-table,
+            #subcategories-table {
+                display: block;
+            }
+
+            #products-table tbody,
+            #categories-table tbody,
+            #subcategories-table tbody {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            #products-table tbody tr,
+            #categories-table tbody tr,
+            #subcategories-table tbody tr {
+                display: grid;
+                grid-template-columns: auto 1fr;
+                gap: 4px 12px;
+                padding: 12px;
+                border: 1px solid #eee;
+                border-radius: 10px;
+                background: var(--white);
+                box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+                align-items: center;
+                border-bottom: none;
+            }
+
+            #products-table td,
+            #categories-table td,
+            #subcategories-table td {
+                padding: 4px 0;
+                border-bottom: none;
+            }
+
+            /* Products table mobile card */
+            #products-table tbody tr {
+                grid-template-columns: 1fr;
+                grid-template-areas:
+                    "image"
+                    "name"
+                    "sku"
+                    "price"
+                    "category"
+                    "subcategory"
+                    "actions";
+                position: relative;
+            }
+
+            /* Hide checkbox and drag handle on mobile */
+            #products-table tbody td:nth-child(1),
+            #products-table tbody td:nth-child(2) {
+                display: none;
+            }
+
+            /* Product image */
+            #products-table tbody td:nth-child(3) {
+                grid-area: image;
+                text-align: center;
+            }
+            #products-table tbody td:nth-child(3) .table-image {
+                width: 80px;
+                height: 80px;
+                border-radius: 10px;
+            }
+
+            /* Product name */
+            #products-table tbody td:nth-child(4) {
+                grid-area: name;
+                font-weight: 600;
+                font-size: 15px;
+                text-align: center;
+            }
+
+            /* SKU, price, category, subcategory - label + value */
+            #products-table tbody td:nth-child(5),
+            #products-table tbody td:nth-child(6),
+            #products-table tbody td:nth-child(7),
+            #products-table tbody td:nth-child(8) {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 6px 0;
+                border-bottom: 1px solid #f5f5f5;
                 font-size: 13px;
             }
-            
-            th, td {
-                padding: 8px;
+
+            #products-table tbody td:nth-child(5) { grid-area: sku; }
+            #products-table tbody td:nth-child(6) { grid-area: price; }
+            #products-table tbody td:nth-child(7) { grid-area: category; }
+            #products-table tbody td:nth-child(8) { grid-area: subcategory; }
+
+            #products-table tbody td:nth-child(5)::before { content: 'מק"ט:'; font-weight: 500; color: var(--secondary); }
+            #products-table tbody td:nth-child(6)::before { content: 'מחיר:'; font-weight: 500; color: var(--secondary); }
+            #products-table tbody td:nth-child(7)::before { content: 'קטגוריה:'; font-weight: 500; color: var(--secondary); }
+            #products-table tbody td:nth-child(8)::before { content: 'תת-קטגוריה:'; font-weight: 500; color: var(--secondary); }
+
+            /* Actions */
+            #products-table tbody td:nth-child(9) {
+                grid-area: actions;
+                display: flex;
+                flex-direction: row;
+                justify-content: center;
+                gap: 10px;
+                padding-top: 8px;
+                border-top: 1px solid #eee;
+                margin-top: 4px;
             }
-            
-            .actions {
+
+            #products-table tbody td:nth-child(9) .btn-icon {
+                width: 40px;
+                height: 40px;
+            }
+
+            /* Categories table mobile card */
+            #categories-table tbody tr {
+                grid-template-columns: 60px 1fr auto;
+                grid-template-areas: "image name actions";
+            }
+            #categories-table tbody td:nth-child(1) { grid-area: image; }
+            #categories-table tbody td:nth-child(2) { grid-area: name; font-weight: 600; }
+            #categories-table tbody td:nth-child(3) { display: none; } /* hide order column */
+            #categories-table tbody td:nth-child(4) {
+                grid-area: actions;
+                display: flex;
+                flex-direction: row;
+                gap: 6px;
+            }
+
+            /* Subcategories table mobile card */
+            #subcategories-table tbody tr {
+                grid-template-columns: 60px 1fr auto;
+                grid-template-areas:
+                    "image name actions"
+                    "image category actions";
+            }
+            #subcategories-table tbody td:nth-child(1) { grid-area: image; }
+            #subcategories-table tbody td:nth-child(2) { grid-area: name; font-weight: 600; }
+            #subcategories-table tbody td:nth-child(3) { grid-area: category; font-size: 12px; color: var(--secondary); }
+            #subcategories-table tbody td:nth-child(4) { display: none; } /* hide order column */
+            #subcategories-table tbody td:nth-child(5) {
+                grid-area: actions;
+                display: flex;
                 flex-direction: column;
+                gap: 6px;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .table-image {
+                width: 50px;
+                height: 50px;
+            }
+
+            /* ===== Modals - Full Screen on Mobile ===== */
+            .modal-overlay {
+                padding: 0;
+                align-items: stretch;
+            }
+            .modal {
+                max-width: 100% !important;
+                border-radius: 0;
+                max-height: 100vh;
+                min-height: 100vh;
+            }
+            .modal-header {
+                padding: 14px 16px;
+                position: sticky;
+                top: 0;
+                background: var(--white);
+                z-index: 10;
+            }
+            .modal-body {
+                padding: 16px;
+            }
+            .modal-footer {
+                padding: 12px 16px;
+                position: sticky;
+                bottom: 0;
+                background: var(--white);
+                z-index: 10;
+            }
+
+            /* Form inputs larger touch targets */
+            .form-group input,
+            .form-group select,
+            .form-group textarea {
+                padding: 14px 16px;
+                font-size: 16px; /* prevents iOS zoom */
+            }
+
+            /* Checkbox items in modal */
+            .checkbox-group {
+                gap: 6px;
+            }
+            .checkbox-item {
+                padding: 10px 12px;
+                font-size: 14px;
+            }
+
+            /* Custom input row */
+            .custom-input-row {
+                flex-direction: row;
+            }
+            .custom-input-row input {
+                font-size: 16px;
+                padding: 10px 12px;
+            }
+
+            /* Bulk action bar */
+            .bulk-bar {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+            }
+            .bulk-bar select {
+                width: 100%;
+            }
+
+            /* Select all checkbox - hide on mobile */
+            #select-all-products {
+                display: none;
+            }
+
+            /* Images preview grid in modal */
+            .images-preview-grid {
+                grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            }
+
+            /* Sizes-prices in modal */
+            .sizes-prices-row {
+                flex-wrap: wrap;
+            }
+            .sizes-prices-row input {
+                width: 100px;
+                font-size: 16px;
+            }
+
+            /* Buttons */
+            .btn {
+                padding: 12px 20px;
+                font-size: 14px;
+            }
+            .btn-primary {
+                width: 100%;
             }
         }
 
@@ -1097,8 +1389,55 @@
                 flex-wrap: wrap;
             }
 
+            .csv-import-toolbar-right input {
+                min-width: 0;
+                width: 100%;
+            }
+
+            .csv-import-toolbar-right select {
+                width: 100%;
+            }
+
             .im-layout {
                 grid-template-columns: 1fr;
+                min-height: auto;
+            }
+
+            .im-images-grid {
+                grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+                max-height: 300px;
+            }
+
+            #im-products-list {
+                max-height: 300px;
+            }
+
+            /* CSV import table on mobile */
+            #csv-import-table {
+                font-size: 12px;
+            }
+            #csv-import-table th,
+            #csv-import-table td {
+                padding: 6px 4px;
+            }
+            /* Hide less important columns */
+            #csv-import-table th:nth-child(5),
+            #csv-import-table td:nth-child(5),
+            #csv-import-table th:nth-child(6),
+            #csv-import-table td:nth-child(6) {
+                display: none;
+            }
+
+            .csv-import-upload {
+                padding: 24px 16px;
+            }
+
+            .csv-import-actions {
+                flex-direction: column;
+            }
+            .csv-import-actions .btn {
+                width: 100%;
+                text-align: center;
             }
         }
     </style>
@@ -1225,11 +1564,11 @@
                 <div class="card">
                     <div class="card-header">
                         <h2>📦 מוצרים</h2>
-                        <div style="display: flex; gap: 10px; align-items: center;">
-                            <select id="filter-category" onchange="filterProducts()" style="padding: 8px; border-radius: 6px; border: 1px solid #ddd;">
+                        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                            <select id="filter-category" onchange="filterProducts()" style="padding: 8px; border-radius: 6px; border: 1px solid #ddd; flex: 1; min-width: 120px;">
                                 <option value="">כל הקטגוריות</option>
                             </select>
-                            <button class="btn btn-primary" onclick="openProductModal()">+ הוסף מוצר</button>
+                            <button class="btn btn-primary" onclick="openProductModal()" style="white-space: nowrap;">+ הוסף מוצר</button>
                         </div>
                     </div>
                     <p style="background: #e3f2fd; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 13px; color: #1565c0;">
