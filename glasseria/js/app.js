@@ -977,7 +977,7 @@ function createProductCard(product, isFavorite) {
             <h3 class="product-name">${product.name}</h3>
             <p class="product-sku">מק"ט: ${product.sku || '-'}</p>
             ${product.type ? `<p class="product-type">${product.type}</p>` : ''}
-            <p class="product-price">${product.sizesPrices && product.sizesPrices.length > 1 && new Set(product.sizesPrices.map(sp => sp.price)).size > 1 ? 'החל מ-' : ''}₪${product.price || '0'}</p>
+            <p class="product-price">${(product.sizesPrices && product.sizesPrices.length > 1 && new Set(product.sizesPrices.map(sp => sp.price)).size > 1) || (product.colorsPrices && product.colorsPrices.length > 1 && new Set(product.colorsPrices.map(cp => cp.price)).size > 1) ? 'החל מ-' : ''}₪${product.price || '0'}</p>
         </div>
     `;
     
@@ -1028,7 +1028,7 @@ function openProductModal(product) {
                 ${product.type ? `<p class="modal-product-type">${product.type}</p>` : ''}
                 ${product.description ? `<p class="modal-product-description">${product.description}</p>` : ''}
                 <div class="modal-product-price" id="modal-dynamic-price">
-                    ${product.sizesPrices && product.sizesPrices.length > 1 && new Set(product.sizesPrices.map(sp => sp.price)).size > 1 ? '<span class="price-prefix">החל מ-</span>' : ''}₪${product.price || '0'}
+                    ${(product.sizesPrices && product.sizesPrices.length > 1 && new Set(product.sizesPrices.map(sp => sp.price)).size > 1) || (product.colorsPrices && product.colorsPrices.length > 1 && new Set(product.colorsPrices.map(cp => cp.price)).size > 1) ? '<span class="price-prefix">החל מ-</span>' : ''}₪${product.price || '0'}
                 </div>
 
                 ${product.sizes && product.sizes.length > 0 ? `
@@ -1289,7 +1289,7 @@ function renderFavoritesList() {
                 <div class="favorite-item-name">${product.name}</div>
                 <div class="favorite-item-sku">מק"ט: ${product.sku || '-'}</div>
                 ${selectionInfo}
-                <div class="favorite-item-price">${product.sizesPrices && product.sizesPrices.length > 1 && new Set(product.sizesPrices.map(sp => sp.price)).size > 1 ? 'החל מ-' : ''}₪${product.price || 0}</div>
+                <div class="favorite-item-price">${(product.sizesPrices && product.sizesPrices.length > 1 && new Set(product.sizesPrices.map(sp => sp.price)).size > 1) || (product.colorsPrices && product.colorsPrices.length > 1 && new Set(product.colorsPrices.map(cp => cp.price)).size > 1) ? 'החל מ-' : ''}₪${product.price || 0}</div>
             </div>
             <button class="favorite-item-remove" data-id="${product.id}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

@@ -1596,6 +1596,10 @@
                             <button type="button" class="btn btn-secondary btn-small" onclick="addCustomColor()">+ הוסף</button>
                         </div>
                     </div>
+                    <div class="form-group" id="colors-prices-section" style="display: none;">
+                        <label>מחיר לפי צבע</label>
+                        <div id="colors-prices-table"></div>
+                    </div>
                     <div class="form-group">
                         <label>תמונות (ניתן לבחור מספר תמונות)</label>
                         <div class="image-upload" onclick="document.getElementById('product-images').click()">
@@ -2412,6 +2416,65 @@
         const _origRemoveCustomSize = removeCustomSize;
         removeCustomSize = function(idx) { _origRemoveCustomSize(idx); updateSizesPricesTable(); };
 
+        // ===== Colors-Prices Management =====
+        let currentColorsPrices = {}; // { color: price }
+
+        function updateColorsPricesTable() {
+            const checkedColors = Array.from(document.querySelectorAll('input[name="colors"]:checked')).map(cb => cb.value);
+            const allColors = [...checkedColors, ...customColors];
+            const section = document.getElementById('colors-prices-section');
+            const table = document.getElementById('colors-prices-table');
+
+            if (allColors.length === 0) {
+                section.style.display = 'none';
+                return;
+            }
+
+            section.style.display = 'block';
+            table.innerHTML = allColors.map(color => {
+                const price = currentColorsPrices[color] || '';
+                return '<div class="sizes-prices-row">' +
+                    '<span class="sp-label">' + color + ':</span>' +
+                    '<input type="number" step="0.01" placeholder="מחיר (ריק = מחיר ראשי)" value="' + price + '" data-color="' + color + '" onchange="onColorPriceChange(this)">' +
+                    '<span style="font-size:12px;color:var(--secondary);">₪</span>' +
+                    '</div>';
+            }).join('') +
+            '<p class="sizes-prices-hint">השאר ריק לשימוש במחיר הראשי. מחירים שונים יציגו "החל מ-" באתר.</p>';
+        }
+
+        function onColorPriceChange(input) {
+            const color = input.dataset.color;
+            const val = parseFloat(input.value);
+            if (!isNaN(val) && val > 0) {
+                currentColorsPrices[color] = val;
+            } else {
+                delete currentColorsPrices[color];
+            }
+        }
+
+        function collectColorsPrices() {
+            const checkedColors = Array.from(document.querySelectorAll('input[name="colors"]:checked')).map(cb => cb.value);
+            const allColors = [...checkedColors, ...customColors];
+            const result = [];
+            allColors.forEach(color => {
+                if (currentColorsPrices[color]) {
+                    result.push({ color: color, price: currentColorsPrices[color] });
+                }
+            });
+            return result;
+        }
+
+        // Listen for color checkbox changes to update pricing table
+        document.querySelectorAll('input[name="colors"]').forEach(cb => {
+            cb.addEventListener('change', updateColorsPricesTable);
+        });
+
+        // Override addCustomColor/removeCustomColor to also update pricing table
+        const _origAddCustomColor = addCustomColor;
+        addCustomColor = function() { _origAddCustomColor(); updateColorsPricesTable(); };
+        const _origRemoveCustomColor = removeCustomColor;
+        removeCustomColor = function(idx) { _origRemoveCustomColor(idx); updateColorsPricesTable(); };
+
         function openProductModal(product = null) {
             document.getElementById('product-modal').classList.add('active');
             document.getElementById('product-modal-title').textContent = product ? 'עריכת מוצר' : 'הוסף מוצר';
@@ -2459,6 +2522,13 @@
                     });
                 }
 
+                // Load colorsPrices
+                if (product.colorsPrices && product.colorsPrices.length > 0) {
+                    product.colorsPrices.forEach(cp => {
+                        currentColorsPrices[cp.color] = cp.price;
+                    });
+                }
+
                 // Load existing images
                 if (product.images && product.images.length > 0) {
                     existingProductImages = [...product.images];
@@ -2475,6 +2545,7 @@
             renderCustomSizes();
             renderCustomColors();
             updateSizesPricesTable();
+            updateColorsPricesTable();
             renderProductImagesPreview();
             document.getElementById('product-compression-status').style.display = 'none';
         }
@@ -2483,6 +2554,8 @@
             document.getElementById('product-modal').classList.remove('active');
             customSizes = [];
             customColors = [];
+            currentSizesPrices = {};
+            currentColorsPrices = {};
             pendingProductImages = [];
             existingProductImages = [];
             productImagesOrder = [];
@@ -2632,6 +2705,7 @@
                 const cat = categories.find(c => c.id === categoryId);
                 
                 const sizesPrices = collectSizesPrices();
+                const colorsPrices = collectColorsPrices();
 
                 const data = {
                     name,
@@ -2645,6 +2719,7 @@
                     sizes,
                     colors,
                     sizesPrices,
+                    colorsPrices,
                     order,
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 };
