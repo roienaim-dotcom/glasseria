@@ -2149,16 +2149,23 @@
             // Initialize drag and drop
             if (productsSortable) {
                 productsSortable.destroy();
+                productsSortable = null;
             }
-            productsSortable = new Sortable(tbody, {
-                animation: 150,
-                handle: '.drag-handle',
-                ghostClass: 'sortable-ghost',
-                chosenClass: 'sortable-chosen',
-                onEnd: async function(evt) {
-                    await updateProductsOrder();
-                }
-            });
+            if (tbody) {
+                productsSortable = new Sortable(tbody, {
+                    animation: 150,
+                    handle: '.drag-handle',
+                    ghostClass: 'sortable-ghost',
+                    chosenClass: 'sortable-chosen',
+                    onEnd: async function(evt) {
+                        try {
+                            await updateProductsOrder();
+                        } catch (e) {
+                            console.error('Error updating products order:', e);
+                        }
+                    }
+                });
+            }
         }
         
         // Update products order after drag
@@ -2525,8 +2532,8 @@
             });
 
             // Init drag and drop
-            if (imagesSortable) imagesSortable.destroy();
-            if (productImagesOrder.length > 1) {
+            if (imagesSortable) { imagesSortable.destroy(); imagesSortable = null; }
+            if (container && productImagesOrder.length > 1) {
                 imagesSortable = new Sortable(container, {
                     animation: 150,
                     ghostClass: 'sortable-ghost',
@@ -2537,7 +2544,8 @@
                             newOrder.push(productImagesOrder[parseInt(item.dataset.orderIdx)]);
                         });
                         productImagesOrder = newOrder;
-                        renderProductImagesPreview();
+                        // Defer re-render to let SortableJS finish its internal cleanup
+                        setTimeout(() => renderProductImagesPreview(), 0);
                     }
                 });
             }
