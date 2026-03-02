@@ -1163,13 +1163,13 @@ function openProductModal(product) {
 
 function closeProductModal() {
     productModal.classList.remove('active');
-    // Restore body scroll
-    const scrollY = document.body.dataset.scrollY || '0';
+    // Restore body scroll - scrollTo BEFORE removing fixed to prevent jump
+    const scrollY = parseInt(document.body.dataset.scrollY || '0');
     document.body.style.position = '';
     document.body.style.top = '';
     document.body.style.width = '';
     document.body.style.overflow = '';
-    window.scrollTo(0, parseInt(scrollY));
+    window.scrollTo({ top: scrollY, behavior: 'instant' });
 }
 
 // ===== Event Listeners =====
