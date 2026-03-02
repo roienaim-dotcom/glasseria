@@ -1047,7 +1047,10 @@ function openProductModal(product) {
                     <div class="modal-product-colors">
                         <strong>צבעים זמינים:</strong>
                         <div class="color-options">
-                            ${product.colors.map(c => `<span class="color-option">${c}</span>`).join('')}
+                            ${product.colors.map(c => {
+                                const cp = product.colorsPrices && product.colorsPrices.find(cp => cp.color === c);
+                                return `<span class="color-option ${cp ? 'has-price' : ''}" data-color="${c}" ${cp ? `data-price="${cp.price}"` : ''}>${c}</span>`;
+                            }).join('')}
                         </div>
                     </div>
                 ` : ''}
@@ -1095,10 +1098,22 @@ function openProductModal(product) {
     const sizeOptions = modalContent.querySelectorAll('.size-option.has-price');
     sizeOptions.forEach(opt => {
         opt.addEventListener('click', () => {
-            // Toggle active state
             sizeOptions.forEach(o => o.classList.remove('active'));
             opt.classList.add('active');
-            // Update price display
+            const price = parseFloat(opt.dataset.price);
+            const priceEl = document.getElementById('modal-dynamic-price');
+            if (priceEl && !isNaN(price)) {
+                priceEl.innerHTML = '₪' + price.toLocaleString();
+            }
+        });
+    });
+
+    // Color option click handlers - update price on click
+    const colorOptions = modalContent.querySelectorAll('.color-option.has-price');
+    colorOptions.forEach(opt => {
+        opt.addEventListener('click', () => {
+            colorOptions.forEach(o => o.classList.remove('active'));
+            opt.classList.add('active');
             const price = parseFloat(opt.dataset.price);
             const priceEl = document.getElementById('modal-dynamic-price');
             if (priceEl && !isNaN(price)) {

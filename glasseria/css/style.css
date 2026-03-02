@@ -813,18 +813,21 @@ body {
     font-size: 12px;
 }
 
-.size-option.has-price {
+.size-option.has-price,
+.color-option.has-price {
     cursor: pointer;
     transition: all 0.2s ease;
     border: 2px solid transparent;
 }
 
-.size-option.has-price:hover {
+.size-option.has-price:hover,
+.color-option.has-price:hover {
     background: #e3f2fd;
     border-color: var(--primary);
 }
 
-.size-option.has-price.active {
+.size-option.has-price.active,
+.color-option.has-price.active {
     background: var(--primary);
     color: var(--white);
     border-color: var(--primary);
