@@ -683,9 +683,13 @@ async function loadAllData() {
             
             showLoading(false);
             updateFavoritesCount();
-            
-            renderCategories();
-            renderProducts();
+
+            // Re-render products for current view (category/subcategory filter)
+            if (currentView === 'products' && currentCategoryId) {
+                showProductsWithoutHistory(currentCategoryId, currentSubcategoryId);
+            } else {
+                renderProducts();
+            }
             
         });
     } catch (error) {
