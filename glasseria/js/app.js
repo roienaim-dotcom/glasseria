@@ -684,6 +684,9 @@ async function loadAllData() {
             showLoading(false);
             updateFavoritesCount();
 
+            // Re-render categories to update product counts
+            renderCategories();
+
             // Re-render products for current view (category/subcategory filter)
             if (currentView === 'products' && currentCategoryId) {
                 showProductsWithoutHistory(currentCategoryId, currentSubcategoryId);
