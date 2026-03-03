@@ -1853,6 +1853,8 @@ img {
         overflow-x: auto;
         scrollbar-width: none;
         -ms-overflow-style: none;
+        transition: none; /* Disable transform transition - using native scroll on touch */
+        transform: none !important; /* Prevent transform from interfering with scroll-snap */
     }
     
     .product-image-carousel::-webkit-scrollbar,

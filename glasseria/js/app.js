@@ -636,52 +636,104 @@ function navigateLightbox(direction) {
 }
 
 // ===== Load All Data =====
+let dataLoadRetries = 0;
+const MAX_RETRIES = 3;
+let categoriesLoaded = false;
+let subcategoriesLoaded = false;
+let productsLoaded = false;
+let loadingTimeout = null;
+// Store unsubscribe functions to prevent duplicate listeners on retry
+let unsubCategories = null;
+let unsubSubcategories = null;
+let unsubProducts = null;
+
 async function loadAllData() {
     showLoading(true);
-    
+    categoriesLoaded = false;
+    subcategoriesLoaded = false;
+    productsLoaded = false;
+
+    // Unsubscribe old listeners before creating new ones (prevents duplicates on retry)
+    if (unsubCategories) { unsubCategories(); unsubCategories = null; }
+    if (unsubSubcategories) { unsubSubcategories(); unsubSubcategories = null; }
+    if (unsubProducts) { unsubProducts(); unsubProducts = null; }
+
+    // Timeout: אם לא נטען תוך 12 שניות, הצג הודעה ונסה שוב
+    if (loadingTimeout) clearTimeout(loadingTimeout);
+    loadingTimeout = setTimeout(() => {
+        if (!productsLoaded) {
+            console.warn('Loading timeout - data not received in 12s');
+            if (dataLoadRetries < MAX_RETRIES) {
+                dataLoadRetries++;
+                console.log(`Retry ${dataLoadRetries}/${MAX_RETRIES}...`);
+                showLoadingError('הטעינה איטית... מנסה שוב');
+                loadAllData();
+            } else {
+                showLoadingError('לא הצלחנו לטעון את המוצרים. בדקו את החיבור לאינטרנט ורעננו את הדף.');
+            }
+        }
+    }, 12000);
+
+    const handleError = (source) => (error) => {
+        console.error(`Error loading ${source}:`, error);
+        if (loadingTimeout) {
+            clearTimeout(loadingTimeout);
+            loadingTimeout = null;
+        }
+        showLoadingError('שגיאה בטעינה. נסו לרענן את הדף.');
+    };
+
     try {
         // Load categories
-        categoriesCollection.orderBy('order').onSnapshot((snapshot) => {
+        unsubCategories = categoriesCollection.orderBy('order').onSnapshot((snapshot) => {
             categories = [];
             snapshot.forEach((doc) => {
                 categories.push({ id: doc.id, ...doc.data() });
             });
+            categoriesLoaded = true;
             renderCategories();
             renderNavigation();
-        });
-        
+            checkAllDataLoaded();
+        }, handleError('categories'));
+
         // Load subcategories
-        subcategoriesCollection.orderBy('order').onSnapshot((snapshot) => {
+        unsubSubcategories = subcategoriesCollection.orderBy('order').onSnapshot((snapshot) => {
             subcategories = [];
             snapshot.forEach((doc) => {
                 subcategories.push({ id: doc.id, ...doc.data() });
             });
-        });
-        
-        // Load products - load without orderBy to support products without order field
-        productsCollection.onSnapshot((snapshot) => {
+            subcategoriesLoaded = true;
+            checkAllDataLoaded();
+        }, handleError('subcategories'));
+
+        // Load products
+        unsubProducts = productsCollection.onSnapshot((snapshot) => {
             products = [];
             snapshot.forEach((doc) => {
                 products.push({ id: doc.id, ...doc.data() });
             });
-            
+
             // Sort in memory: products with order first (by order), then products without order (by createdAt)
             products.sort((a, b) => {
-                // Both have order - sort by order
                 if (a.order !== undefined && b.order !== undefined) {
                     return a.order - b.order;
                 }
-                // Only a has order - a comes first
                 if (a.order !== undefined) return -1;
-                // Only b has order - b comes first
                 if (b.order !== undefined) return 1;
-                // Neither has order - sort by createdAt (newest first)
                 const aTime = a.createdAt?.toMillis?.() || 0;
                 const bTime = b.createdAt?.toMillis?.() || 0;
                 return bTime - aTime;
             });
-            
+
+            productsLoaded = true;
+            if (loadingTimeout) {
+                clearTimeout(loadingTimeout);
+                loadingTimeout = null;
+            }
+            dataLoadRetries = 0;
+
             showLoading(false);
+            hideLoadingError();
             updateFavoritesCount();
 
             // Re-render categories to update product counts
@@ -693,12 +745,40 @@ async function loadAllData() {
             } else {
                 renderProducts();
             }
-            
-        });
+
+        }, handleError('products'));
     } catch (error) {
-        console.error('Error loading data:', error);
+        console.error('Error setting up listeners:', error);
         showLoading(false);
+        showLoadingError('שגיאה בטעינה. נסו לרענן את הדף.');
     }
+}
+
+function checkAllDataLoaded() {
+    if (categoriesLoaded && subcategoriesLoaded && productsLoaded && loadingTimeout) {
+        clearTimeout(loadingTimeout);
+        loadingTimeout = null;
+    }
+}
+
+function showLoadingError(message) {
+    let errorEl = document.getElementById('loading-error');
+    if (!errorEl) {
+        errorEl = document.createElement('div');
+        errorEl.id = 'loading-error';
+        errorEl.style.cssText = 'text-align:center;padding:20px;color:#c62828;font-weight:500;';
+        const loadingParent = loadingEl ? loadingEl.parentNode : document.querySelector('.products-section .container');
+        if (loadingParent) {
+            loadingParent.insertBefore(errorEl, loadingEl ? loadingEl.nextSibling : null);
+        }
+    }
+    errorEl.innerHTML = `<p>${message}</p><button onclick="location.reload()" style="margin-top:10px;padding:8px 20px;background:#1a1a1a;color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:inherit;">רענן דף</button>`;
+    errorEl.style.display = 'block';
+}
+
+function hideLoadingError() {
+    const errorEl = document.getElementById('loading-error');
+    if (errorEl) errorEl.style.display = 'none';
 }
 
 // ===== Show/Hide Loading =====
@@ -927,13 +1007,37 @@ function renderNextBatch() {
     if (renderedCount >= currentFilteredProducts.length) return;
 
     const end = Math.min(renderedCount + PRODUCTS_PER_BATCH, currentFilteredProducts.length);
+
+    // Use DocumentFragment to batch DOM insertions (reduces reflows)
+    const fragment = document.createDocumentFragment();
+    const cardsToInit = [];
+
     for (let i = renderedCount; i < end; i++) {
         const product = currentFilteredProducts[i];
         const isFavorite = isProductInFavorites(product.id);
-        const card = createProductCard(product, isFavorite);
-        productsGrid.appendChild(card);
+        const card = createProductCard(product, isFavorite, true); // skipCarouselInit=true
+        fragment.appendChild(card);
+
+        // Collect images for carousel init after DOM insertion
+        const images = product.images && product.images.length > 0
+            ? product.images
+            : (product.image ? [product.image] : ['images/placeholder.svg']);
+        if (images.length > 0) {
+            cardsToInit.push({ card, images });
+        }
     }
+
+    productsGrid.appendChild(fragment);
     renderedCount = end;
+
+    // Initialize all carousels in a single requestAnimationFrame (instead of 20 separate setTimeouts)
+    if (cardsToInit.length > 0 && typeof productCarousel !== 'undefined') {
+        requestAnimationFrame(() => {
+            cardsToInit.forEach(({ card, images }) => {
+                productCarousel.initCardCarousel(card, images);
+            });
+        });
+    }
 
     // Update counter
     if (renderedCount < currentFilteredProducts.length) {
@@ -963,12 +1067,12 @@ function setupScrollObserver() {
 }
 
 // ===== Create Product Card (עם תמיכה בקרוסלה) =====
-function createProductCard(product, isFavorite) {
+function createProductCard(product, isFavorite, skipCarouselInit = false) {
     // תמיכה גם בתמונה בודדת וגם במערך תמונות
-    const images = product.images && product.images.length > 0 
-        ? product.images 
+    const images = product.images && product.images.length > 0
+        ? product.images
         : (product.image ? [product.image] : ['images/placeholder.svg']);
-    
+
     const card = document.createElement('div');
     card.className = 'product-card';
     card.innerHTML = `
@@ -987,28 +1091,30 @@ function createProductCard(product, isFavorite) {
             <p class="product-price">${(product.sizesPrices && product.sizesPrices.length > 1 && new Set(product.sizesPrices.map(sp => sp.price)).size > 1) || (product.colorsPrices && product.colorsPrices.length > 1 && new Set(product.colorsPrices.map(cp => cp.price)).size > 1) ? 'החל מ-' : ''}₪${product.price || '0'}</p>
         </div>
     `;
-    
-    // אתחול הקרוסלה
-    setTimeout(() => {
-        if (typeof productCarousel !== 'undefined') {
-            productCarousel.initCardCarousel(card, images);
-        }
-    }, 10);
-    
+
+    // אתחול הקרוסלה - רק אם לא נדחה ל-batch init
+    if (!skipCarouselInit) {
+        requestAnimationFrame(() => {
+            if (typeof productCarousel !== 'undefined') {
+                productCarousel.initCardCarousel(card, images);
+            }
+        });
+    }
+
     // לחיצה על הכרטיס פותחת את המודל
     card.addEventListener('click', (e) => {
         if (!e.target.closest('.favorite-btn') && !e.target.closest('.carousel-arrow')) {
             openProductModal(product);
         }
     });
-    
+
     // כפתור מועדפים
     const favoriteBtn = card.querySelector('.favorite-btn');
     favoriteBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         toggleFavorite(product.id, favoriteBtn, product);
     });
-    
+
     return card;
 }
 
