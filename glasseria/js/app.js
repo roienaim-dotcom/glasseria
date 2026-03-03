@@ -658,21 +658,29 @@ async function loadAllData() {
     if (unsubSubcategories) { unsubSubcategories(); unsubSubcategories = null; }
     if (unsubProducts) { unsubProducts(); unsubProducts = null; }
 
-    // Timeout: אם לא נטען תוך 12 שניות, הצג הודעה ונסה שוב
+    // Slow connection hint after 5 seconds
     if (loadingTimeout) clearTimeout(loadingTimeout);
-    loadingTimeout = setTimeout(() => {
+    const slowHintTimeout = setTimeout(() => {
         if (!productsLoaded) {
-            console.warn('Loading timeout - data not received in 12s');
+            showLoadingHint('החיבור איטי, הטעינה עשויה לקחת מספר שניות...');
+        }
+    }, 5000);
+
+    // Timeout: אם לא נטען תוך 25 שניות, הצג הודעה ונסה שוב
+    loadingTimeout = setTimeout(() => {
+        clearTimeout(slowHintTimeout);
+        if (!productsLoaded) {
+            console.warn('Loading timeout - data not received in 25s');
             if (dataLoadRetries < MAX_RETRIES) {
                 dataLoadRetries++;
                 console.log(`Retry ${dataLoadRetries}/${MAX_RETRIES}...`);
-                showLoadingError('הטעינה איטית... מנסה שוב');
+                showLoadingError('החיבור איטי ולכן הטעינה מתעכבת... מנסה שוב');
                 loadAllData();
             } else {
-                showLoadingError('לא הצלחנו לטעון את המוצרים. בדקו את החיבור לאינטרנט ורעננו את הדף.');
+                showLoadingError('לא הצלחנו לטעון את המוצרים. נראה שהחיבור לאינטרנט איטי מדי. נסו לרענן את הדף.');
             }
         }
-    }, 12000);
+    }, 25000);
 
     const handleError = (source) => (error) => {
         console.error(`Error loading ${source}:`, error);
@@ -734,6 +742,7 @@ async function loadAllData() {
 
             showLoading(false);
             hideLoadingError();
+            hideLoadingHint();
             updateFavoritesCount();
 
             // Re-render categories to update product counts
@@ -779,6 +788,25 @@ function showLoadingError(message) {
 function hideLoadingError() {
     const errorEl = document.getElementById('loading-error');
     if (errorEl) errorEl.style.display = 'none';
+}
+
+function showLoadingHint(message) {
+    let hintEl = document.getElementById('loading-hint');
+    if (!hintEl) {
+        hintEl = document.createElement('div');
+        hintEl.id = 'loading-hint';
+        hintEl.style.cssText = 'text-align:center;padding:10px;color:#666;font-size:14px;';
+        if (loadingEl && loadingEl.parentNode) {
+            loadingEl.parentNode.insertBefore(hintEl, loadingEl.nextSibling);
+        }
+    }
+    hintEl.textContent = message;
+    hintEl.style.display = 'block';
+}
+
+function hideLoadingHint() {
+    const hintEl = document.getElementById('loading-hint');
+    if (hintEl) hintEl.style.display = 'none';
 }
 
 // ===== Show/Hide Loading =====
