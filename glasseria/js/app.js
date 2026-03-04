@@ -1173,8 +1173,10 @@ function updateModalPrice(product) {
     const selectedSize = selectedSizeEl ? selectedSizeEl.dataset.size : null;
     const selectedColor = selectedColorEl ? selectedColorEl.dataset.color : null;
 
-    // Priority 1: variantPrices (size+color combination)
-    if (selectedSize && selectedColor && product.variantPrices && product.variantPrices.length > 0) {
+    const hasVariants = product.variantPrices && product.variantPrices.length > 0;
+
+    // Priority 1: variantPrices (size+color combination) - requires both dimensions
+    if (selectedSize && selectedColor && hasVariants) {
         const variant = product.variantPrices.find(v => v.size === selectedSize && v.color === selectedColor);
         if (variant) {
             priceEl.innerHTML = '₪' + variant.price.toLocaleString();
@@ -1182,21 +1184,25 @@ function updateModalPrice(product) {
         }
     }
 
-    // Priority 2: sizesPrices
-    if (selectedSize && product.sizesPrices && product.sizesPrices.length > 0) {
-        const sp = product.sizesPrices.find(sp => sp.size === selectedSize);
-        if (sp) {
-            priceEl.innerHTML = '₪' + sp.price.toLocaleString();
-            return;
+    // When product has variant pricing, skip individual size/color price fallbacks
+    // (they may have stale values that don't match the variant matrix)
+    if (!hasVariants) {
+        // Priority 2: sizesPrices
+        if (selectedSize && product.sizesPrices && product.sizesPrices.length > 0) {
+            const sp = product.sizesPrices.find(sp => sp.size === selectedSize);
+            if (sp) {
+                priceEl.innerHTML = '₪' + sp.price.toLocaleString();
+                return;
+            }
         }
-    }
 
-    // Priority 3: colorsPrices
-    if (selectedColor && product.colorsPrices && product.colorsPrices.length > 0) {
-        const cp = product.colorsPrices.find(cp => cp.color === selectedColor);
-        if (cp) {
-            priceEl.innerHTML = '₪' + cp.price.toLocaleString();
-            return;
+        // Priority 3: colorsPrices
+        if (selectedColor && product.colorsPrices && product.colorsPrices.length > 0) {
+            const cp = product.colorsPrices.find(cp => cp.color === selectedColor);
+            if (cp) {
+                priceEl.innerHTML = '₪' + cp.price.toLocaleString();
+                return;
+            }
         }
     }
 
@@ -1209,20 +1215,24 @@ function updateModalPrice(product) {
 }
 
 function getResolvedPrice(product, selectedSize, selectedColor) {
+    const hasVariants = product.variantPrices && product.variantPrices.length > 0;
     // Priority 1: variantPrices (size+color combination)
-    if (selectedSize && selectedColor && product.variantPrices && product.variantPrices.length > 0) {
+    if (selectedSize && selectedColor && hasVariants) {
         const variant = product.variantPrices.find(v => v.size === selectedSize && v.color === selectedColor);
         if (variant) return variant.price;
     }
-    // Priority 2: sizesPrices
-    if (selectedSize && product.sizesPrices && product.sizesPrices.length > 0) {
-        const sp = product.sizesPrices.find(sp => sp.size === selectedSize);
-        if (sp) return sp.price;
-    }
-    // Priority 3: colorsPrices
-    if (selectedColor && product.colorsPrices && product.colorsPrices.length > 0) {
-        const cp = product.colorsPrices.find(cp => cp.color === selectedColor);
-        if (cp) return cp.price;
+    // When product has variant pricing, skip individual size/color price fallbacks
+    if (!hasVariants) {
+        // Priority 2: sizesPrices
+        if (selectedSize && product.sizesPrices && product.sizesPrices.length > 0) {
+            const sp = product.sizesPrices.find(sp => sp.size === selectedSize);
+            if (sp) return sp.price;
+        }
+        // Priority 3: colorsPrices
+        if (selectedColor && product.colorsPrices && product.colorsPrices.length > 0) {
+            const cp = product.colorsPrices.find(cp => cp.color === selectedColor);
+            if (cp) return cp.price;
+        }
     }
     // Fallback: base price
     return product.price || 0;
