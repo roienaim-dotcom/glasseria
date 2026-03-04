@@ -842,7 +842,7 @@ body {
 .price-hint {
     font-size: 14px;
     font-weight: 400;
-    color: var(--primary);
+    color: #e53935;
 }
 
 .modal-favorite-btn {
