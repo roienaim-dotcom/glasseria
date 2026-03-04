@@ -203,7 +203,7 @@ function createSelectionModal() {
                     <div class="selection-options" id="selection-sizes"></div>
                 </div>
                 <div class="selection-group" id="selection-colors-group" style="display: none;">
-                    <label>בחר צבע:</label>
+                    <label id="selection-colors-label">בחר צבע:</label>
                     <div class="selection-options" id="selection-colors"></div>
                 </div>
                 <div class="selection-note" id="selection-note" style="display: none;">
@@ -273,6 +273,7 @@ function openSelectionModal(product, sourceButton) {
     // Set colors
     if (product.colors && product.colors.length > 0) {
         colorsGroup.style.display = 'block';
+        document.getElementById('selection-colors-label').textContent = getProductColorsLabel(product, 'select');
         colorsContainer.innerHTML = product.colors.map(color => `
             <button class="selection-option" data-type="color" data-value="${color}">${color}</button>
         `).join('');
@@ -1116,7 +1117,7 @@ function createProductCard(product, isFavorite, skipCarouselInit = false) {
             <h3 class="product-name">${product.name}</h3>
             <p class="product-sku">מק"ט: ${product.sku || '-'}</p>
             ${product.type ? `<p class="product-type">${product.type}</p>` : ''}
-            <p class="product-price">${(product.sizesPrices && product.sizesPrices.length > 1 && new Set(product.sizesPrices.map(sp => sp.price)).size > 1) || (product.colorsPrices && product.colorsPrices.length > 1 && new Set(product.colorsPrices.map(cp => cp.price)).size > 1) ? 'החל מ-' : ''}₪${product.price || '0'}</p>
+            <p class="product-price">${hasVariantPricing(product) ? 'החל מ-' : ''}₪${product.price || '0'}</p>
         </div>
     `;
 
@@ -1146,6 +1147,87 @@ function createProductCard(product, isFavorite, skipCarouselInit = false) {
     return card;
 }
 
+// ===== Colors Label Helper =====
+function getProductColorsLabel(product, form) {
+    // form: 'singular' = צבע/זכוכית, 'plural' = צבעים זמינים/זכוכיות זמינות, 'select' = בחר צבע/בחר זכוכית
+    const label = product.colorsLabel || 'צבע';
+    if (form === 'plural') return label === 'זכוכית' ? 'זכוכיות זמינות' : 'צבעים זמינים';
+    if (form === 'select') return 'בחר ' + label + ':';
+    return label;
+}
+
+// ===== Variant Pricing Helpers =====
+function hasVariantPricing(product) {
+    if (product.variantPrices && product.variantPrices.length > 1 && new Set(product.variantPrices.map(v => v.price)).size > 1) return true;
+    if (product.sizesPrices && product.sizesPrices.length > 1 && new Set(product.sizesPrices.map(sp => sp.price)).size > 1) return true;
+    if (product.colorsPrices && product.colorsPrices.length > 1 && new Set(product.colorsPrices.map(cp => cp.price)).size > 1) return true;
+    return false;
+}
+
+function updateModalPrice(product) {
+    const priceEl = document.getElementById('modal-dynamic-price');
+    if (!priceEl) return;
+
+    const selectedSizeEl = document.querySelector('#modal-content .size-option.active');
+    const selectedColorEl = document.querySelector('#modal-content .color-option.active');
+    const selectedSize = selectedSizeEl ? selectedSizeEl.dataset.size : null;
+    const selectedColor = selectedColorEl ? selectedColorEl.dataset.color : null;
+
+    // Priority 1: variantPrices (size+color combination)
+    if (selectedSize && selectedColor && product.variantPrices && product.variantPrices.length > 0) {
+        const variant = product.variantPrices.find(v => v.size === selectedSize && v.color === selectedColor);
+        if (variant) {
+            priceEl.innerHTML = '₪' + variant.price.toLocaleString();
+            return;
+        }
+    }
+
+    // Priority 2: sizesPrices
+    if (selectedSize && product.sizesPrices && product.sizesPrices.length > 0) {
+        const sp = product.sizesPrices.find(sp => sp.size === selectedSize);
+        if (sp) {
+            priceEl.innerHTML = '₪' + sp.price.toLocaleString();
+            return;
+        }
+    }
+
+    // Priority 3: colorsPrices
+    if (selectedColor && product.colorsPrices && product.colorsPrices.length > 0) {
+        const cp = product.colorsPrices.find(cp => cp.color === selectedColor);
+        if (cp) {
+            priceEl.innerHTML = '₪' + cp.price.toLocaleString();
+            return;
+        }
+    }
+
+    // Fallback: base price
+    if (hasVariantPricing(product)) {
+        priceEl.innerHTML = '<span class="price-prefix">החל מ-</span>₪' + (product.price || '0');
+    } else {
+        priceEl.innerHTML = '₪' + (product.price || '0');
+    }
+}
+
+function getResolvedPrice(product, selectedSize, selectedColor) {
+    // Priority 1: variantPrices (size+color combination)
+    if (selectedSize && selectedColor && product.variantPrices && product.variantPrices.length > 0) {
+        const variant = product.variantPrices.find(v => v.size === selectedSize && v.color === selectedColor);
+        if (variant) return variant.price;
+    }
+    // Priority 2: sizesPrices
+    if (selectedSize && product.sizesPrices && product.sizesPrices.length > 0) {
+        const sp = product.sizesPrices.find(sp => sp.size === selectedSize);
+        if (sp) return sp.price;
+    }
+    // Priority 3: colorsPrices
+    if (selectedColor && product.colorsPrices && product.colorsPrices.length > 0) {
+        const cp = product.colorsPrices.find(cp => cp.color === selectedColor);
+        if (cp) return cp.price;
+    }
+    // Fallback: base price
+    return product.price || 0;
+}
+
 // ===== Product Modal (עם תמיכה בקרוסלה ו-Lightbox) =====
 function openProductModal(product) {
     const cat = categories.find(c => c.id === product.categoryId);
@@ -1169,7 +1251,7 @@ function openProductModal(product) {
                 ${product.type ? `<p class="modal-product-type">${product.type}</p>` : ''}
                 ${product.description ? `<p class="modal-product-description">${product.description}</p>` : ''}
                 <div class="modal-product-price" id="modal-dynamic-price">
-                    ${(product.sizesPrices && product.sizesPrices.length > 1 && new Set(product.sizesPrices.map(sp => sp.price)).size > 1) || (product.colorsPrices && product.colorsPrices.length > 1 && new Set(product.colorsPrices.map(cp => cp.price)).size > 1) ? '<span class="price-prefix">החל מ-</span>' : ''}₪${product.price || '0'}
+                    ${hasVariantPricing(product) ? '<span class="price-prefix">החל מ-</span>' : ''}₪${product.price || '0'}
                 </div>
 
                 ${product.sizes && product.sizes.length > 0 ? `
@@ -1178,19 +1260,21 @@ function openProductModal(product) {
                         <div class="size-options">
                             ${product.sizes.map(s => {
                                 const sp = product.sizesPrices && product.sizesPrices.find(sp => sp.size === s);
-                                return `<span class="size-option ${sp ? 'has-price' : ''}" data-size="${s}" ${sp ? `data-price="${sp.price}"` : ''}>${s}</span>`;
+                                const hasVariant = product.variantPrices && product.variantPrices.some(v => v.size === s);
+                                return `<span class="size-option ${(sp || hasVariant) ? 'has-price' : ''}" data-size="${s}" ${sp ? `data-price="${sp.price}"` : ''}>${s}</span>`;
                             }).join('')}
                         </div>
                     </div>
                 ` : ''}
-                
+
                 ${product.colors && product.colors.length > 0 ? `
                     <div class="modal-product-colors">
-                        <strong>צבעים זמינים:</strong>
+                        <strong>${getProductColorsLabel(product, 'plural')}:</strong>
                         <div class="color-options">
                             ${product.colors.map(c => {
                                 const cp = product.colorsPrices && product.colorsPrices.find(cp => cp.color === c);
-                                return `<span class="color-option ${cp ? 'has-price' : ''}" data-color="${c}" ${cp ? `data-price="${cp.price}"` : ''}>${c}</span>`;
+                                const hasVariant = product.variantPrices && product.variantPrices.some(v => v.color === c);
+                                return `<span class="color-option ${(cp || hasVariant) ? 'has-price' : ''}" data-color="${c}" ${cp ? `data-price="${cp.price}"` : ''}>${c}</span>`;
                             }).join('')}
                         </div>
                     </div>
@@ -1235,31 +1319,23 @@ function openProductModal(product) {
         }
     }, 10);
     
-    // Size option click handlers - update price on click
-    const sizeOptions = modalContent.querySelectorAll('.size-option.has-price');
-    sizeOptions.forEach(opt => {
+    // Size option click handlers - unified price update
+    const allSizeOptions = modalContent.querySelectorAll('.size-option');
+    allSizeOptions.forEach(opt => {
         opt.addEventListener('click', () => {
-            sizeOptions.forEach(o => o.classList.remove('active'));
+            allSizeOptions.forEach(o => o.classList.remove('active'));
             opt.classList.add('active');
-            const price = parseFloat(opt.dataset.price);
-            const priceEl = document.getElementById('modal-dynamic-price');
-            if (priceEl && !isNaN(price)) {
-                priceEl.innerHTML = '₪' + price.toLocaleString();
-            }
+            updateModalPrice(product);
         });
     });
 
-    // Color option click handlers - update price on click
-    const colorOptions = modalContent.querySelectorAll('.color-option.has-price');
-    colorOptions.forEach(opt => {
+    // Color option click handlers - unified price update
+    const allColorOptions = modalContent.querySelectorAll('.color-option');
+    allColorOptions.forEach(opt => {
         opt.addEventListener('click', () => {
-            colorOptions.forEach(o => o.classList.remove('active'));
+            allColorOptions.forEach(o => o.classList.remove('active'));
             opt.classList.add('active');
-            const price = parseFloat(opt.dataset.price);
-            const priceEl = document.getElementById('modal-dynamic-price');
-            if (priceEl && !isNaN(price)) {
-                priceEl.innerHTML = '₪' + price.toLocaleString();
-            }
+            updateModalPrice(product);
         });
     });
 
@@ -1431,7 +1507,7 @@ function renderFavoritesList() {
         if (fav.selectedSize || fav.selectedColor) {
             const parts = [];
             if (fav.selectedSize) parts.push(`מידה: ${fav.selectedSize}`);
-            if (fav.selectedColor) parts.push(`צבע: ${fav.selectedColor}`);
+            if (fav.selectedColor) parts.push(`${getProductColorsLabel(product, 'singular')}: ${fav.selectedColor}`);
             selectionInfo = `<div class="favorite-item-selection">${parts.join(' | ')}</div>`;
         }
         
@@ -1445,7 +1521,7 @@ function renderFavoritesList() {
                 <div class="favorite-item-name">${product.name}</div>
                 <div class="favorite-item-sku">מק"ט: ${product.sku || '-'}</div>
                 ${selectionInfo}
-                <div class="favorite-item-price">${(product.sizesPrices && product.sizesPrices.length > 1 && new Set(product.sizesPrices.map(sp => sp.price)).size > 1) || (product.colorsPrices && product.colorsPrices.length > 1 && new Set(product.colorsPrices.map(cp => cp.price)).size > 1) ? 'החל מ-' : ''}₪${product.price || 0}</div>
+                <div class="favorite-item-price">₪${getResolvedPrice(product, fav.selectedSize, fav.selectedColor).toLocaleString()}</div>
             </div>
             <button class="favorite-item-remove" data-id="${product.id}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1499,10 +1575,11 @@ function sendToWhatsApp() {
             message += `   מידה: ${fav.selectedSize}\n`;
         }
         if (fav.selectedColor) {
-            message += `   צבע: ${fav.selectedColor}\n`;
+            message += `   ${getProductColorsLabel(product, 'singular')}: ${fav.selectedColor}\n`;
         }
         
-        message += `   מחיר: ₪${product.price || '0'}\n\n`;
+        const resolvedPrice = getResolvedPrice(product, fav.selectedSize, fav.selectedColor);
+        message += `   מחיר: ₪${resolvedPrice}\n\n`;
     });
     
     message += 'אשמח לקבל פרטים נוספים. תודה!';
