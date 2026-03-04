@@ -1184,8 +1184,20 @@ function updateModalPrice(product) {
         }
     }
 
-    // When product has variant pricing, skip individual size/color price fallbacks
-    // (they may have stale values that don't match the variant matrix)
+    // When product has variant pricing, show hint for missing dimension
+    if (hasVariants) {
+        if (selectedSize && !selectedColor) {
+            const colorLabel = getProductColorsLabel(product, 'singular');
+            priceEl.innerHTML = '<span class="price-hint">בחר גם ' + colorLabel + ' לצפייה במחיר</span>';
+            return;
+        }
+        if (!selectedSize && selectedColor) {
+            priceEl.innerHTML = '<span class="price-hint">בחר גם מידה לצפייה במחיר</span>';
+            return;
+        }
+    }
+
+    // When no variant pricing, use individual size/color prices
     if (!hasVariants) {
         // Priority 2: sizesPrices
         if (selectedSize && product.sizesPrices && product.sizesPrices.length > 0) {
