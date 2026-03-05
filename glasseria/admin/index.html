@@ -2529,7 +2529,7 @@
                         <td><img src="${product.image || '../images/placeholder.svg'}" class="table-image" onerror="this.src='../images/placeholder.svg'"></td>
                         <td>${product.name}</td>
                         <td>${product.sku || '-'}</td>
-                        <td>₪${product.price || 0}</td>
+                        <td>${product.hidePrice ? '<em style="color:#2e7d32">הצעת מחיר</em>' : '₪' + (product.price || 0)}</td>
                         <td>${cat ? cat.name : '-'}</td>
                         <td>${subcat ? subcat.name : '-'}</td>
                         <td class="actions">
