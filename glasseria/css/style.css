@@ -1276,6 +1276,29 @@ body {
     width: 100%;
 }
 
+.built-by {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255,255,255,0.15);
+    font-size: 13px;
+    color: rgba(255,255,255,0.7);
+}
+
+.built-by-logo {
+    height: 32px;
+    width: auto;
+    border-radius: 50%;
+    transition: opacity 0.3s;
+}
+
+.built-by a:hover .built-by-logo {
+    opacity: 0.8;
+}
+
 /* ===== Welcome Popup ===== */
 .welcome-popup-overlay {
     position: fixed;
