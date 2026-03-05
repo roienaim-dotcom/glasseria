@@ -1277,26 +1277,20 @@ body {
 }
 
 .built-by {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    margin-top: 14px;
-    padding-top: 14px;
-    border-top: 1px solid rgba(255,255,255,0.15);
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255,255,255,0.2);
     font-size: 13px;
+}
+
+.built-by a {
     color: rgba(255,255,255,0.7);
+    text-decoration: none;
+    transition: color 0.3s;
 }
 
-.built-by-logo {
-    height: 32px;
-    width: auto;
-    border-radius: 50%;
-    transition: opacity 0.3s;
-}
-
-.built-by a:hover .built-by-logo {
-    opacity: 0.8;
+.built-by a:hover {
+    color: #fff;
 }
 
 /* ===== Welcome Popup ===== */
