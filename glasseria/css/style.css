@@ -389,6 +389,8 @@ body {
     transition: transform 0.3s;
     cursor: pointer;
     width: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
 .product-card:hover {
@@ -539,6 +541,13 @@ body {
 
 .product-info {
     padding: 14px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.product-price {
+    margin-top: auto;
 }
 
 .product-name {
