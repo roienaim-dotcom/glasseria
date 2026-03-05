@@ -1117,7 +1117,7 @@ function createProductCard(product, isFavorite, skipCarouselInit = false) {
             <h3 class="product-name">${product.name}</h3>
             <p class="product-sku">מק"ט: ${product.sku || '-'}</p>
             ${product.type ? `<p class="product-type">${product.type}</p>` : ''}
-            <p class="product-price">${hasVariantPricing(product) ? 'החל מ-' : ''}₪${product.price || '0'}</p>
+            <p class="product-price">${product.hidePrice ? '<span class="quote-text">קבל הצעת מחיר</span>' : (hasVariantPricing(product) ? 'החל מ-' : '') + '₪' + (product.price || '0')}</p>
         </div>
     `;
 
@@ -1167,6 +1167,7 @@ function hasVariantPricing(product) {
 function updateModalPrice(product) {
     const priceEl = document.getElementById('modal-dynamic-price');
     if (!priceEl) return;
+    if (product.hidePrice) return;
 
     const selectedSizeEl = document.querySelector('#modal-content .size-option.active');
     const selectedColorEl = document.querySelector('#modal-content .color-option.active');
@@ -1273,7 +1274,9 @@ function openProductModal(product) {
                 ${product.type ? `<p class="modal-product-type">${product.type}</p>` : ''}
                 ${product.description ? `<p class="modal-product-description">${product.description}</p>` : ''}
                 <div class="modal-product-price" id="modal-dynamic-price">
-                    ${hasVariantPricing(product) ? '<span class="price-prefix">החל מ-</span>' : ''}₪${product.price || '0'}
+                    ${product.hidePrice
+                        ? '<span class="quote-text">קבל הצעת מחיר</span>'
+                        : (hasVariantPricing(product) ? '<span class="price-prefix">החל מ-</span>' : '') + '₪' + (product.price || '0')}
                 </div>
 
                 ${product.sizes && product.sizes.length > 0 ? `
@@ -1543,7 +1546,7 @@ function renderFavoritesList() {
                 <div class="favorite-item-name">${product.name}</div>
                 <div class="favorite-item-sku">מק"ט: ${product.sku || '-'}</div>
                 ${selectionInfo}
-                <div class="favorite-item-price">₪${getResolvedPrice(product, fav.selectedSize, fav.selectedColor).toLocaleString()}</div>
+                <div class="favorite-item-price">${product.hidePrice ? '<span class="quote-text">קבל הצעת מחיר</span>' : '₪' + getResolvedPrice(product, fav.selectedSize, fav.selectedColor).toLocaleString()}</div>
             </div>
             <button class="favorite-item-remove" data-id="${product.id}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1600,8 +1603,12 @@ function sendToWhatsApp() {
             message += `   ${getProductColorsLabel(product, 'singular')}: ${fav.selectedColor}\n`;
         }
         
-        const resolvedPrice = getResolvedPrice(product, fav.selectedSize, fav.selectedColor);
-        message += `   מחיר: ₪${resolvedPrice}\n\n`;
+        if (product.hidePrice) {
+            message += `   מחיר: קבל הצעת מחיר\n\n`;
+        } else {
+            const resolvedPrice = getResolvedPrice(product, fav.selectedSize, fav.selectedColor);
+            message += `   מחיר: ₪${resolvedPrice}\n\n`;
+        }
     });
     
     message += 'אשמח לקבל פרטים נוספים. תודה!';

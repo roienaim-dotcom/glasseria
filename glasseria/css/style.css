@@ -570,6 +570,11 @@ body {
     color: var(--primary);
 }
 
+.quote-text {
+    color: #2e7d32;
+    font-weight: 700;
+}
+
 /* ===== Product Modal - FIXED FOR MOBILE ===== */
 .product-modal-overlay {
     position: fixed;

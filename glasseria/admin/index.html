@@ -1922,6 +1922,12 @@
                         <input type="number" id="product-price" step="0.01">
                     </div>
                     <div class="form-group">
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="product-hide-price">
+                            הסתר מחיר (יוצג "קבל הצעת מחיר")
+                        </label>
+                    </div>
+                    <div class="form-group">
                         <label>קטגוריה *</label>
                         <select id="product-category" required onchange="updateProductSubcategories()"></select>
                     </div>
@@ -3020,6 +3026,7 @@
                 document.getElementById('product-type').value = product.type || '';
                 document.getElementById('product-description').value = product.description || '';
                 document.getElementById('product-colors-label').value = product.colorsLabel || 'צבע';
+                document.getElementById('product-hide-price').checked = product.hidePrice || false;
                 updateColorsLabels();
 
                 const predefinedSizes = ['50', '60', '70', '80', '90', '100', '120', '150'];
@@ -3071,6 +3078,7 @@
                 document.getElementById('product-id').value = '';
                 document.getElementById('product-order').value = products.length;
                 document.getElementById('product-colors-label').value = 'צבע';
+                document.getElementById('product-hide-price').checked = false;
                 updateColorsLabels();
             }
 
@@ -3181,6 +3189,7 @@
             const name = document.getElementById('product-name').value;
             const sku = document.getElementById('product-sku').value;
             const price = parseFloat(document.getElementById('product-price').value) || 0;
+            const hidePrice = document.getElementById('product-hide-price').checked;
             const categoryId = document.getElementById('product-category').value;
             const subcategoryId = document.getElementById('product-subcategory').value;
             const type = document.getElementById('product-type').value;
@@ -3247,6 +3256,7 @@
                     name,
                     sku,
                     price,
+                    hidePrice,
                     categoryId,
                     subcategoryId: subcategoryId || null,
                     category: cat ? cat.name : '',
