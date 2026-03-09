@@ -695,9 +695,11 @@ function applyProductsData(loadMethod) {
 }
 
 // Fallback: use get() instead of onSnapshot when realtime fails
-async function loadDataWithGet() {
-    console.log('Falling back to get() for data loading...');
-    showLoadingHint('טוען מוצרים...');
+const GET_MAX_RETRIES = 2;
+async function loadDataWithGet(attempt = 1) {
+    console.log(`Falling back to get() for data loading (attempt ${attempt}/${GET_MAX_RETRIES})...`);
+    // Keep the same user-facing message throughout - no technical details
+    showLoadingHint('החיבור איטי, הטעינה עשויה לקחת מספר שניות...');
     try {
         const [catSnap, subSnap, prodSnap] = await Promise.all([
             categoriesCollection.orderBy('order').get({ source: 'server' }),
@@ -721,9 +723,17 @@ async function loadDataWithGet() {
         initialLoadDone = true;
         console.log(`Fallback loaded: ${products.length} products`);
     } catch (err) {
-        console.error('Fallback get() also failed:', err);
-        GlasseriaLogger.logLoadFailure('get-server', err.message || err.code || String(err), dataLoadRetries);
-        // Last resort: try from cache
+        console.error(`Fallback get() attempt ${attempt} failed:`, err);
+        GlasseriaLogger.logLoadFailure('get-server', err.message || err.code || String(err), attempt);
+
+        // Retry if we have attempts left
+        if (attempt < GET_MAX_RETRIES) {
+            showLoadingHint('החיבור איטי, הטעינה עשויה לקחת מספר שניות...');
+            await new Promise(r => setTimeout(r, 2000));
+            return loadDataWithGet(attempt + 1);
+        }
+
+        // All retries exhausted - try from cache as last resort
         try {
             const prodSnap = await productsCollection.get({ source: 'cache' });
             if (prodSnap.size > 0) {
@@ -733,12 +743,12 @@ async function loadDataWithGet() {
                 showLoadingHint('נטען מגרסה שמורה. חלק מהמוצרים עשויים להיות לא מעודכנים.');
                 console.log(`Cache fallback loaded: ${products.length} products`);
             } else {
-                showLoadingError('נראה שהחיבור לאינטרנט איטי וטעינת המוצרים מתעכבת. נסו לרענן את הדף.');
-                GlasseriaLogger.logLoadFailure('get-cache', 'Empty cache', dataLoadRetries);
+                showLoadingError('לא הצלחנו לטעון את המוצרים. בדקו את החיבור לאינטרנט ונסו לרענן.');
+                GlasseriaLogger.logLoadFailure('get-cache', 'Empty cache', attempt);
             }
         } catch (cacheErr) {
-            showLoadingError('נראה שהחיבור לאינטרנט איטי וטעינת המוצרים מתעכבת. נסו לרענן את הדף.');
-            GlasseriaLogger.logLoadFailure('get-cache', cacheErr.message || String(cacheErr), dataLoadRetries);
+            showLoadingError('לא הצלחנו לטעון את המוצרים. בדקו את החיבור לאינטרנט ונסו לרענן.');
+            GlasseriaLogger.logLoadFailure('get-cache', cacheErr.message || String(cacheErr), attempt);
         }
     }
 }
@@ -777,7 +787,7 @@ async function loadAllData() {
             if (dataLoadRetries < MAX_RETRIES) {
                 dataLoadRetries++;
                 console.log(`Retry ${dataLoadRetries}/${MAX_RETRIES} using get()...`);
-                showLoadingHint('מנסה שיטת טעינה חלופית...');
+                showLoadingHint('החיבור איטי, הטעינה עשויה לקחת מספר שניות...');
                 loadDataWithGet();
             } else {
                 showLoadingError('נראה שהחיבור לאינטרנט איטי וטעינת המוצרים מתעכבת. נסו לרענן את הדף.');

@@ -11,13 +11,14 @@ const firebaseConfig = {
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 
-// Detect iOS/Safari for workarounds
+// Detect problematic browsers that block WebSocket
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+const isInAppBrowser = /FBAN|FBAV|Instagram|Line|Twitter|MicroMessenger|WebView/i.test(navigator.userAgent);
 
-// Initialize Firestore with iOS long-polling fix (SDK 10.7.x timeout bug)
+// Initialize Firestore with long-polling fix for iOS and in-app browsers (Facebook, Instagram etc.)
 const db = firebase.firestore();
-if (isIOS) {
+if (isIOS || isInAppBrowser) {
     db.settings({ experimentalForceLongPolling: true });
 }
 
