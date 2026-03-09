@@ -1484,9 +1484,65 @@
         }
 
         /* ===== Logs Viewer ===== */
-        .log-entry {
+        .log-session {
+            border: 1px solid #eee;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            overflow: hidden;
+        }
+        .log-session.has-error { border-color: #f5c6cb; }
+        .log-session-header {
             padding: 12px 16px;
-            border-bottom: 1px solid #eee;
+            background: #fafafa;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            user-select: none;
+        }
+        .log-session-header:hover { background: #f0f0f0; }
+        .log-session-header .session-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+            min-width: 0;
+        }
+        .log-session-header .session-left {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+        .log-session-arrow {
+            transition: transform 0.2s;
+            font-size: 12px;
+            color: var(--secondary);
+        }
+        .log-session.open .log-session-arrow { transform: rotate(90deg); }
+        .log-session-device {
+            font-weight: 600;
+            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .log-session-meta {
+            font-size: 12px;
+            color: var(--secondary);
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .log-session-body {
+            display: none;
+            border-top: 1px solid #eee;
+        }
+        .log-session.open .log-session-body { display: block; }
+        .log-entry {
+            padding: 10px 16px;
+            border-bottom: 1px solid #f5f5f5;
             font-size: 13px;
             line-height: 1.5;
         }
@@ -1495,7 +1551,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
             flex-wrap: wrap;
             gap: 6px;
         }
@@ -1511,8 +1567,8 @@
         .log-badge.timing { background: #e3f2fd; color: #1565c0; }
         .log-badge.info { background: #e8f5e9; color: #2e7d32; }
         .log-time { color: var(--secondary); font-size: 12px; }
-        .log-message { font-weight: 500; margin-bottom: 4px; }
-        .log-details { color: var(--secondary); font-size: 12px; }
+        .log-message { font-weight: 500; }
+        .log-details { color: var(--secondary); font-size: 12px; margin-top: 2px; }
         .log-details span { margin-left: 12px; }
         .log-stat-card {
             background: var(--white);
@@ -4337,10 +4393,7 @@
             empty.style.display = 'none';
 
             try {
-                let query = db.collection('glasseria_logs').orderBy('timestamp', 'desc').limit(200);
-                if (filter !== 'all') {
-                    query = db.collection('glasseria_logs').where('level', '==', filter).orderBy('timestamp', 'desc').limit(200);
-                }
+                let query = db.collection('glasseria_logs').orderBy('timestamp', 'desc').limit(500);
                 const snap = await query.get();
                 logsData = [];
                 snap.forEach(doc => logsData.push({ id: doc.id, ...doc.data() }));
@@ -4353,12 +4406,53 @@
                     return;
                 }
 
+                // Group by sessionId
+                const sessions = groupBySession(logsData);
+
+                // Apply filter
+                let filtered = sessions;
+                if (filter !== 'all') {
+                    filtered = sessions.filter(s => s.logs.some(l => l.level === filter));
+                }
+
                 renderLogsStats(logsData);
-                renderLogs(logsData);
+                renderSessions(filtered);
+
+                if (filtered.length === 0) {
+                    empty.style.display = 'block';
+                }
             } catch (err) {
                 loading.style.display = 'none';
                 container.innerHTML = '<p style="color:var(--danger);padding:20px;">שגיאה בטעינת לוגים: ' + err.message + '</p>';
             }
+        }
+
+        function groupBySession(logs) {
+            const map = {};
+            logs.forEach(log => {
+                const sid = log.sessionId || log.id;
+                if (!map[sid]) {
+                    map[sid] = {
+                        sessionId: sid,
+                        logs: [],
+                        device: log.device || {},
+                        deviceType: log.deviceType || 'unknown',
+                        firstTime: null,
+                        hasError: false
+                    };
+                }
+                map[sid].logs.push(log);
+                if (log.level === 'error') map[sid].hasError = true;
+                // Use earliest timestamp
+                const t = log.timestamp ? log.timestamp.toDate() : null;
+                if (t && (!map[sid].firstTime || t < map[sid].firstTime)) {
+                    map[sid].firstTime = t;
+                    map[sid].device = log.device || map[sid].device;
+                    map[sid].deviceType = log.deviceType || map[sid].deviceType;
+                }
+            });
+            // Sort sessions by time (newest first)
+            return Object.values(map).sort((a, b) => (b.firstTime || 0) - (a.firstTime || 0));
         }
 
         function renderLogsStats(logs) {
@@ -4369,37 +4463,83 @@
             const avgLoad = timings.length > 0
                 ? Math.round(timings.reduce((sum, t) => sum + (t.durationMs || 0), 0) / timings.length)
                 : 0;
+            const sessions = new Set(logs.map(l => l.sessionId)).size;
             const devices = {};
             logs.forEach(l => { devices[l.deviceType || 'unknown'] = (devices[l.deviceType || 'unknown'] || 0) + 1; });
             const topDevice = Object.entries(devices).sort((a, b) => b[1] - a[1])[0];
 
             stats.innerHTML = `
+                <div class="log-stat-card"><div class="stat-val">${sessions}</div><div class="stat-lbl">כניסות</div></div>
                 <div class="log-stat-card"><div class="stat-val" style="color:var(--danger)">${errors}</div><div class="stat-lbl">שגיאות</div></div>
                 <div class="log-stat-card"><div class="stat-val" style="color:var(--warning)">${warnings}</div><div class="stat-lbl">אזהרות</div></div>
                 <div class="log-stat-card"><div class="stat-val" style="color:#1565c0">${avgLoad > 0 ? (avgLoad / 1000).toFixed(1) + 's' : '-'}</div><div class="stat-lbl">זמן טעינה ממוצע</div></div>
-                <div class="log-stat-card"><div class="stat-val">${timings.length}</div><div class="stat-lbl">טעינות</div></div>
                 <div class="log-stat-card"><div class="stat-val">${topDevice ? topDevice[0] : '-'}</div><div class="stat-lbl">מכשיר נפוץ</div></div>
             `;
         }
 
-        function renderLogs(logs) {
-            const container = document.getElementById('logs-container');
-            container.innerHTML = logs.map(log => {
-                const time = log.timestamp ? log.timestamp.toDate().toLocaleString('he-IL') : (log.clientTime || '?');
-                const badge = `<span class="log-badge ${log.level}">${log.level}</span>`;
-                let details = '';
-                if (log.deviceType) details += `<span>📱 ${log.deviceType}</span>`;
-                if (log.durationMs) details += `<span>⏱ ${(log.durationMs / 1000).toFixed(1)}s</span>`;
-                if (log.productCount) details += `<span>📦 ${log.productCount} מוצרים</span>`;
-                if (log.method) details += `<span>🔧 ${log.method}</span>`;
-                if (log.device?.connection) details += `<span>📶 ${log.device.connection}</span>`;
-                if (log.device?.viewport) details += `<span>🖥 ${log.device.viewport}</span>`;
-                if (log.retryCount) details += `<span>🔄 ${log.retryCount} ניסיונות</span>`;
+        function _deviceIcon(type) {
+            if (type === 'mobile') return '📱';
+            if (type === 'tablet') return '📱';
+            return '🖥';
+        }
 
-                return `<div class="log-entry">
-                    <div class="log-header">${badge}<span class="log-time">${time}</span></div>
-                    <div class="log-message">${log.message || ''}</div>
-                    ${details ? `<div class="log-details">${details}</div>` : ''}
+        function renderSessions(sessions) {
+            const container = document.getElementById('logs-container');
+            container.innerHTML = sessions.map((session, idx) => {
+                const time = session.firstTime ? session.firstTime.toLocaleString('he-IL') : '?';
+                const icon = _deviceIcon(session.deviceType);
+                const conn = session.device?.connection || '';
+                const viewport = session.device?.viewport || '';
+                const screen = session.device?.screen || '';
+                const hasError = session.hasError ? ' has-error' : '';
+
+                // Find timing log for load duration
+                const timing = session.logs.find(l => l.level === 'timing');
+                const loadTime = timing ? (timing.durationMs / 1000).toFixed(1) + 's' : '';
+                const productCount = timing ? timing.productCount : '';
+                const method = timing ? timing.method : '';
+
+                // Badges summary
+                const badges = [];
+                const errCount = session.logs.filter(l => l.level === 'error').length;
+                const warnCount = session.logs.filter(l => l.level === 'warn').length;
+                if (errCount) badges.push(`<span class="log-badge error">${errCount} שגיאות</span>`);
+                if (warnCount) badges.push(`<span class="log-badge warn">${warnCount} אזהרות</span>`);
+                if (loadTime) badges.push(`<span class="log-badge timing">⏱ ${loadTime}</span>`);
+
+                // Render inner log entries
+                const entries = session.logs.map(log => {
+                    const logTime = log.timestamp ? log.timestamp.toDate().toLocaleTimeString('he-IL') : '';
+                    const badge = `<span class="log-badge ${log.level}">${log.level}</span>`;
+                    let details = '';
+                    if (log.durationMs) details += `<span>⏱ ${(log.durationMs / 1000).toFixed(1)}s</span>`;
+                    if (log.productCount) details += `<span>📦 ${log.productCount} מוצרים</span>`;
+                    if (log.method) details += `<span>🔧 ${log.method}</span>`;
+                    if (log.retryCount) details += `<span>🔄 ${log.retryCount} ניסיונות</span>`;
+                    if (log.referrer && log.referrer !== 'direct') details += `<span>🔗 ${log.referrer}</span>`;
+
+                    return `<div class="log-entry">
+                        <div class="log-header">${badge}<span class="log-time">${logTime}</span></div>
+                        <div class="log-message">${log.message || ''}</div>
+                        ${details ? `<div class="log-details">${details}</div>` : ''}
+                    </div>`;
+                }).join('');
+
+                return `<div class="log-session${hasError}" onclick="this.classList.toggle('open')">
+                    <div class="log-session-header">
+                        <div class="session-right">
+                            <span class="log-session-arrow">▶</span>
+                            <span class="log-session-device">${icon} ${session.deviceType} ${conn ? '(' + conn + ')' : ''}</span>
+                            ${badges.join('')}
+                        </div>
+                        <div class="session-left">
+                            <span class="log-session-meta">
+                                <span>${viewport}</span>
+                                <span>${time}</span>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="log-session-body">${entries}</div>
                 </div>`;
             }).join('');
         }
