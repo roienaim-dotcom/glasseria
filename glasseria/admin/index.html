@@ -1482,6 +1482,47 @@
                 text-align: center;
             }
         }
+
+        /* ===== Logs Viewer ===== */
+        .log-entry {
+            padding: 12px 16px;
+            border-bottom: 1px solid #eee;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .log-entry:last-child { border-bottom: none; }
+        .log-entry .log-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .log-badge {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .log-badge.error { background: #fde8e8; color: #c62828; }
+        .log-badge.warn { background: #fff3e0; color: #e65100; }
+        .log-badge.timing { background: #e3f2fd; color: #1565c0; }
+        .log-badge.info { background: #e8f5e9; color: #2e7d32; }
+        .log-time { color: var(--secondary); font-size: 12px; }
+        .log-message { font-weight: 500; margin-bottom: 4px; }
+        .log-details { color: var(--secondary); font-size: 12px; }
+        .log-details span { margin-left: 12px; }
+        .log-stat-card {
+            background: var(--white);
+            border: 2px solid #eee;
+            border-radius: 10px;
+            padding: 14px;
+            text-align: center;
+        }
+        .log-stat-card .stat-val { font-size: 24px; font-weight: 700; }
+        .log-stat-card .stat-lbl { font-size: 12px; color: var(--secondary); margin-top: 2px; }
     </style>
 </head>
 <body>
@@ -1519,6 +1560,7 @@
             <button data-section="products">📦 מוצרים</button>
             <button data-section="csv-import">📥 ייבוא CSV</button>
             <button data-section="image-matcher">🖼️ שיוך תמונות</button>
+            <button data-section="logs">📋 לוגים</button>
         </nav>
         
         <main class="admin-content">
@@ -1816,6 +1858,40 @@
                             <p id="im-progress-text" style="text-align: center; margin-top: 8px; font-size: 13px;"></p>
                         </div>
                         <div id="im-result" style="display: none;"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Logs Viewer -->
+            <section class="section" id="section-logs">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>📋 לוגים - מעקב ביצועים ושגיאות</h2>
+                        <div style="display: flex; gap: 8px;">
+                            <select id="logs-filter" style="padding: 8px 12px; border: 2px solid #eee; border-radius: 8px; font-family: inherit;">
+                                <option value="all">הכל</option>
+                                <option value="error">שגיאות</option>
+                                <option value="warn">אזהרות</option>
+                                <option value="timing">זמני טעינה</option>
+                                <option value="info">מידע</option>
+                            </select>
+                            <button class="btn btn-primary" onclick="loadLogs()">רענן</button>
+                            <button class="btn btn-danger" onclick="clearOldLogs()">נקה ישנים</button>
+                        </div>
+                    </div>
+
+                    <!-- Stats Summary -->
+                    <div id="logs-stats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 16px;"></div>
+
+                    <div id="logs-loading" class="loading" style="display: none;">
+                        <div class="spinner"></div>
+                        טוען לוגים...
+                    </div>
+
+                    <div id="logs-container" style="max-height: 70vh; overflow-y: auto;"></div>
+
+                    <div id="logs-empty" style="display: none; text-align: center; padding: 40px; color: var(--secondary);">
+                        <p>אין לוגים להצגה</p>
                     </div>
                 </div>
             </section>
@@ -4246,6 +4322,112 @@
             btn.textContent = 'שמור והעלה תמונות';
             loadMatcherProducts();
         }
+
+        // ===== Logs Viewer =====
+        let logsData = [];
+
+        async function loadLogs() {
+            const container = document.getElementById('logs-container');
+            const loading = document.getElementById('logs-loading');
+            const empty = document.getElementById('logs-empty');
+            const filter = document.getElementById('logs-filter').value;
+
+            loading.style.display = 'flex';
+            container.innerHTML = '';
+            empty.style.display = 'none';
+
+            try {
+                let query = db.collection('glasseria_logs').orderBy('timestamp', 'desc').limit(200);
+                if (filter !== 'all') {
+                    query = db.collection('glasseria_logs').where('level', '==', filter).orderBy('timestamp', 'desc').limit(200);
+                }
+                const snap = await query.get();
+                logsData = [];
+                snap.forEach(doc => logsData.push({ id: doc.id, ...doc.data() }));
+
+                loading.style.display = 'none';
+
+                if (logsData.length === 0) {
+                    empty.style.display = 'block';
+                    document.getElementById('logs-stats').innerHTML = '';
+                    return;
+                }
+
+                renderLogsStats(logsData);
+                renderLogs(logsData);
+            } catch (err) {
+                loading.style.display = 'none';
+                container.innerHTML = '<p style="color:var(--danger);padding:20px;">שגיאה בטעינת לוגים: ' + err.message + '</p>';
+            }
+        }
+
+        function renderLogsStats(logs) {
+            const stats = document.getElementById('logs-stats');
+            const errors = logs.filter(l => l.level === 'error').length;
+            const warnings = logs.filter(l => l.level === 'warn').length;
+            const timings = logs.filter(l => l.level === 'timing');
+            const avgLoad = timings.length > 0
+                ? Math.round(timings.reduce((sum, t) => sum + (t.durationMs || 0), 0) / timings.length)
+                : 0;
+            const devices = {};
+            logs.forEach(l => { devices[l.deviceType || 'unknown'] = (devices[l.deviceType || 'unknown'] || 0) + 1; });
+            const topDevice = Object.entries(devices).sort((a, b) => b[1] - a[1])[0];
+
+            stats.innerHTML = `
+                <div class="log-stat-card"><div class="stat-val" style="color:var(--danger)">${errors}</div><div class="stat-lbl">שגיאות</div></div>
+                <div class="log-stat-card"><div class="stat-val" style="color:var(--warning)">${warnings}</div><div class="stat-lbl">אזהרות</div></div>
+                <div class="log-stat-card"><div class="stat-val" style="color:#1565c0">${avgLoad > 0 ? (avgLoad / 1000).toFixed(1) + 's' : '-'}</div><div class="stat-lbl">זמן טעינה ממוצע</div></div>
+                <div class="log-stat-card"><div class="stat-val">${timings.length}</div><div class="stat-lbl">טעינות</div></div>
+                <div class="log-stat-card"><div class="stat-val">${topDevice ? topDevice[0] : '-'}</div><div class="stat-lbl">מכשיר נפוץ</div></div>
+            `;
+        }
+
+        function renderLogs(logs) {
+            const container = document.getElementById('logs-container');
+            container.innerHTML = logs.map(log => {
+                const time = log.timestamp ? log.timestamp.toDate().toLocaleString('he-IL') : (log.clientTime || '?');
+                const badge = `<span class="log-badge ${log.level}">${log.level}</span>`;
+                let details = '';
+                if (log.deviceType) details += `<span>📱 ${log.deviceType}</span>`;
+                if (log.durationMs) details += `<span>⏱ ${(log.durationMs / 1000).toFixed(1)}s</span>`;
+                if (log.productCount) details += `<span>📦 ${log.productCount} מוצרים</span>`;
+                if (log.method) details += `<span>🔧 ${log.method}</span>`;
+                if (log.device?.connection) details += `<span>📶 ${log.device.connection}</span>`;
+                if (log.device?.viewport) details += `<span>🖥 ${log.device.viewport}</span>`;
+                if (log.retryCount) details += `<span>🔄 ${log.retryCount} ניסיונות</span>`;
+
+                return `<div class="log-entry">
+                    <div class="log-header">${badge}<span class="log-time">${time}</span></div>
+                    <div class="log-message">${log.message || ''}</div>
+                    ${details ? `<div class="log-details">${details}</div>` : ''}
+                </div>`;
+            }).join('');
+        }
+
+        async function clearOldLogs() {
+            if (!confirm('למחוק לוגים ישנים מלפני 7 ימים?')) return;
+            const weekAgo = new Date();
+            weekAgo.setDate(weekAgo.getDate() - 7);
+            try {
+                const snap = await db.collection('glasseria_logs')
+                    .where('timestamp', '<', weekAgo)
+                    .get();
+                const batch = db.batch();
+                snap.forEach(doc => batch.delete(doc.ref));
+                await batch.commit();
+                alert('נמחקו ' + snap.size + ' לוגים ישנים');
+                loadLogs();
+            } catch (err) {
+                alert('שגיאה: ' + err.message);
+            }
+        }
+
+        // Auto-load logs when switching to logs tab
+        document.querySelectorAll('.admin-nav button').forEach(btn => {
+            if (btn.dataset.section === 'logs') {
+                btn.addEventListener('click', () => loadLogs());
+            }
+        });
     </script>
 </body>
 </html>

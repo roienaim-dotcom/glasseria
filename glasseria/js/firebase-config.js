@@ -11,15 +11,27 @@ const firebaseConfig = {
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 
-// Initialize Firestore
-const db = firebase.firestore();
+// Detect iOS/Safari for workarounds
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
-// Enable offline persistence for faster loading & mobile reliability
+// Initialize Firestore with iOS long-polling fix (SDK 10.7.x timeout bug)
+const db = firebase.firestore();
+if (isIOS) {
+    db.settings({ experimentalForceLongPolling: true });
+}
+
+// Enable offline persistence - with Safari/iOS safety
+// Note: enablePersistence can cause empty-cache issues on first visit;
+// app.js handles this by checking snapshot.metadata.fromCache
 db.enablePersistence({ synchronizeTabs: true }).catch((err) => {
     if (err.code === 'failed-precondition') {
         console.warn('Firestore persistence: multiple tabs open');
     } else if (err.code === 'unimplemented') {
         console.warn('Firestore persistence: not supported by browser');
+    } else {
+        // On Safari/iOS, persistence can silently fail - log it
+        console.warn('Firestore persistence error:', err.code, err.message);
     }
 });
 

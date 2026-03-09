@@ -124,6 +124,18 @@ document.addEventListener('DOMContentLoaded', () => {
     createLightbox();
     createSelectionModal();
     setupHistoryNavigation();
+
+    // Auto-hide loading animation after 3 seconds (splash screen style)
+    // Products continue loading in background and will render when ready
+    setTimeout(() => {
+        if (loadingEl && loadingEl.style.display !== 'none') {
+            loadingEl.classList.add('fade-out');
+            setTimeout(() => {
+                loadingEl.style.display = 'none';
+                loadingEl.classList.remove('fade-out');
+            }, 400);
+        }
+    }, 3000);
 });
 
 // ===== History Navigation =====
@@ -643,53 +655,150 @@ let categoriesLoaded = false;
 let subcategoriesLoaded = false;
 let productsLoaded = false;
 let loadingTimeout = null;
+let initialLoadDone = false; // Track if we got real (non-cache) data at least once
 // Store unsubscribe functions to prevent duplicate listeners on retry
 let unsubCategories = null;
 let unsubSubcategories = null;
 let unsubProducts = null;
+
+function sortProducts(arr) {
+    arr.sort((a, b) => {
+        if (a.order !== undefined && b.order !== undefined) return a.order - b.order;
+        if (a.order !== undefined) return -1;
+        if (b.order !== undefined) return 1;
+        const aTime = a.createdAt?.toMillis?.() || 0;
+        const bTime = b.createdAt?.toMillis?.() || 0;
+        return bTime - aTime;
+    });
+}
+
+function applyProductsData(loadMethod) {
+    sortProducts(products);
+    productsLoaded = true;
+    if (loadingTimeout) {
+        clearTimeout(loadingTimeout);
+        loadingTimeout = null;
+    }
+    dataLoadRetries = 0;
+    // Log load timing
+    const duration = Date.now() - (window._glasseriaLoadStart || GlasseriaLogger.getSessionStart());
+    GlasseriaLogger.logLoadTime(loadMethod || 'onSnapshot', products.length, duration);
+    showLoading(false);
+    hideLoadingError();
+    hideLoadingHint();
+    updateFavoritesCount();
+    renderCategories();
+    if (currentView === 'products' && currentCategoryId) {
+        showProductsWithoutHistory(currentCategoryId, currentSubcategoryId);
+    } else {
+        renderProducts();
+    }
+}
+
+// Fallback: use get() instead of onSnapshot when realtime fails
+async function loadDataWithGet() {
+    console.log('Falling back to get() for data loading...');
+    showLoadingHint('טוען מוצרים...');
+    try {
+        const [catSnap, subSnap, prodSnap] = await Promise.all([
+            categoriesCollection.orderBy('order').get({ source: 'server' }),
+            subcategoriesCollection.orderBy('order').get({ source: 'server' }),
+            productsCollection.get({ source: 'server' })
+        ]);
+
+        categories = [];
+        catSnap.forEach(doc => categories.push({ id: doc.id, ...doc.data() }));
+        categoriesLoaded = true;
+        renderCategories();
+        renderNavigation();
+
+        subcategories = [];
+        subSnap.forEach(doc => subcategories.push({ id: doc.id, ...doc.data() }));
+        subcategoriesLoaded = true;
+
+        products = [];
+        prodSnap.forEach(doc => products.push({ id: doc.id, ...doc.data() }));
+        applyProductsData('get-server');
+        initialLoadDone = true;
+        console.log(`Fallback loaded: ${products.length} products`);
+    } catch (err) {
+        console.error('Fallback get() also failed:', err);
+        GlasseriaLogger.logLoadFailure('get-server', err.message || err.code || String(err), dataLoadRetries);
+        // Last resort: try from cache
+        try {
+            const prodSnap = await productsCollection.get({ source: 'cache' });
+            if (prodSnap.size > 0) {
+                products = [];
+                prodSnap.forEach(doc => products.push({ id: doc.id, ...doc.data() }));
+                applyProductsData('get-cache');
+                showLoadingHint('נטען מגרסה שמורה. חלק מהמוצרים עשויים להיות לא מעודכנים.');
+                console.log(`Cache fallback loaded: ${products.length} products`);
+            } else {
+                showLoadingError('נראה שהחיבור לאינטרנט איטי וטעינת המוצרים מתעכבת. נסו לרענן את הדף.');
+                GlasseriaLogger.logLoadFailure('get-cache', 'Empty cache', dataLoadRetries);
+            }
+        } catch (cacheErr) {
+            showLoadingError('נראה שהחיבור לאינטרנט איטי וטעינת המוצרים מתעכבת. נסו לרענן את הדף.');
+            GlasseriaLogger.logLoadFailure('get-cache', cacheErr.message || String(cacheErr), dataLoadRetries);
+        }
+    }
+}
 
 async function loadAllData() {
     showLoading(true);
     categoriesLoaded = false;
     subcategoriesLoaded = false;
     productsLoaded = false;
+    window._glasseriaLoadStart = Date.now();
 
     // Unsubscribe old listeners before creating new ones (prevents duplicates on retry)
     if (unsubCategories) { unsubCategories(); unsubCategories = null; }
     if (unsubSubcategories) { unsubSubcategories(); unsubSubcategories = null; }
     if (unsubProducts) { unsubProducts(); unsubProducts = null; }
 
-    // Slow connection hint after 5 seconds
+    // Slow connection hint after 3 seconds (was 5)
     if (loadingTimeout) clearTimeout(loadingTimeout);
     const slowHintTimeout = setTimeout(() => {
         if (!productsLoaded) {
             showLoadingHint('החיבור איטי, הטעינה עשויה לקחת מספר שניות...');
         }
-    }, 5000);
+    }, 3000);
 
-    // Timeout: אם לא נטען תוך 25 שניות, הצג הודעה ונסה שוב
+    // Timeout: shorter - 12 seconds instead of 25, then fallback to get()
     loadingTimeout = setTimeout(() => {
         clearTimeout(slowHintTimeout);
         if (!productsLoaded) {
-            console.warn('Loading timeout - data not received in 25s');
+            console.warn('Loading timeout - data not received in 12s, trying fallback...');
+            GlasseriaLogger.warn('load', 'Timeout after 12s, trying fallback', { retryCount: dataLoadRetries });
+            // Unsubscribe failed listeners
+            if (unsubCategories) { unsubCategories(); unsubCategories = null; }
+            if (unsubSubcategories) { unsubSubcategories(); unsubSubcategories = null; }
+            if (unsubProducts) { unsubProducts(); unsubProducts = null; }
+
             if (dataLoadRetries < MAX_RETRIES) {
                 dataLoadRetries++;
-                console.log(`Retry ${dataLoadRetries}/${MAX_RETRIES}...`);
-                showLoadingError('החיבור איטי ולכן הטעינה מתעכבת... מנסה שוב');
-                loadAllData();
+                console.log(`Retry ${dataLoadRetries}/${MAX_RETRIES} using get()...`);
+                showLoadingHint('מנסה שיטת טעינה חלופית...');
+                loadDataWithGet();
             } else {
-                showLoadingError('לא הצלחנו לטעון את המוצרים. נראה שהחיבור לאינטרנט איטי מדי. נסו לרענן את הדף.');
+                showLoadingError('נראה שהחיבור לאינטרנט איטי וטעינת המוצרים מתעכבת. נסו לרענן את הדף.');
+                GlasseriaLogger.logLoadFailure('timeout', 'All retries exhausted', dataLoadRetries);
             }
         }
-    }, 25000);
+    }, 12000);
 
     const handleError = (source) => (error) => {
         console.error(`Error loading ${source}:`, error);
-        if (loadingTimeout) {
-            clearTimeout(loadingTimeout);
-            loadingTimeout = null;
+        GlasseriaLogger.error('firestore', `onSnapshot error for ${source}: ${error.message || error.code || error}`);
+        // Don't immediately give up - try fallback
+        if (!productsLoaded && source === 'products') {
+            console.log(`onSnapshot error for ${source}, trying get() fallback...`);
+            if (loadingTimeout) { clearTimeout(loadingTimeout); loadingTimeout = null; }
+            loadDataWithGet();
+        } else if (!productsLoaded) {
+            // Category/subcategory error - less critical, try get for those
+            console.warn(`onSnapshot error for ${source}, will retry via get if products also fail`);
         }
-        showLoadingError('שגיאה בטעינה. נסו לרענן את הדף.');
     };
 
     try {
@@ -715,52 +824,38 @@ async function loadAllData() {
             checkAllDataLoaded();
         }, handleError('subcategories'));
 
-        // Load products
+        // Load products - with fromCache awareness
         unsubProducts = productsCollection.onSnapshot((snapshot) => {
+            const isFromCache = snapshot.metadata.fromCache;
+
+            // If snapshot is from cache and empty, DON'T clear products yet - wait for server data
+            if (isFromCache && snapshot.size === 0 && !initialLoadDone) {
+                console.log('Received empty cache snapshot, waiting for server data...');
+                return; // Skip this empty cache snapshot
+            }
+
+            // If from cache but has data, show it as temporary while waiting for server
+            if (isFromCache && snapshot.size > 0 && !initialLoadDone) {
+                console.log(`Showing ${snapshot.size} cached products while loading from server...`);
+            }
+
             products = [];
             snapshot.forEach((doc) => {
                 products.push({ id: doc.id, ...doc.data() });
             });
 
-            // Sort in memory: products with order first (by order), then products without order (by createdAt)
-            products.sort((a, b) => {
-                if (a.order !== undefined && b.order !== undefined) {
-                    return a.order - b.order;
-                }
-                if (a.order !== undefined) return -1;
-                if (b.order !== undefined) return 1;
-                const aTime = a.createdAt?.toMillis?.() || 0;
-                const bTime = b.createdAt?.toMillis?.() || 0;
-                return bTime - aTime;
-            });
-
-            productsLoaded = true;
-            if (loadingTimeout) {
-                clearTimeout(loadingTimeout);
-                loadingTimeout = null;
+            if (!isFromCache) {
+                initialLoadDone = true;
             }
-            dataLoadRetries = 0;
 
-            showLoading(false);
-            hideLoadingError();
-            hideLoadingHint();
-            updateFavoritesCount();
-
-            // Re-render categories to update product counts
-            renderCategories();
-
-            // Re-render products for current view (category/subcategory filter)
-            if (currentView === 'products' && currentCategoryId) {
-                showProductsWithoutHistory(currentCategoryId, currentSubcategoryId);
-            } else {
-                renderProducts();
-            }
+            applyProductsData(isFromCache ? 'onSnapshot-cache' : 'onSnapshot');
 
         }, handleError('products'));
     } catch (error) {
         console.error('Error setting up listeners:', error);
-        showLoading(false);
-        showLoadingError('שגיאה בטעינה. נסו לרענן את הדף.');
+        GlasseriaLogger.error('firestore', `Listener setup failed: ${error.message || error}`);
+        // Try fallback before giving up
+        loadDataWithGet();
     }
 }
 
@@ -782,8 +877,15 @@ function showLoadingError(message) {
             loadingParent.insertBefore(errorEl, loadingEl ? loadingEl.nextSibling : null);
         }
     }
-    errorEl.innerHTML = `<p>${message}</p><button onclick="location.reload()" style="margin-top:10px;padding:8px 20px;background:#1a1a1a;color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:inherit;">רענן דף</button>`;
+    errorEl.innerHTML = `<p>${message}</p><button onclick="location.reload()" style="margin-top:10px;padding:10px 24px;background:#1a1a1a;color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:inherit;font-size:14px;min-height:44px;">רענן דף</button>`;
     errorEl.style.display = 'block';
+    // Stop loading animation on error
+    if (loadingEl) {
+        const spinner = loadingEl.querySelector('.loading-logo-spin');
+        if (spinner) spinner.style.animationPlayState = 'paused';
+        const progress = loadingEl.querySelector('.loading-progress');
+        if (progress) progress.style.display = 'none';
+    }
 }
 
 function hideLoadingError() {
@@ -792,11 +894,18 @@ function hideLoadingError() {
 }
 
 function showLoadingHint(message) {
+    // Update the loading text inside the animation if it exists
+    const loadingText = loadingEl ? loadingEl.querySelector('.loading-text') : null;
+    if (loadingText) {
+        loadingText.textContent = message;
+        return;
+    }
+    // Fallback: create external hint element
     let hintEl = document.getElementById('loading-hint');
     if (!hintEl) {
         hintEl = document.createElement('div');
         hintEl.id = 'loading-hint';
-        hintEl.style.cssText = 'text-align:center;padding:10px;color:#666;font-size:14px;';
+        hintEl.style.cssText = 'text-align:center;padding:10px;color:#666;font-size:13px;';
         if (loadingEl && loadingEl.parentNode) {
             loadingEl.parentNode.insertBefore(hintEl, loadingEl.nextSibling);
         }

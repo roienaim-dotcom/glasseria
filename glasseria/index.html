@@ -99,8 +99,14 @@
             
             <!-- Loading State -->
             <div class="loading" id="loading">
-                <div class="loading-spinner"></div>
-                <p>טוען מוצרים...</p>
+                <div class="loading-logo-animation">
+                    <img src="images/logo.png" alt="Glasseria" class="loading-logo-spin">
+                    <div class="loading-brand-name">GLASSERIA</div>
+                </div>
+                <div class="loading-progress">
+                    <div class="loading-progress-bar"></div>
+                </div>
+                <p class="loading-text">טוען מוצרים...</p>
             </div>
             
             <div class="products-grid" id="products-grid">
@@ -239,6 +245,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="js/firebase-config.js"></script>
+    <script src="js/logger.js"></script>
     <script src="js/carousel.js"></script>
     <script src="js/app.js"></script>
     <script src="js/accessibility-widget.js"></script>

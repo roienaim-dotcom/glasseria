@@ -1237,13 +1237,116 @@ body {
     visibility: visible;
 }
 
-/* ===== Loading ===== */
+/* ===== Loading with Logo Animation (Mobile First) ===== */
 .loading {
     text-align: center;
-    padding: 50px 20px;
+    padding: 40px 16px 30px;
     color: var(--secondary);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 250px;
 }
 
+.loading-logo-animation {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.loading-logo-spin {
+    width: 56px;
+    height: 56px;
+    animation: logoSpin 2.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.12));
+}
+
+.loading-brand-name {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 5px;
+    color: var(--primary);
+    opacity: 0;
+    animation: brandFadeIn 1s ease-out 0.3s forwards, brandPulse 2.5s ease-in-out 1.3s infinite;
+}
+
+.loading-progress {
+    width: 140px;
+    height: 2px;
+    background: #e0e0e0;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 14px;
+}
+
+.loading-progress-bar {
+    height: 100%;
+    width: 0%;
+    background: var(--primary);
+    border-radius: 3px;
+    animation: progressSlide 2s ease-in-out infinite;
+}
+
+.loading-text {
+    font-size: 13px;
+    color: var(--secondary);
+    margin: 0;
+}
+
+.loading.fade-out {
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+/* Desktop enhancements */
+@media (min-width: 769px) {
+    .loading {
+        padding: 60px 20px 40px;
+        min-height: 300px;
+    }
+    .loading-logo-spin {
+        width: 70px;
+        height: 70px;
+    }
+    .loading-brand-name {
+        font-size: 24px;
+        letter-spacing: 6px;
+    }
+    .loading-progress {
+        width: 180px;
+        height: 3px;
+    }
+    .loading-text {
+        font-size: 14px;
+    }
+}
+
+@keyframes logoSpin {
+    0% { transform: rotateY(0deg); }
+    50% { transform: rotateY(180deg); }
+    100% { transform: rotateY(360deg); }
+}
+
+@keyframes brandFadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes brandPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+@keyframes progressSlide {
+    0% { width: 0%; margin-right: 0; margin-left: auto; }
+    50% { width: 70%; margin-right: 0; margin-left: 0; }
+    100% { width: 0%; margin-right: auto; margin-left: 0; }
+}
+
+/* Old spinner kept for backwards compat */
 .loading-spinner {
     width: 40px;
     height: 40px;
