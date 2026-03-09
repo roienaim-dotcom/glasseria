@@ -894,9 +894,11 @@ function hideLoadingError() {
 
 function showLoadingHint(message) {
     // Update the loading text inside the animation if it exists
-    const loadingText = loadingEl ? loadingEl.querySelector('.loading-text') : null;
-    if (loadingText) {
-        loadingText.textContent = message;
+    const loadingSlogan = loadingEl ? loadingEl.querySelector('.loading-slogan') : null;
+    if (loadingSlogan) {
+        loadingSlogan.textContent = message;
+        loadingSlogan.style.opacity = '0.7';
+        loadingSlogan.style.animation = 'none';
         return;
     }
     // Fallback: create external hint element

@@ -1296,10 +1296,13 @@ body {
     animation: progressSlide 2s ease-in-out infinite;
 }
 
-.loading-text {
+.loading-slogan {
     font-size: 13px;
     color: var(--secondary);
     margin: 0;
+    letter-spacing: 0.3px;
+    opacity: 0;
+    animation: sloganFadeIn 1s ease-out 2s forwards;
 }
 
 .loading.fade-out {
@@ -1324,8 +1327,9 @@ body {
         width: 180px;
         height: 3px;
     }
-    .loading-text {
-        font-size: 14px;
+    .loading-slogan {
+        font-size: 15px;
+        letter-spacing: 0.5px;
     }
 }
 
@@ -1349,6 +1353,11 @@ body {
     0% { width: 0%; margin-right: 0; margin-left: auto; }
     50% { width: 70%; margin-right: 0; margin-left: 0; }
     100% { width: 0%; margin-right: auto; margin-left: 0; }
+}
+
+@keyframes sloganFadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 0.7; transform: translateY(0); }
 }
 
 /* Old spinner kept for backwards compat */
