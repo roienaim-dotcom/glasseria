@@ -125,17 +125,16 @@ document.addEventListener('DOMContentLoaded', () => {
     createSelectionModal();
     setupHistoryNavigation();
 
-    // Auto-hide loading animation after 3 seconds (splash screen style)
-    // Products continue loading in background and will render when ready
+    // Fullscreen splash screen for 5 seconds, then show welcome popup
     setTimeout(() => {
-        if (loadingEl && loadingEl.style.display !== 'none') {
+        if (loadingEl) {
             loadingEl.classList.add('fade-out');
             setTimeout(() => {
                 loadingEl.style.display = 'none';
                 loadingEl.classList.remove('fade-out');
             }, 400);
         }
-    }, 3000);
+    }, 5000);
 });
 
 // ===== History Navigation =====
@@ -921,8 +920,10 @@ function hideLoadingHint() {
 
 // ===== Show/Hide Loading =====
 function showLoading(show) {
-    if (loadingEl) {
-        loadingEl.style.display = show ? 'flex' : 'none';
+    // Splash screen is always shown for 5s via setTimeout in DOMContentLoaded
+    // Only use this for showing (not hiding - the timer handles that)
+    if (loadingEl && show) {
+        loadingEl.style.display = 'flex';
     }
 }
 
@@ -1757,12 +1758,12 @@ function setupWelcomePopup() {
     const welcomeCloseBtn = document.getElementById('welcome-close');
     const dontShowAgain = document.getElementById('dont-show-again');
     
-    // משתמש ב-sessionStorage - הפופאפ יופיע פעם אחת בכל סשן
+    // הפופאפ יופיע אחרי שהספלאש נעלם (5.5 שניות)
     if (!localStorage.getItem('glasseria_welcome_dismissed') && !sessionStorage.getItem('glasseria_welcome_shown')) {
         setTimeout(() => {
             welcomePopup.classList.add('active');
             sessionStorage.setItem('glasseria_welcome_shown', 'true');
-        }, 500);
+        }, 5500);
     }
     
     welcomeCloseBtn.addEventListener('click', () => {
