@@ -117,3 +117,8 @@ const GlasseriaLogger = (() => {
 
 // Auto-setup global error handlers
 GlasseriaLogger.setupGlobalErrorHandlers();
+
+// Log every visit (session start)
+GlasseriaLogger.info('session', 'כניסה לאתר', {
+    referrer: document.referrer || 'direct'
+});
