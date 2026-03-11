@@ -9,6 +9,22 @@ const GlasseriaLogger = (() => {
     const sessionId = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
     const sessionStart = Date.now();
 
+    // Persistent device ID - survives across sessions on same browser
+    function _getOrCreateDeviceId() {
+        const KEY = 'glasseria_did';
+        try {
+            let did = localStorage.getItem(KEY);
+            if (!did) {
+                did = 'd_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 9);
+                localStorage.setItem(KEY, did);
+            }
+            return did;
+        } catch (e) {
+            return 'did_unavailable'; // Private browsing / blocked
+        }
+    }
+    const deviceId = _getOrCreateDeviceId();
+
     // Device info (collected once)
     const deviceInfo = {
         ua: navigator.userAgent.slice(0, 200),
@@ -36,6 +52,7 @@ const GlasseriaLogger = (() => {
         const doc = {
             ...entry,
             sessionId,
+            deviceId,
             device: deviceInfo,
             deviceType: _getDeviceType(),
             timestamp: firebase.firestore.FieldValue.serverTimestamp(),

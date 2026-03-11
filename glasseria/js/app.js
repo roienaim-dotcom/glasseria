@@ -679,9 +679,12 @@ function applyProductsData(loadMethod) {
         loadingTimeout = null;
     }
     dataLoadRetries = 0;
-    // Log load timing
-    const duration = Date.now() - (window._glasseriaLoadStart || GlasseriaLogger.getSessionStart());
-    GlasseriaLogger.logLoadTime(loadMethod || 'onSnapshot', products.length, duration);
+    // Log load timing only on first load (not on live real-time updates)
+    if (!window._initialLoadLogged) {
+        window._initialLoadLogged = true;
+        const duration = Date.now() - (window._glasseriaLoadStart || GlasseriaLogger.getSessionStart());
+        GlasseriaLogger.logLoadTime(loadMethod || 'onSnapshot', products.length, duration);
+    }
     showLoading(false);
     hideLoadingError();
     hideLoadingHint();

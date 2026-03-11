@@ -59,7 +59,7 @@ class ProductCarousel {
         // Create slides
         const slides = images.map((img, index) => `
             <div class="${slideClass}" data-index="${index}">
-                <img src="${img}" alt="תמונת מוצר ${index + 1}" loading="lazy">
+                <img src="${img}" alt="תמונת מוצר ${index + 1}" loading="${index === 0 ? 'eager' : 'lazy'}">
             </div>
         `).join('');
         
