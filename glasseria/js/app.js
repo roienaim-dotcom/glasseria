@@ -698,7 +698,8 @@ function applyProductsData(loadMethod) {
 }
 
 // Fallback: use get() instead of onSnapshot when realtime fails
-const GET_MAX_RETRIES = 2;
+const GET_MAX_RETRIES = 3;
+const GET_RETRY_DELAYS = [2000, 4000, 6000]; // Increasing delay between retries
 async function loadDataWithGet(attempt = 1) {
     console.log(`Falling back to get() for data loading (attempt ${attempt}/${GET_MAX_RETRIES})...`);
     // Keep the same user-facing message throughout - no technical details
@@ -731,8 +732,9 @@ async function loadDataWithGet(attempt = 1) {
 
         // Retry if we have attempts left
         if (attempt < GET_MAX_RETRIES) {
+            const delay = GET_RETRY_DELAYS[attempt - 1] || 4000;
             showLoadingHint('החיבור איטי, הטעינה עשויה לקחת מספר שניות...');
-            await new Promise(r => setTimeout(r, 2000));
+            await new Promise(r => setTimeout(r, delay));
             return loadDataWithGet(attempt + 1);
         }
 
@@ -768,20 +770,27 @@ async function loadAllData() {
     if (unsubSubcategories) { unsubSubcategories(); unsubSubcategories = null; }
     if (unsubProducts) { unsubProducts(); unsubProducts = null; }
 
-    // Slow connection hint after 3 seconds (was 5)
+    // Determine timeout based on connection speed
+    const conn = navigator.connection;
+    const connType = conn ? conn.effectiveType : '4g';
+    const isSlowNetwork = ['slow-2g', '2g', '3g'].includes(connType);
+    const LOAD_TIMEOUT = isSlowNetwork ? 25000 : 12000; // 25s for slow, 12s for fast
+    const HINT_DELAY = isSlowNetwork ? 2000 : 3000; // Show hint earlier on slow
+
+    // Slow connection hint
     if (loadingTimeout) clearTimeout(loadingTimeout);
     const slowHintTimeout = setTimeout(() => {
         if (!productsLoaded) {
             showLoadingHint('החיבור איטי, הטעינה עשויה לקחת מספר שניות...');
         }
-    }, 3000);
+    }, HINT_DELAY);
 
-    // Timeout: shorter - 12 seconds instead of 25, then fallback to get()
+    // Timeout: adaptive based on connection speed, then fallback to get()
     loadingTimeout = setTimeout(() => {
         clearTimeout(slowHintTimeout);
         if (!productsLoaded) {
-            console.warn('Loading timeout - data not received in 12s, trying fallback...');
-            GlasseriaLogger.warn('load', 'Timeout after 12s, trying fallback', { retryCount: dataLoadRetries });
+            console.warn(`Loading timeout - data not received in ${LOAD_TIMEOUT/1000}s, trying fallback...`);
+            GlasseriaLogger.warn('load', `Timeout after ${LOAD_TIMEOUT/1000}s, trying fallback`, { retryCount: dataLoadRetries, connectionType: connType });
             // Unsubscribe failed listeners
             if (unsubCategories) { unsubCategories(); unsubCategories = null; }
             if (unsubSubcategories) { unsubSubcategories(); unsubSubcategories = null; }
@@ -797,7 +806,7 @@ async function loadAllData() {
                 GlasseriaLogger.logLoadFailure('timeout', 'All retries exhausted', dataLoadRetries);
             }
         }
-    }, 12000);
+    }, LOAD_TIMEOUT);
 
     const handleError = (source) => (error) => {
         console.error(`Error loading ${source}:`, error);

@@ -11,14 +11,16 @@ const firebaseConfig = {
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 
-// Detect problematic browsers that block WebSocket
+// Detect problematic browsers that need long-polling instead of WebSocket
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+const isAndroid = /Android/.test(navigator.userAgent);
 const isInAppBrowser = /FBAN|FBAV|Instagram|Line|Twitter|MicroMessenger|WebView/i.test(navigator.userAgent);
+const isSlowConnection = navigator.connection && ['slow-2g', '2g', '3g'].includes(navigator.connection.effectiveType);
 
-// Initialize Firestore with long-polling fix for iOS and in-app browsers (Facebook, Instagram etc.)
+// Initialize Firestore with long-polling for mobile devices and slow connections
+// WebSocket connections fail silently on 3G (carrier proxies, packet loss)
 const db = firebase.firestore();
-if (isIOS || isInAppBrowser) {
+if (isIOS || isAndroid || isInAppBrowser || isSlowConnection) {
     db.settings({ experimentalForceLongPolling: true });
 }
 
