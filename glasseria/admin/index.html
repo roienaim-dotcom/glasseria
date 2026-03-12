@@ -1540,6 +1540,16 @@
             border-top: 1px solid #eee;
         }
         .log-session.open .log-session-body { display: block; }
+        .log-device-info {
+            background: #f8f9fa;
+            padding: 8px 16px;
+            border-bottom: 1px solid #eee;
+            font-size: 12px;
+            color: #555;
+        }
+        .log-device-info .device-detail {
+            padding: 2px 0;
+        }
         .log-entry {
             padding: 10px 16px;
             border-bottom: 1px solid #f5f5f5;
@@ -4488,9 +4498,16 @@
             container.innerHTML = sessions.map((session, idx) => {
                 const time = session.firstTime ? session.firstTime.toLocaleString('he-IL') : '?';
                 const icon = _deviceIcon(session.deviceType);
-                const conn = session.device?.connection || '';
-                const viewport = session.device?.viewport || '';
-                const screen = session.device?.screen || '';
+                const dev = session.device || {};
+                // Support both old format (connection = string) and new format (connection = object)
+                const conn = typeof dev.connection === 'object' ? dev.connection?.effectiveType : (dev.connection || '');
+                const connRtt = typeof dev.connection === 'object' ? dev.connection?.rtt : null;
+                const connDownlink = typeof dev.connection === 'object' ? dev.connection?.downlink : null;
+                const viewport = dev.viewport || '';
+                const os = dev.os || '';
+                const browser = dev.browser || '';
+                const deviceModel = dev.deviceModel || '';
+                const inApp = dev.inApp || '';
                 const hasError = session.hasError ? ' has-error' : '';
 
                 // Find timing log for load duration
@@ -4506,6 +4523,21 @@
                 if (errCount) badges.push(`<span class="log-badge error">${errCount} שגיאות</span>`);
                 if (warnCount) badges.push(`<span class="log-badge warn">${warnCount} אזהרות</span>`);
                 if (loadTime) badges.push(`<span class="log-badge timing">⏱ ${loadTime}</span>`);
+
+                // Build device detail line
+                const deviceParts = [];
+                if (os) deviceParts.push(os);
+                if (browser) deviceParts.push(browser);
+                if (deviceModel) deviceParts.push(deviceModel);
+                if (inApp) deviceParts.push(`🔗 ${inApp}`);
+                const deviceDetail = deviceParts.join(' · ');
+
+                // Connection detail line
+                const connParts = [];
+                if (conn && conn !== 'unknown') connParts.push(conn);
+                if (connRtt) connParts.push(`RTT ${connRtt}ms`);
+                if (connDownlink) connParts.push(`${connDownlink} Mbps`);
+                const connDetail = connParts.join(' · ');
 
                 // Render inner log entries
                 const entries = session.logs.map(log => {
@@ -4539,7 +4571,14 @@
                             </span>
                         </div>
                     </div>
-                    <div class="log-session-body">${entries}</div>
+                    <div class="log-session-body">
+                        ${deviceDetail || connDetail ? `<div class="log-device-info">
+                            ${deviceDetail ? `<div class="device-detail">🔧 ${deviceDetail}</div>` : ''}
+                            ${connDetail ? `<div class="device-detail">📶 ${connDetail}</div>` : ''}
+                            ${dev.memory ? `<div class="device-detail">💾 ${dev.memory}GB RAM · ${dev.cores || '?'} cores</div>` : ''}
+                        </div>` : ''}
+                        ${entries}
+                    </div>
                 </div>`;
             }).join('');
         }
