@@ -64,11 +64,17 @@ let categories = [];
 let subcategories = [];
 let products = [];
 // favorites now stores objects: { id, selectedSize, selectedColor }
-let favorites = JSON.parse(localStorage.getItem('glasseria_favorites')) || [];
-// Migration: convert old format (array of IDs) to new format (array of objects)
-if (favorites.length > 0 && typeof favorites[0] === 'string') {
-    favorites = favorites.map(id => ({ id, selectedSize: null, selectedColor: null }));
-    localStorage.setItem('glasseria_favorites', JSON.stringify(favorites));
+let favorites = [];
+try {
+    favorites = JSON.parse(localStorage.getItem('glasseria_favorites')) || [];
+    // Migration: convert old format (array of IDs) to new format (array of objects)
+    if (favorites.length > 0 && typeof favorites[0] === 'string') {
+        favorites = favorites.map(id => ({ id, selectedSize: null, selectedColor: null }));
+        localStorage.setItem('glasseria_favorites', JSON.stringify(favorites));
+    }
+} catch (e) {
+    // localStorage blocked in some in-app browsers (Instagram, Facebook WebView)
+    favorites = [];
 }
 
 let currentView = 'categories'; // 'categories', 'subcategories', 'products'
@@ -654,7 +660,10 @@ let categoriesLoaded = false;
 let subcategoriesLoaded = false;
 let productsLoaded = false;
 let loadingTimeout = null;
+let slowHintTimeout = null; // Promoted to module scope so it can be cleared from anywhere
 let initialLoadDone = false; // Track if we got real (non-cache) data at least once
+let fallbackInProgress = false; // Guard against concurrent loadDataWithGet calls
+let listenersCancelled = false; // Guard against queued onSnapshot callbacks after unsubscribe
 // Store unsubscribe functions to prevent duplicate listeners on retry
 let unsubCategories = null;
 let unsubSubcategories = null;
@@ -674,6 +683,11 @@ function sortProducts(arr) {
 function applyProductsData(loadMethod) {
     sortProducts(products);
     productsLoaded = true;
+    fallbackInProgress = false; // Reset guard so future fallbacks can run
+    if (slowHintTimeout) {
+        clearTimeout(slowHintTimeout);
+        slowHintTimeout = null;
+    }
     if (loadingTimeout) {
         clearTimeout(loadingTimeout);
         loadingTimeout = null;
@@ -701,6 +715,12 @@ function applyProductsData(loadMethod) {
 const GET_MAX_RETRIES = 3;
 const GET_RETRY_DELAYS = [2000, 4000, 6000]; // Increasing delay between retries
 async function loadDataWithGet(attempt = 1) {
+    // Guard against concurrent fallback calls (e.g. timeout + onSnapshot error firing together)
+    if (fallbackInProgress && attempt === 1) {
+        console.log('loadDataWithGet already in progress, skipping duplicate call');
+        return;
+    }
+    fallbackInProgress = true;
     console.log(`Falling back to get() for data loading (attempt ${attempt}/${GET_MAX_RETRIES})...`);
     // Keep the same user-facing message throughout - no technical details
     showLoadingHint('החיבור איטי, הטעינה עשויה לקחת מספר שניות...');
@@ -788,6 +808,7 @@ async function loadAllData() {
     if (unsubCategories) { unsubCategories(); unsubCategories = null; }
     if (unsubSubcategories) { unsubSubcategories(); unsubSubcategories = null; }
     if (unsubProducts) { unsubProducts(); unsubProducts = null; }
+    listenersCancelled = false; // Reset guard for fresh listeners
 
     // Determine timeout based on connection speed
     const conn = navigator.connection;
@@ -798,7 +819,7 @@ async function loadAllData() {
 
     // Slow connection hint
     if (loadingTimeout) clearTimeout(loadingTimeout);
-    const slowHintTimeout = setTimeout(() => {
+    slowHintTimeout = setTimeout(() => {
         if (!productsLoaded) {
             showLoadingHint('החיבור איטי, הטעינה עשויה לקחת מספר שניות...');
         }
@@ -810,10 +831,11 @@ async function loadAllData() {
         if (!productsLoaded) {
             console.warn(`Loading timeout - data not received in ${LOAD_TIMEOUT/1000}s, trying fallback...`);
             GlasseriaLogger.warn('load', `Timeout after ${LOAD_TIMEOUT/1000}s, trying fallback`, { retryCount: dataLoadRetries, connectionType: connType });
-            // Unsubscribe failed listeners
+            // Unsubscribe failed listeners and mark as cancelled
             if (unsubCategories) { unsubCategories(); unsubCategories = null; }
             if (unsubSubcategories) { unsubSubcategories(); unsubSubcategories = null; }
             if (unsubProducts) { unsubProducts(); unsubProducts = null; }
+            listenersCancelled = true;
 
             if (dataLoadRetries < MAX_RETRIES) {
                 dataLoadRetries++;
@@ -828,6 +850,7 @@ async function loadAllData() {
     }, LOAD_TIMEOUT);
 
     const handleError = (source) => (error) => {
+        if (listenersCancelled) return; // Ignore errors from cancelled listeners
         console.error(`Error loading ${source}:`, error);
         GlasseriaLogger.error('firestore', `onSnapshot error for ${source}: ${error.message || error.code || error}`);
         // Don't immediately give up - try fallback
@@ -844,6 +867,7 @@ async function loadAllData() {
     try {
         // Load categories
         unsubCategories = categoriesCollection.orderBy('order').onSnapshot((snapshot) => {
+            if (listenersCancelled) return; // Queued callback after unsubscribe
             categories = [];
             snapshot.forEach((doc) => {
                 categories.push({ id: doc.id, ...doc.data() });
@@ -856,6 +880,7 @@ async function loadAllData() {
 
         // Load subcategories
         unsubSubcategories = subcategoriesCollection.orderBy('order').onSnapshot((snapshot) => {
+            if (listenersCancelled) return; // Queued callback after unsubscribe
             subcategories = [];
             snapshot.forEach((doc) => {
                 subcategories.push({ id: doc.id, ...doc.data() });
@@ -866,6 +891,7 @@ async function loadAllData() {
 
         // Load products - with fromCache awareness
         unsubProducts = productsCollection.onSnapshot((snapshot) => {
+            if (listenersCancelled) return; // Queued callback after unsubscribe
             const isFromCache = snapshot.metadata.fromCache;
 
             // If snapshot is from cache and empty, DON'T clear products yet - wait for server data
@@ -894,6 +920,11 @@ async function loadAllData() {
     } catch (error) {
         console.error('Error setting up listeners:', error);
         GlasseriaLogger.error('firestore', `Listener setup failed: ${error.message || error}`);
+        // Clean up any partially-created listeners
+        if (unsubCategories) { unsubCategories(); unsubCategories = null; }
+        if (unsubSubcategories) { unsubSubcategories(); unsubSubcategories = null; }
+        if (unsubProducts) { unsubProducts(); unsubProducts = null; }
+        listenersCancelled = true;
         // Try fallback before giving up
         loadDataWithGet();
     }
@@ -1009,7 +1040,7 @@ function renderCategories() {
         return `
             <div class="category-card" data-category="${cat.id}">
                 <div class="category-image">
-                    <img src="${cat.image || 'images/placeholder.svg'}" alt="${cat.name}" onerror="this.src='images/placeholder.svg'">
+                    <img src="${cat.image || 'images/placeholder.svg'}" alt="${cat.name}" loading="lazy" onerror="this.src='images/placeholder.svg'">
                 </div>
                 <div class="category-info">
                     <h3>${cat.name}</h3>
@@ -1061,7 +1092,7 @@ function showSubcategoriesWithoutHistory(categoryId, subs) {
         return `
             <div class="subcategory-card" data-subcategory="${sub.id}">
                 <div class="subcategory-image">
-                    <img src="${sub.image || 'images/placeholder.svg'}" alt="${sub.name}" onerror="this.src='images/placeholder.svg'">
+                    <img src="${sub.image || 'images/placeholder.svg'}" alt="${sub.name}" loading="lazy" onerror="this.src='images/placeholder.svg'">
                 </div>
                 <div class="subcategory-info">
                     <h3>${sub.name}</h3>
@@ -1784,16 +1815,15 @@ function closeMobileMenu() {
 }
 
 // ===== Scroll Header Effect =====
+const _headerEl = document.querySelector('.header'); // Cache outside handler
 window.addEventListener('scroll', () => {
-    const header = document.querySelector('.header');
-    const currentScroll = window.pageYOffset;
-    
-    if (currentScroll > 100) {
-        header.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
+    if (!_headerEl) return;
+    if (window.pageYOffset > 100) {
+        _headerEl.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
     } else {
-        header.style.boxShadow = 'none';
+        _headerEl.style.boxShadow = 'none';
     }
-});
+}, { passive: true });
 
 // ===== Welcome Popup (פעם אחת בסשן בלבד) =====
 function setupWelcomePopup() {

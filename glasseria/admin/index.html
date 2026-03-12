@@ -4390,6 +4390,10 @@
         }
 
         // ===== Logs Viewer =====
+        function _escHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
         let logsData = [];
 
         async function loadLogs() {
@@ -4433,7 +4437,7 @@
                 }
             } catch (err) {
                 loading.style.display = 'none';
-                container.innerHTML = '<p style="color:var(--danger);padding:20px;">שגיאה בטעינת לוגים: ' + err.message + '</p>';
+                container.innerHTML = '<p style="color:var(--danger);padding:20px;">שגיאה בטעינת לוגים: ' + _escHtml(err.message) + '</p>';
             }
         }
 
@@ -4548,11 +4552,11 @@
                     if (log.productCount) details += `<span>📦 ${log.productCount} מוצרים</span>`;
                     if (log.method) details += `<span>🔧 ${log.method}</span>`;
                     if (log.retryCount) details += `<span>🔄 ${log.retryCount} ניסיונות</span>`;
-                    if (log.referrer && log.referrer !== 'direct') details += `<span>🔗 ${log.referrer}</span>`;
+                    if (log.referrer && log.referrer !== 'direct') details += `<span>🔗 ${_escHtml(log.referrer)}</span>`;
 
                     return `<div class="log-entry">
                         <div class="log-header">${badge}<span class="log-time">${logTime}</span></div>
-                        <div class="log-message">${log.message || ''}</div>
+                        <div class="log-message">${_escHtml(log.message)}</div>
                         ${details ? `<div class="log-details">${details}</div>` : ''}
                     </div>`;
                 }).join('');
@@ -4591,9 +4595,13 @@
                 const snap = await db.collection('glasseria_logs')
                     .where('timestamp', '<', weekAgo)
                     .get();
-                const batch = db.batch();
-                snap.forEach(doc => batch.delete(doc.ref));
-                await batch.commit();
+                // Firestore batch limit is 500 - chunk deletes
+                const docs = snap.docs;
+                for (let i = 0; i < docs.length; i += 500) {
+                    const batch = db.batch();
+                    docs.slice(i, i + 500).forEach(doc => batch.delete(doc.ref));
+                    await batch.commit();
+                }
                 alert('נמחקו ' + snap.size + ' לוגים ישנים');
                 loadLogs();
             } catch (err) {
