@@ -738,15 +738,34 @@ async function loadDataWithGet(attempt = 1) {
             return loadDataWithGet(attempt + 1);
         }
 
-        // All retries exhausted - try from cache as last resort
+        // All retries exhausted - try from cache as last resort (products + categories + subcategories)
         try {
-            const prodSnap = await productsCollection.get({ source: 'cache' });
+            const [catSnap, subSnap, prodSnap] = await Promise.all([
+                categoriesCollection.orderBy('order').get({ source: 'cache' }).catch(() => null),
+                subcategoriesCollection.orderBy('order').get({ source: 'cache' }).catch(() => null),
+                productsCollection.get({ source: 'cache' })
+            ]);
+
             if (prodSnap.size > 0) {
+                // Load cached categories and subcategories if available (for navigation)
+                if (catSnap && catSnap.size > 0) {
+                    categories = [];
+                    catSnap.forEach(doc => categories.push({ id: doc.id, ...doc.data() }));
+                    categoriesLoaded = true;
+                    renderCategories();
+                    renderNavigation();
+                }
+                if (subSnap && subSnap.size > 0) {
+                    subcategories = [];
+                    subSnap.forEach(doc => subcategories.push({ id: doc.id, ...doc.data() }));
+                    subcategoriesLoaded = true;
+                }
+
                 products = [];
                 prodSnap.forEach(doc => products.push({ id: doc.id, ...doc.data() }));
                 applyProductsData('get-cache');
                 showLoadingHint('נטען מגרסה שמורה. חלק מהמוצרים עשויים להיות לא מעודכנים.');
-                console.log(`Cache fallback loaded: ${products.length} products`);
+                console.log(`Cache fallback loaded: ${products.length} products, ${categories.length} categories`);
             } else {
                 showLoadingError('לא הצלחנו לטעון את המוצרים. בדקו את החיבור לאינטרנט ונסו לרענן.');
                 GlasseriaLogger.logLoadFailure('get-cache', 'Empty cache', attempt);
