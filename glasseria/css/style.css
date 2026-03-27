@@ -484,7 +484,14 @@ body {
     display: none;
     gap: 6px;
     z-index: 5;
-    direction: ltr; /* Force LTR for consistent dot ordering */
+    direction: ltr;
+}
+
+/* On desktop (non-touch), flip dots to match RTL arrow direction */
+@media (hover: hover) and (pointer: fine) {
+    .carousel-dots {
+        direction: rtl;
+    }
 }
 
 .product-image.has-multiple .carousel-dots {
@@ -500,6 +507,17 @@ body {
     padding: 0;
     cursor: pointer;
     transition: all 0.3s;
+    position: relative;
+}
+
+/* Invisible touch area around small dot */
+.carousel-dot::before {
+    content: '';
+    position: absolute;
+    top: -19px;
+    left: -10px;
+    right: -10px;
+    bottom: -19px;
 }
 
 .carousel-dot.active {
@@ -511,10 +529,10 @@ body {
 /* Favorite Button */
 .favorite-btn {
     position: absolute;
-    top: 10px;
-    right: 10px;
-    width: 36px;
-    height: 36px;
+    top: 8px;
+    right: 8px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     background: var(--white);
     border: none;
@@ -528,8 +546,8 @@ body {
 }
 
 .favorite-btn svg {
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
     fill: #ddd;
     transition: fill 0.3s;
 }
@@ -619,8 +637,8 @@ body {
     position: absolute;
     top: 12px;
     right: 12px;
-    width: 36px;
-    height: 36px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     background: var(--white);
     border: none;
@@ -735,7 +753,14 @@ body {
     background: rgba(255,255,255,0.8);
     padding: 6px 12px;
     border-radius: 20px;
-    direction: ltr; /* Force LTR for consistent dot ordering */
+    direction: ltr;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .modal-carousel-dots {
+        direction: rtl;
+    }
+}
 }
 
 .modal-product-image.has-multiple .modal-carousel-dots {
@@ -751,6 +776,17 @@ body {
     padding: 0;
     cursor: pointer;
     transition: all 0.3s;
+    position: relative;
+}
+
+/* Invisible touch area around small dot */
+.modal-carousel-dot::before {
+    content: '';
+    position: absolute;
+    top: -18px;
+    left: -10px;
+    right: -10px;
+    bottom: -18px;
 }
 
 .modal-carousel-dot.active {
@@ -1142,8 +1178,8 @@ body {
 }
 
 .favorite-item-remove {
-    width: 30px;
-    height: 30px;
+    width: 40px;
+    height: 40px;
     border: none;
     background: var(--light);
     border-radius: 50%;
@@ -2065,10 +2101,10 @@ img {
 
 .selection-modal-close {
     position: absolute;
-    top: 12px;
-    right: 12px;
-    width: 32px;
-    height: 32px;
+    top: 10px;
+    right: 10px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     background: var(--light);
     border: none;
@@ -2085,8 +2121,8 @@ img {
 }
 
 .selection-modal-close svg {
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
 }
 
 .selection-modal-header {

@@ -2497,6 +2497,15 @@
         }
         
         function deleteCategory(id) {
+            const relatedProducts = products.filter(p => p.categoryId === id);
+            const relatedSubs = subcategories.filter(s => s.categoryId === id);
+            if (relatedProducts.length > 0 || relatedSubs.length > 0) {
+                const parts = [];
+                if (relatedProducts.length > 0) parts.push(`${relatedProducts.length} מוצרים`);
+                if (relatedSubs.length > 0) parts.push(`${relatedSubs.length} תתי-קטגוריות`);
+                alert(`לא ניתן למחוק קטגוריה זו - יש ${parts.join(' ו-')} משויכים אליה.\nהעבירו או מחקו אותם קודם.`);
+                return;
+            }
             openDeleteModal('האם אתה בטוח שברצונך למחוק קטגוריה זו?', async () => {
                 await categoriesCollection.doc(id).delete();
             });
@@ -2640,6 +2649,11 @@
         }
         
         function deleteSubcategory(id) {
+            const relatedProducts = products.filter(p => p.subcategoryId === id);
+            if (relatedProducts.length > 0) {
+                alert(`לא ניתן למחוק תת-קטגוריה זו - יש ${relatedProducts.length} מוצרים משויכים אליה.\nהעבירו או מחקו אותם קודם.`);
+                return;
+            }
             openDeleteModal('האם אתה בטוח שברצונך למחוק תת-קטגוריה זו?', async () => {
                 await subcategoriesCollection.doc(id).delete();
             });

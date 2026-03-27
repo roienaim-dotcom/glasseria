@@ -1,6 +1,14 @@
 // ===== Glasseria Catalog App with Dynamic Categories =====
 // Updated with Size & Color Selection before adding to favorites
 
+// Safe localStorage/sessionStorage helpers (some in-app browsers block storage)
+function safeSetStorage(key, value, session = false) {
+    try { (session ? sessionStorage : localStorage).setItem(key, value); } catch(e) {}
+}
+function safeGetStorage(key, session = false) {
+    try { return (session ? sessionStorage : localStorage).getItem(key); } catch(e) { return null; }
+}
+
 // הוספת סגנונות לאנימציית המועדפים
 const favoritesAnimationStyles = document.createElement('style');
 favoritesAnimationStyles.textContent = `
@@ -131,7 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
     createSelectionModal();
     setupHistoryNavigation();
 
-    // Fullscreen splash screen for 5 seconds, then show welcome popup
+    // Fullscreen splash screen for 3.2 seconds, then fade out
     setTimeout(() => {
         if (loadingEl) {
             loadingEl.classList.add('fade-out');
@@ -140,7 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 loadingEl.classList.remove('fade-out');
             }, 400);
         }
-    }, 5000);
+    }, 3200);
 });
 
 // ===== History Navigation =====
@@ -199,6 +207,9 @@ function createSelectionModal() {
     const modal = document.createElement('div');
     modal.className = 'selection-modal-overlay';
     modal.id = 'selection-modal';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'בחירת מידה וצבע');
     modal.innerHTML = `
         <div class="selection-modal">
             <button class="selection-modal-close" id="selection-modal-close">
@@ -423,10 +434,10 @@ function addToFavorites(productId, selectedSize, selectedColor, button) {
         button.classList.add('active');
     }
     
-    localStorage.setItem('glasseria_favorites', JSON.stringify(favorites));
+    safeSetStorage('glasseria_favorites', JSON.stringify(favorites));
     updateFavoritesCount();
     renderFavoritesList();
-    
+
     // Update card button if exists
     const cardBtn = document.querySelector(`.product-card .favorite-btn[data-id="${productId}"]`);
     if (cardBtn && cardBtn !== button) {
@@ -445,10 +456,10 @@ function removeFromFavorites(productId, button) {
         button.classList.remove('active');
     }
     
-    localStorage.setItem('glasseria_favorites', JSON.stringify(favorites));
+    safeSetStorage('glasseria_favorites', JSON.stringify(favorites));
     updateFavoritesCount();
     renderFavoritesList();
-    
+
     // Update card button if exists
     const cardBtn = document.querySelector(`.product-card .favorite-btn[data-id="${productId}"]`);
     if (cardBtn && cardBtn !== button) {
@@ -556,8 +567,10 @@ function createLightbox() {
         if (!lightboxEl.classList.contains('active')) return;
         
         if (e.key === 'Escape') closeLightbox();
-        if (e.key === 'ArrowRight') navigateLightbox(-1); // Right key = previous
-        if (e.key === 'ArrowLeft') navigateLightbox(1);  // Left key = next
+        // RTL: Right arrow = next (reading direction), Left arrow = previous
+        const isRTL = document.documentElement.dir === 'rtl';
+        if (e.key === 'ArrowRight') navigateLightbox(isRTL ? 1 : -1);
+        if (e.key === 'ArrowLeft') navigateLightbox(isRTL ? -1 : 1);
     });
     
     // Swipe support for mobile
@@ -702,6 +715,12 @@ function applyProductsData(loadMethod) {
     showLoading(false);
     hideLoadingError();
     hideLoadingHint();
+    // Clean favorites that reference deleted products
+    const before = favorites.length;
+    favorites = favorites.filter(fav => products.some(p => p.id === fav.id));
+    if (favorites.length !== before) {
+        safeSetStorage('glasseria_favorites', JSON.stringify(favorites));
+    }
     updateFavoritesCount();
     renderCategories();
     if (currentView === 'products' && currentCategoryId) {
@@ -1638,6 +1657,20 @@ function setupEventListeners() {
     productModal.addEventListener('click', (e) => {
         if (e.target === productModal) closeProductModal();
     });
+
+    // Escape key closes modals (priority: selection modal > product modal > favorites)
+    // Note: lightbox Escape is handled separately in createLightbox()
+    document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Escape') return;
+        const selectionModal = document.getElementById('selection-modal');
+        if (selectionModal && selectionModal.classList.contains('active')) {
+            closeSelectionModal();
+        } else if (productModal.classList.contains('active')) {
+            closeProductModal();
+        } else if (favoritesPanel.classList.contains('active')) {
+            closeFavoritesPanel();
+        }
+    });
 }
 
 // ===== Handle Navigation Click =====
@@ -1753,7 +1786,7 @@ function renderFavoritesList() {
 
 function clearFavorites() {
     favorites = [];
-    localStorage.setItem('glasseria_favorites', JSON.stringify(favorites));
+    safeSetStorage('glasseria_favorites', JSON.stringify(favorites));
     
     document.querySelectorAll('.favorite-btn').forEach(btn => {
         btn.classList.remove('active');
@@ -1831,26 +1864,26 @@ function setupWelcomePopup() {
     const welcomeCloseBtn = document.getElementById('welcome-close');
     const dontShowAgain = document.getElementById('dont-show-again');
     
-    // הפופאפ יופיע אחרי שהספלאש נעלם (5.5 שניות)
-    if (!localStorage.getItem('glasseria_welcome_dismissed') && !sessionStorage.getItem('glasseria_welcome_shown')) {
+    // הפופאפ יופיע אחרי שהספלאש נעלם (3.2s + 0.5s)
+    if (!safeGetStorage('glasseria_welcome_dismissed') && !safeGetStorage('glasseria_welcome_shown', true)) {
         setTimeout(() => {
             welcomePopup.classList.add('active');
-            sessionStorage.setItem('glasseria_welcome_shown', 'true');
-        }, 5500);
+            safeSetStorage('glasseria_welcome_shown', 'true', true);
+        }, 3700);
     }
     
     welcomeCloseBtn.addEventListener('click', () => {
         // אם המשתמש סימן "אל תציג שוב" - שומר ב-localStorage לצמיתות
         if (dontShowAgain.checked) {
-            localStorage.setItem('glasseria_welcome_dismissed', 'true');
+            safeSetStorage('glasseria_welcome_dismissed', 'true');
         }
         welcomePopup.classList.remove('active');
     });
-    
+
     welcomePopup.addEventListener('click', (e) => {
         if (e.target === welcomePopup) {
             if (dontShowAgain.checked) {
-                localStorage.setItem('glasseria_welcome_dismissed', 'true');
+                safeSetStorage('glasseria_welcome_dismissed', 'true');
             }
             welcomePopup.classList.remove('active');
         }
