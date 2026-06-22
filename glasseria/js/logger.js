@@ -6,7 +6,16 @@ const GlasseriaLogger = (() => {
     const COLLECTION = 'glasseria_logs';
     const MAX_LOGS_PER_SESSION = 10; // Prevent spam
     let logCount = 0;
-    const sessionId = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+    function _getOrCreateSessionId() {
+        const KEY = 'glasseria_sid';
+        const fresh = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+        try {
+            let sid = sessionStorage.getItem(KEY);
+            if (!sid) { sid = fresh(); sessionStorage.setItem(KEY, sid); }
+            return sid;
+        } catch (e) { return fresh(); }
+    }
+    const sessionId = _getOrCreateSessionId();
     const sessionStart = Date.now();
 
     // Persistent device ID - survives across sessions on same browser
@@ -24,6 +33,42 @@ const GlasseriaLogger = (() => {
         }
     }
     const deviceId = _getOrCreateDeviceId();
+
+    // Navigation type: navigate | reload | back_forward
+    function _getNavigationType() {
+        try {
+            const nav = performance.getEntriesByType('navigation')[0];
+            return nav ? nav.type : 'unknown';
+        } catch (e) { return 'unknown'; }
+    }
+
+    // Detailed navigation timing (best-effort)
+    function _getNavTiming() {
+        try {
+            const nav = performance.getEntriesByType('navigation')[0];
+            if (!nav) return {};
+            return {
+                ttfbMs: Math.round(nav.responseStart),
+                domContentLoadedMs: Math.round(nav.domContentLoadedEventEnd),
+                loadEventMs: nav.loadEventEnd ? Math.round(nav.loadEventEnd) : null
+            };
+        } catch (e) { return {}; }
+    }
+
+    // Storage usage/quota (async, non-blocking; read at send time)
+    let _storageInfo = null;
+    (function _captureStorage() {
+        try {
+            if (navigator.storage && navigator.storage.estimate) {
+                navigator.storage.estimate().then(function (est) {
+                    _storageInfo = {
+                        usageMB: est.usage ? Math.round(est.usage / 1048576) : null,
+                        quotaMB: est.quota ? Math.round(est.quota / 1048576) : null
+                    };
+                }).catch(function () {});
+            }
+        } catch (e) {}
+    })();
 
     // Parse OS from user agent
     function _parseOS(ua) {
@@ -128,28 +173,49 @@ const GlasseriaLogger = (() => {
         return 'desktop';
     }
 
-    // Send log to Firestore (fire-and-forget, never blocks UI)
-    function _send(entry) {
-        if (logCount >= MAX_LOGS_PER_SESSION) return;
-        if (typeof db === 'undefined') return; // Firestore not loaded yet
-        logCount++;
-
+    // Build the document and write it (fire-and-forget)
+    function _writeDoc(entry) {
         const doc = {
             ...entry,
             sessionId,
             deviceId,
-            device: deviceInfo,
+            device: Object.assign({}, deviceInfo, {
+                storage: _storageInfo,
+                persistence: (typeof window !== 'undefined' && window._glasseriaPersistence) || null
+            }),
             deviceType: _getDeviceType(),
+            navigationType: _getNavigationType(),
             timestamp: firebase.firestore.FieldValue.serverTimestamp(),
             clientTime: new Date().toISOString(),
             url: window.location.href
         };
-
         // Fire-and-forget - don't await, don't block
         db.collection(COLLECTION).add(doc).catch(() => {
             // Silently fail - logging should never break the app
         });
     }
+
+    // Queue logs created before Firestore is available; flush when it is.
+    let _queue = [];
+    function _flushQueue() {
+        if (typeof db === 'undefined' || !db || !_queue.length) return;
+        const q = _queue; _queue = [];
+        q.forEach(_writeDoc);
+    }
+
+    // Send log to Firestore (fire-and-forget, never blocks UI)
+    function _send(entry) {
+        if (logCount >= MAX_LOGS_PER_SESSION) return;
+        logCount++;
+        if (typeof db === 'undefined' || !db) {
+            if (_queue.length < MAX_LOGS_PER_SESSION) _queue.push(entry);
+            return;
+        }
+        _flushQueue();
+        _writeDoc(entry);
+    }
+    // Belt-and-suspenders flush in case Firestore SDK came up after first logs
+    setTimeout(_flushQueue, 3000);
 
     return {
         // Log an error
@@ -178,7 +244,8 @@ const GlasseriaLogger = (() => {
                 method,
                 productCount,
                 durationMs,
-                timeSincePageLoad: Date.now() - sessionStart
+                timeSincePageLoad: Date.now() - sessionStart,
+                ..._getNavTiming()
             });
         },
 
@@ -195,18 +262,30 @@ const GlasseriaLogger = (() => {
 
         // Capture unhandled errors globally
         setupGlobalErrorHandlers() {
+            // Capture phase = true so resource (img/script) load failures are caught too
             window.addEventListener('error', (e) => {
+                const target = e.target;
+                if (target && target !== window && target.tagName) {
+                    if (target.tagName.toLowerCase() === 'img') {
+                        const src = target.src || target.currentSrc || 'unknown';
+                        this.warn('image', 'תמונה לא נטענה: ' + src, { src });
+                    }
+                    return; // other resource errors ignored for now
+                }
                 this.error('global', e.message || 'Unknown error', {
                     filename: e.filename,
                     line: e.lineno,
-                    col: e.colno
+                    col: e.colno,
+                    stack: e.error && e.error.stack ? String(e.error.stack).slice(0, 1000) : ''
                 });
-            });
+            }, true);
 
             window.addEventListener('unhandledrejection', (e) => {
                 const reason = e.reason;
-                const msg = reason?.message || reason?.toString?.() || 'Unhandled promise rejection';
-                this.error('promise', msg);
+                const msg = (reason && reason.message) || (reason && reason.toString && reason.toString()) || 'Unhandled promise rejection';
+                this.error('promise', msg, {
+                    stack: reason && reason.stack ? String(reason.stack).slice(0, 1000) : ''
+                });
             });
         },
 
@@ -220,7 +299,25 @@ const GlasseriaLogger = (() => {
 // Auto-setup global error handlers
 GlasseriaLogger.setupGlobalErrorHandlers();
 
-// Log every visit (session start)
-GlasseriaLogger.info('session', 'כניסה לאתר', {
-    referrer: document.referrer || 'direct'
+// Log every visit ONCE per browser-tab session (reloads reuse the same session, no duplicate)
+(function logVisitOnce() {
+    const KEY = 'glasseria_visit_logged';
+    try {
+        if (sessionStorage.getItem(KEY)) return;
+        sessionStorage.setItem(KEY, '1');
+    } catch (e) { /* storage blocked: fall through and log anyway */ }
+    GlasseriaLogger.info('session', 'כניסה לאתר', {
+        referrer: document.referrer || 'direct'
+    });
+})();
+
+// Back/forward bfcache restore: scripts don't re-run, so note the revisit explicitly
+window.addEventListener('pageshow', (e) => {
+    if (e.persisted) {
+        GlasseriaLogger.info('session', 'חזרה לעמוד מהמטמן');
+    }
 });
+
+// Connectivity changes during the session
+window.addEventListener('offline', () => GlasseriaLogger.warn('network', 'החיבור לאינטרנט נותק'));
+window.addEventListener('online', () => GlasseriaLogger.info('network', 'החיבור לאינטרנט חזר'));
