@@ -1565,6 +1565,15 @@
             flex-wrap: wrap;
             gap: 6px;
         }
+        .log-tech { margin-top: 6px; }
+        .log-tech summary { cursor: pointer; color: var(--secondary); font-size: 12px; user-select: none; }
+        .log-tech summary:hover { color: var(--primary); }
+        .log-tech pre {
+            white-space: pre-wrap; word-break: break-word;
+            background: #f8f9fa; border: 1px solid #eee; border-radius: 6px;
+            padding: 8px; margin-top: 6px; font-size: 11px;
+            direction: ltr; text-align: left; max-height: 240px; overflow: auto;
+        }
         .log-badge {
             padding: 2px 8px;
             border-radius: 4px;
@@ -2181,6 +2190,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="../js/log-explain.js"></script>
     
     <script>
         // ===== Firebase Configuration =====
@@ -4560,18 +4570,34 @@
                 // Render inner log entries
                 const entries = session.logs.map(log => {
                     const logTime = log.timestamp ? log.timestamp.toDate().toLocaleTimeString('he-IL') : '';
-                    const badge = `<span class="log-badge ${log.level}">${log.level}</span>`;
+                    const exp = (typeof explainLog === 'function')
+                        ? explainLog(log)
+                        : { title: log.message || '', detail: log.message || '', severity: log.level };
+                    const sevColor = exp.severity === 'error' ? 'var(--danger)'
+                        : (exp.severity === 'warn' ? 'var(--warning)' : '#1565c0');
+
                     let details = '';
                     if (log.durationMs) details += `<span>⏱ ${(log.durationMs / 1000).toFixed(1)}s</span>`;
                     if (log.productCount) details += `<span>📦 ${log.productCount} מוצרים</span>`;
-                    if (log.method) details += `<span>🔧 ${log.method}</span>`;
                     if (log.retryCount) details += `<span>🔄 ${log.retryCount} ניסיונות</span>`;
                     if (log.referrer && log.referrer !== 'direct') details += `<span>🔗 ${_escHtml(log.referrer)}</span>`;
 
+                    const tech = [];
+                    if (log.message) tech.push('הודעה: ' + _escHtml(log.message));
+                    if (log.code) tech.push('קוד: ' + _escHtml(log.code));
+                    if (log.method) tech.push('שיטה: ' + _escHtml(log.method));
+                    if (log.filename) tech.push('קובץ: ' + _escHtml(log.filename) + (log.line ? ':' + log.line + (log.col ? ':' + log.col : '') : ''));
+                    if (log.navigationType) tech.push('ניווט: ' + _escHtml(log.navigationType));
+                    if (log.stack) tech.push('Stack:\n' + _escHtml(log.stack));
+                    const techBlock = tech.length
+                        ? `<details class="log-tech"><summary>פרטים טכניים</summary><pre>${tech.join('\n')}</pre></details>`
+                        : '';
+
                     return `<div class="log-entry">
-                        <div class="log-header">${badge}<span class="log-time">${logTime}</span></div>
-                        <div class="log-message">${_escHtml(log.message)}</div>
+                        <div class="log-header"><span class="log-badge ${log.level}">${log.level}</span><span class="log-time">${logTime}</span></div>
+                        <div class="log-message" style="font-weight:600;color:${sevColor}">${_escHtml(exp.title)}</div>
                         ${details ? `<div class="log-details">${details}</div>` : ''}
+                        ${techBlock}
                     </div>`;
                 }).join('');
 
@@ -4590,10 +4616,12 @@
                         </div>
                     </div>
                     <div class="log-session-body">
-                        ${deviceDetail || connDetail ? `<div class="log-device-info">
+                        ${deviceDetail || connDetail || dev.storage || dev.persistence ? `<div class="log-device-info">
                             ${deviceDetail ? `<div class="device-detail">🔧 ${deviceDetail}</div>` : ''}
                             ${connDetail ? `<div class="device-detail">📶 ${connDetail}</div>` : ''}
                             ${dev.memory ? `<div class="device-detail">💾 ${dev.memory}GB RAM · ${dev.cores || '?'} cores</div>` : ''}
+                            ${dev.storage ? `<div class="device-detail">🗄 אחסון: ${dev.storage.usageMB != null ? dev.storage.usageMB : '?'}MB / ${dev.storage.quotaMB != null ? dev.storage.quotaMB : '?'}MB</div>` : ''}
+                            ${dev.persistence ? `<div class="device-detail">📦 מטמן: ${dev.persistence === 'ok' ? 'פעיל' : 'לא פעיל (' + _escHtml(dev.persistence) + ')'}</div>` : ''}
                         </div>` : ''}
                         ${entries}
                     </div>
