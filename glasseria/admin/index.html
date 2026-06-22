@@ -4591,7 +4591,7 @@
                     if (log.navigationType) tech.push('ניווט: ' + _escHtml(log.navigationType));
                     if (log.stack) tech.push('Stack:\n' + _escHtml(log.stack));
                     const techBlock = tech.length
-                        ? `<details class="log-tech"><summary>פרטים טכניים</summary><pre>${tech.join('\n')}</pre></details>`
+                        ? `<details class="log-tech" onclick="event.stopPropagation()"><summary>פרטים טכניים</summary><pre>${tech.join('\n')}</pre></details>`
                         : '';
 
                     return `<div class="log-entry">
