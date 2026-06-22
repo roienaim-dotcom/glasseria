@@ -4621,7 +4621,7 @@
                             ${connDetail ? `<div class="device-detail">📶 ${connDetail}</div>` : ''}
                             ${dev.memory ? `<div class="device-detail">💾 ${dev.memory}GB RAM · ${dev.cores || '?'} cores</div>` : ''}
                             ${dev.storage ? `<div class="device-detail">🗄 אחסון: ${dev.storage.usageMB != null ? dev.storage.usageMB : '?'}MB / ${dev.storage.quotaMB != null ? dev.storage.quotaMB : '?'}MB</div>` : ''}
-                            ${dev.persistence ? `<div class="device-detail">📦 מטמן: ${dev.persistence === 'ok' ? 'פעיל' : 'לא פעיל (' + _escHtml(dev.persistence) + ')'}</div>` : ''}
+                            ${dev.persistence ? `<div class="device-detail">📦 מטמון: ${dev.persistence === 'ok' ? 'פעיל' : 'לא פעיל (' + _escHtml(dev.persistence) + ')'}</div>` : ''}
                         </div>` : ''}
                         ${entries}
                     </div>

@@ -23,7 +23,7 @@
         if (level === 'timing') return { title: 'האתר נטען בהצלחה', detail: message, severity: 'ok' };
 
         if (source === 'session') {
-            if (/מטמן/.test(message)) return { title: 'חזרה לעמוד (מהמטמן של הדפדפן)', detail: message, severity: 'ok' };
+            if (/מטמון/.test(message)) return { title: 'חזרה לעמוד (מהמטמון של הדפדפן)', detail: message, severity: 'ok' };
             return { title: 'כניסה לאתר', detail: message, severity: 'ok' };
         }
 
@@ -47,8 +47,8 @@
         if (source === 'image') return { title: 'תמונת מוצר לא נטענה — קישור שבור או בעיית רשת', detail: message, severity: 'warn' };
 
         if (source === 'persistence') {
-            if (code === 'failed-precondition') return { title: 'המטמן לא הופעל — האתר פתוח בכמה טאבים', detail: message, severity: 'warn' };
-            return { title: 'הדפדפן אינו תומך בשמירת מטמן (גלישה פרטית?)', detail: message, severity: 'warn' };
+            if (code === 'failed-precondition') return { title: 'המטמון לא הופעל — האתר פתוח בכמה טאבים', detail: message, severity: 'warn' };
+            return { title: 'הדפדפן אינו תומך בשמירת מטמון (גלישה פרטית?)', detail: message, severity: 'warn' };
         }
 
         if (source === 'storage') return { title: 'שמירת המועדפים נחסמה בדפדפן (דפדפן בתוך אפליקציה?)', detail: message, severity: 'warn' };

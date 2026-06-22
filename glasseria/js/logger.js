@@ -314,7 +314,7 @@ GlasseriaLogger.setupGlobalErrorHandlers();
 // Back/forward bfcache restore: scripts don't re-run, so note the revisit explicitly
 window.addEventListener('pageshow', (e) => {
     if (e.persisted) {
-        GlasseriaLogger.info('session', 'חזרה לעמוד מהמטמן');
+        GlasseriaLogger.info('session', 'חזרה לעמוד מהמטמון');
     }
 });
 
