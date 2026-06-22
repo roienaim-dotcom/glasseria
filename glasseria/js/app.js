@@ -2,8 +2,16 @@
 // Updated with Size & Color Selection before adding to favorites
 
 // Safe localStorage/sessionStorage helpers (some in-app browsers block storage)
+let _storageBlockedWarned = false;
+function _warnStorageBlocked(e) {
+    if (_storageBlockedWarned) return;
+    _storageBlockedWarned = true;
+    if (typeof GlasseriaLogger !== 'undefined') {
+        GlasseriaLogger.warn('storage', 'שמירה מקומית נחסמה: ' + (e && e.message ? e.message : e));
+    }
+}
 function safeSetStorage(key, value, session = false) {
-    try { (session ? sessionStorage : localStorage).setItem(key, value); } catch(e) {}
+    try { (session ? sessionStorage : localStorage).setItem(key, value); } catch(e) { _warnStorageBlocked(e); }
 }
 function safeGetStorage(key, session = false) {
     try { return (session ? sessionStorage : localStorage).getItem(key); } catch(e) { return null; }
@@ -822,6 +830,7 @@ async function loadAllData() {
     subcategoriesLoaded = false;
     productsLoaded = false;
     window._glasseriaLoadStart = Date.now();
+    window._firestoreErrorLogged = false; // reset per load-phase: only one merged firestore error per load
 
     // Unsubscribe old listeners before creating new ones (prevents duplicates on retry)
     if (unsubCategories) { unsubCategories(); unsubCategories = null; }
@@ -871,7 +880,14 @@ async function loadAllData() {
     const handleError = (source) => (error) => {
         if (listenersCancelled) return; // Ignore errors from cancelled listeners
         console.error(`Error loading ${source}:`, error);
-        GlasseriaLogger.error('firestore', `onSnapshot error for ${source}: ${error.message || error.code || error}`);
+        // One merged log per load-phase instead of one per collection
+        if (!window._firestoreErrorLogged) {
+            window._firestoreErrorLogged = true;
+            GlasseriaLogger.error('firestore', `onSnapshot error (${source}): ${error.message || error.code || error}`, {
+                code: error.code || '',
+                firstCollection: source
+            });
+        }
         // Don't immediately give up - try fallback
         if (!productsLoaded && source === 'products') {
             console.log(`onSnapshot error for ${source}, trying get() fallback...`);
@@ -938,7 +954,7 @@ async function loadAllData() {
         }, handleError('products'));
     } catch (error) {
         console.error('Error setting up listeners:', error);
-        GlasseriaLogger.error('firestore', `Listener setup failed: ${error.message || error}`);
+        GlasseriaLogger.error('firestore', `Listener setup failed: ${error.message || error}`, { code: error.code || '' });
         // Clean up any partially-created listeners
         if (unsubCategories) { unsubCategories(); unsubCategories = null; }
         if (unsubSubcategories) { unsubSubcategories(); unsubSubcategories = null; }
