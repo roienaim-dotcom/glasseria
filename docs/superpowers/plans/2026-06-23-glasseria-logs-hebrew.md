@@ -443,7 +443,7 @@ git commit -m "feat(logs): record Firestore persistence result and log failures"
 
 - [ ] **Step 1: Reset the per-load error flag**
 
-In `glasseria/js/app.js`, in `loadAllData()`, immediately after the line `window._glasseriaLoadStart = Date.now();` (currently line 1049), add:
+In `glasseria/js/app.js`, in `loadAllData()`, immediately after the line `window._glasseriaLoadStart = Date.now();` (live baseline line 824), add:
 
 ```js
     window._firestoreErrorLogged = false; // reset per load-phase: only one merged firestore error per load
@@ -451,7 +451,7 @@ In `glasseria/js/app.js`, in `loadAllData()`, immediately after the line `window
 
 - [ ] **Step 2: Merge Firestore onSnapshot errors into one log**
 
-In `glasseria/js/app.js`, replace the `handleError` definition (currently lines 1096-1109) with:
+In `glasseria/js/app.js`, replace the `handleError` definition (live baseline lines 871-884) with:
 
 ```js
     const handleError = (source) => (error) => {
@@ -478,7 +478,7 @@ In `glasseria/js/app.js`, replace the `handleError` definition (currently lines 
 
 - [ ] **Step 3: Add code field to listener-setup failure**
 
-In `glasseria/js/app.js`, replace line 1166:
+In `glasseria/js/app.js`, replace line 941 (`Listener setup failed`):
 
 ```js
         GlasseriaLogger.error('firestore', `Listener setup failed: ${error.message || error}`);
