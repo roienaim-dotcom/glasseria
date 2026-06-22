@@ -27,16 +27,23 @@ if (isIOS || isAndroid || isInAppBrowser || isSlowConnection) {
 // Enable offline persistence - with Safari/iOS safety
 // Note: enablePersistence can cause empty-cache issues on first visit;
 // app.js handles this by checking snapshot.metadata.fromCache
-db.enablePersistence({ synchronizeTabs: true }).catch((err) => {
-    if (err.code === 'failed-precondition') {
-        console.warn('Firestore persistence: multiple tabs open');
-    } else if (err.code === 'unimplemented') {
-        console.warn('Firestore persistence: not supported by browser');
-    } else {
-        // On Safari/iOS, persistence can silently fail - log it
-        console.warn('Firestore persistence error:', err.code, err.message);
-    }
-});
+db.enablePersistence({ synchronizeTabs: true })
+    .then(() => { window._glasseriaPersistence = 'ok'; })
+    .catch((err) => {
+        window._glasseriaPersistence = err.code || 'error';
+        if (err.code === 'failed-precondition') {
+            console.warn('Firestore persistence: multiple tabs open');
+        } else if (err.code === 'unimplemented') {
+            console.warn('Firestore persistence: not supported by browser');
+        } else {
+            // On Safari/iOS, persistence can silently fail - log it
+            console.warn('Firestore persistence error:', err.code, err.message);
+        }
+        // Surface to the admin log (logger.js has loaded by the time this async catch runs)
+        if (typeof GlasseriaLogger !== 'undefined') {
+            GlasseriaLogger.warn('persistence', 'Persistence failed: ' + (err.code || err.message || 'unknown'), { code: err.code || '' });
+        }
+    });
 
 // Initialize Storage (only available when SDK is loaded - admin pages)
 const storage = typeof firebase.storage === 'function' ? firebase.storage() : null;
