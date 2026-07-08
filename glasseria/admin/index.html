@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
     <title>Glasseria - פאנל ניהול</title>
     <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- SortableJS for drag and drop -->
@@ -1617,6 +1618,7 @@
                     <input type="password" id="login-password" required placeholder="••••••••">
                 </div>
                 <button type="submit" class="btn btn-primary">התחבר</button>
+                <button type="button" id="forgot-password-btn" style="background:none;border:none;color:#1565c0;cursor:pointer;font-size:13px;margin-top:12px;text-decoration:underline;">שכחתי סיסמה</button>
             </form>
         </div>
     </div>
@@ -1630,11 +1632,13 @@
         
         <nav class="admin-nav">
             <button class="active" data-section="dashboard">📊 דשבורד</button>
+            <button data-section="inquiries">📞 פניות</button>
             <button data-section="categories">📁 קטגוריות</button>
             <button data-section="subcategories">📂 תת-קטגוריות</button>
             <button data-section="products">📦 מוצרים</button>
             <button data-section="csv-import">📥 ייבוא CSV</button>
             <button data-section="image-matcher">🖼️ שיוך תמונות</button>
+            <button data-section="settings">⚙️ הגדרות</button>
             <button data-section="logs">📋 לוגים</button>
         </nav>
         
@@ -1657,6 +1661,24 @@
                 </div>
                 
                 <div class="card">
+                    <div class="card-header">
+                        <h2>📈 נתוני האתר (30 ימים אחרונים)</h2>
+                        <button class="btn btn-secondary btn-small" onclick="loadBusinessStats()">🔄 רענן</button>
+                    </div>
+                    <div id="biz-stats-loading" style="color:var(--secondary);padding:8px 0;">לחץ "רענן" כדי לטעון נתונים...</div>
+                    <div class="stats-grid" id="biz-stats-grid" style="display:none;margin-top:10px;">
+                        <div class="stat-card"><div class="stat-number" id="biz-visits">0</div><div class="stat-label">כניסות</div></div>
+                        <div class="stat-card"><div class="stat-number" id="biz-returning">0</div><div class="stat-label">מבקרים חוזרים</div></div>
+                        <div class="stat-card"><div class="stat-number" id="biz-inquiries">0</div><div class="stat-label">פניות וואטסאפ</div></div>
+                        <div class="stat-card"><div class="stat-number" id="biz-inapp">0%</div><div class="stat-label">מפייסבוק/אינסטגרם</div></div>
+                    </div>
+                    <div id="biz-breakdown" style="display:none;margin-top:16px;"></div>
+                    <p style="margin-top:10px;font-size:12px;color:var(--secondary);">
+                        הנתונים מבוססים על מה שהאתר אוסף אוטומטית (כניסות, מכשירים, צפיות, פניות). ללא מידע אישי מזהה.
+                    </p>
+                </div>
+
+                <div class="card">
                     <h2> ברוך הבא לפאנל הניהול</h2>
                     <p style="margin-top: 10px; color: var(--secondary);">
                         כאן תוכל לנהל את הקטלוג שלך - להוסיף קטגוריות, תת-קטגוריות ומוצרים.
@@ -1665,8 +1687,75 @@
                          <strong>דחיסת תמונות אוטומטית:</strong> כל תמונה שתעלה תכווץ אוטומטית לגודל אופטימלי!
                     </p>
                 </div>
+
+                <div class="card">
+                    <h2>💾 גיבוי וייצוא</h2>
+                    <p style="margin:10px 0; color: var(--secondary);">
+                        מומלץ לגבות את הקטלוג מדי פעם. הקבצים יורדים למחשב שלך.
+                    </p>
+                    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                        <button class="btn btn-primary" onclick="exportBackup()">💾 גיבוי מלא (JSON)</button>
+                        <button class="btn btn-secondary" onclick="exportPriceList()">📄 ייצוא מחירון (Excel/CSV)</button>
+                    </div>
+                    <p style="margin-top:10px; font-size:12px; color: var(--secondary);">
+                        גיבוי מלא = כל הקטגוריות והמוצרים לשחזור. מחירון = טבלה לפתיחה באקסל, להדפסה או שליחה למתקינים.
+                    </p>
+                </div>
             </section>
-            
+
+            <!-- Inquiries -->
+            <section class="section" id="section-inquiries">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>📞 פניות וואטסאפ</h2>
+                        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                            <select id="inquiries-filter" onchange="renderInquiries()">
+                                <option value="all">כל הפניות</option>
+                                <option value="new">חדשות</option>
+                                <option value="handled">טופלו</option>
+                                <option value="closed">נסגרו עסקה</option>
+                            </select>
+                            <button class="btn btn-secondary btn-small" onclick="loadInquiries()">🔄 רענן</button>
+                        </div>
+                    </div>
+                    <div id="inquiries-summary" style="margin-bottom:14px;"></div>
+                    <div id="inquiries-loading" style="color:var(--secondary);padding:8px 0;">טוען פניות...</div>
+                    <div id="inquiries-list"></div>
+                </div>
+            </section>
+
+            <!-- Settings -->
+            <section class="section" id="section-settings">
+                <div class="card">
+                    <h2>⚙️ הגדרות אתר</h2>
+                    <p style="margin:10px 0;color:var(--secondary);">כאן אפשר לשנות את הכותרת בעמוד הבית ולפרסם הודעה/מבצע — בלי צורך במתכנת.</p>
+                    <div id="settings-loading" style="color:var(--secondary);">טוען הגדרות...</div>
+                    <div id="settings-form" style="display:none;max-width:560px;">
+                        <div class="form-group">
+                            <label>כותרת ראשית בעמוד הבית</label>
+                            <input type="text" id="settings-hero-title" placeholder="קטלוג מוצרים">
+                        </div>
+                        <div class="form-group">
+                            <label>כותרת משנה</label>
+                            <input type="text" id="settings-hero-subtitle" placeholder="בחרו את המוצרים האהובים עליכם ושלחו לנו ב-WhatsApp">
+                        </div>
+                        <hr style="margin:16px 0;border:none;border-top:1px solid #eee;">
+                        <div class="form-group">
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="settings-banner-visible">
+                                הצג שורת הודעה/מבצע בראש האתר
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label>טקסט ההודעה</label>
+                            <input type="text" id="settings-banner-text" placeholder="לדוגמה: מבצע חורף — 10% על כל המקלחונים">
+                        </div>
+                        <button class="btn btn-primary" id="settings-save-btn" onclick="saveSiteSettings(this)">שמור הגדרות</button>
+                        <span id="settings-saved-msg" style="margin-right:10px;color:var(--success);display:none;">✅ נשמר</span>
+                    </div>
+                </div>
+            </section>
+
             <!-- Categories -->
             <section class="section" id="section-categories">
                 <div class="card">
@@ -1724,13 +1813,14 @@
                     <div class="card-header">
                         <h2>📦 מוצרים</h2>
                         <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                            <input type="text" id="product-search" oninput="filterProducts()" placeholder="חיפוש לפי שם או מק&quot;ט..." style="padding: 8px; border-radius: 6px; border: 1px solid #ddd; flex: 1; min-width: 140px;">
                             <select id="filter-category" onchange="filterProducts()" style="padding: 8px; border-radius: 6px; border: 1px solid #ddd; flex: 1; min-width: 120px;">
                                 <option value="">כל הקטגוריות</option>
                             </select>
                             <button class="btn btn-primary" onclick="openProductModal()" style="white-space: nowrap;">+ הוסף מוצר</button>
                         </div>
                     </div>
-                    <p style="background: #e3f2fd; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 13px; color: #1565c0;">
+                    <p id="products-drag-hint" style="background: #e3f2fd; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 13px; color: #1565c0;">
                         💡 גרור את השורות (⋮⋮) כדי לשנות את סדר המוצרים באתר
                     </p>
                     <div id="products-loading" class="loading">
@@ -1740,13 +1830,25 @@
                     <!-- Bulk Action Bar -->
                     <div class="bulk-bar" id="bulk-bar">
                         <span class="bulk-count" id="bulk-count">0 נבחרו</span>
-                        <select id="bulk-category" onchange="updateBulkSubcategories()">
-                            <option value="">בחר קטגוריה</option>
-                        </select>
-                        <select id="bulk-subcategory">
-                            <option value="">בחר תת-קטגוריה</option>
-                        </select>
-                        <button class="btn btn-primary" onclick="bulkUpdateProducts()">עדכן נבחרים</button>
+                        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                            <select id="bulk-category" onchange="updateBulkSubcategories()">
+                                <option value="">בחר קטגוריה</option>
+                            </select>
+                            <select id="bulk-subcategory">
+                                <option value="">בחר תת-קטגוריה</option>
+                            </select>
+                            <button class="btn btn-primary" onclick="bulkUpdateProducts()">עדכן קטגוריה</button>
+                        </div>
+                        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;border-right:2px solid #ddd;padding-right:8px;">
+                            <select id="bulk-price-mode">
+                                <option value="percent">שינוי באחוזים (%)</option>
+                                <option value="fixed">שינוי בסכום (₪)</option>
+                                <option value="set">קביעת מחיר אחיד (₪)</option>
+                            </select>
+                            <input type="number" id="bulk-price-value" step="0.01" placeholder="ערך" style="width:90px;">
+                            <label class="checkbox-item" style="white-space:nowrap;"><input type="checkbox" id="bulk-price-round" checked> עגל לשלם</label>
+                            <button class="btn btn-primary" onclick="bulkUpdatePrices()">עדכן מחירים</button>
+                        </div>
                         <button class="btn" onclick="clearBulkSelection()" style="background: #eee;">בטל בחירה</button>
                     </div>
 
@@ -1798,6 +1900,15 @@
                             <span class="csv-merge-hint">מאחד שורות עם אותו דגם למוצר אחד עם מידות/צבעים כאפשרויות. מחיר התחלתי מוצג.</span>
                         </div>
 
+                        <!-- Update-by-SKU toggle -->
+                        <div class="csv-import-merge-toggle">
+                            <label class="csv-merge-label">
+                                <input type="checkbox" id="csv-update-toggle" onchange="onUpdateToggleChange()">
+                                <span>עדכן מוצרים קיימים לפי מק"ט</span>
+                            </label>
+                            <span class="csv-merge-hint">אם מק"ט כבר קיים בקטלוג — המוצר יעודכן במקום ליצור כפילות. חדשים ייווצרו כרגיל.</span>
+                        </div>
+
                         <!-- Category Assignment -->
                         <div class="csv-import-assignment">
                             <h3 style="margin-bottom: 12px;">שיוך קטגוריה למוצרים שנבחרו</h3>
@@ -1828,8 +1939,8 @@
                                 <input type="text" id="csv-search" placeholder="חיפוש לפי שם מוצר..." oninput="filterImportProducts()">
                             </div>
                             <div class="csv-import-toolbar-left">
-                                <button class="btn btn-secondary btn-small" onclick="toggleSelectAll(true)">בחר הכל</button>
-                                <button class="btn btn-secondary btn-small" onclick="toggleSelectAll(false)">נקה בחירה</button>
+                                <button class="btn btn-secondary btn-small" onclick="csvToggleSelectAll(true)">בחר הכל</button>
+                                <button class="btn btn-secondary btn-small" onclick="csvToggleSelectAll(false)">נקה בחירה</button>
                                 <span class="csv-import-counter" id="csv-selected-count">0 מתוך 0 נבחרו</span>
                             </div>
                         </div>
@@ -1839,7 +1950,7 @@
                             <table id="csv-import-table">
                                 <thead>
                                     <tr>
-                                        <th style="width: 40px;"><input type="checkbox" id="csv-select-all-checkbox" onchange="toggleSelectAll(this.checked)"></th>
+                                        <th style="width: 40px;"><input type="checkbox" id="csv-select-all-checkbox" onchange="csvToggleSelectAll(this.checked)"></th>
                                         <th>שם מוצר</th>
                                         <th>מק"ט</th>
                                         <th>מחיר</th>
@@ -1958,6 +2069,9 @@
                     <!-- Stats Summary -->
                     <div id="logs-stats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 16px;"></div>
 
+                    <!-- Common problems summary -->
+                    <div id="logs-problems" style="margin-bottom: 16px;"></div>
+
                     <div id="logs-loading" class="loading" style="display: none;">
                         <div class="spinner"></div>
                         טוען לוגים...
@@ -2004,7 +2118,7 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeCategoryModal()">ביטול</button>
-                <button class="btn btn-primary" onclick="saveCategory()">שמור</button>
+                <button class="btn btn-primary" onclick="saveCategory(this)">שמור</button>
             </div>
         </div>
     </div>
@@ -2044,7 +2158,7 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeSubcategoryModal()">ביטול</button>
-                <button class="btn btn-primary" onclick="saveSubcategory()">שמור</button>
+                <button class="btn btn-primary" onclick="saveSubcategory(this)">שמור</button>
             </div>
         </div>
     </div>
@@ -2076,6 +2190,23 @@
                         <label class="checkbox-item">
                             <input type="checkbox" id="product-hide-price">
                             הסתר מחיר (יוצג "קבל הצעת מחיר")
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>מחיר מבצע (השאר ריק אם אין מבצע)</label>
+                        <input type="number" id="product-sale-price" step="0.01" placeholder="לדוגמה: 899">
+                        <small style="color:var(--secondary);font-size:12px;">אם ממולא, יוצג עם קו על המחיר הרגיל ותג "מבצע"</small>
+                    </div>
+                    <div class="form-group">
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="product-out-of-stock">
+                            אזל מהמלאי (יוצג "אזל מהמלאי" במקום כפתור מועדפים)
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="product-hidden">
+                            הסתר מהאתר (המוצר לא יוצג ללקוחות, בלי למחוק אותו)
                         </label>
                     </div>
                     <div class="form-group">
@@ -2213,7 +2344,12 @@
         const categoriesCollection = db.collection('glasseria_categories');
         const subcategoriesCollection = db.collection('glasseria_subcategories');
         const productsCollection = db.collection('glasseria_products');
-        
+        const inquiriesCollection = db.collection('glasseria_inquiries');
+        const eventsCollection = db.collection('glasseria_events');
+        const settingsCollection = db.collection('glasseria_settings');
+        const logsCollection = db.collection('glasseria_logs');
+        const SETTINGS_DOC_ID = 'site';
+
         // ===== Image Compression =====
         async function compressImage(file, options = {}) {
             const {
@@ -2302,11 +2438,39 @@
                 await auth.signInWithEmailAndPassword(email, password);
                 errorEl.classList.remove('show');
             } catch (error) {
-                errorEl.textContent = 'אימייל או סיסמה שגויים';
+                // Specific Hebrew message per error code instead of always "wrong password"
+                let msg = 'אימייל או סיסמה שגויים';
+                if (error.code === 'auth/network-request-failed') msg = 'בעיית חיבור לאינטרנט. בדקו את הרשת ונסו שוב.';
+                else if (error.code === 'auth/too-many-requests') msg = 'יותר מדי ניסיונות. נסו שוב בעוד מספר דקות.';
+                else if (error.code === 'auth/user-disabled') msg = 'המשתמש חסום. פנו למנהל המערכת.';
+                else if (error.code === 'auth/invalid-email') msg = 'כתובת אימייל לא תקינה.';
+                errorEl.textContent = msg;
                 errorEl.classList.add('show');
             }
         });
-        
+
+        document.getElementById('forgot-password-btn').addEventListener('click', async () => {
+            const email = document.getElementById('login-email').value;
+            const errorEl = document.getElementById('login-error');
+            if (!email) {
+                errorEl.textContent = 'הזינו את כתובת האימייל שלכם ואז לחצו "שכחתי סיסמה".';
+                errorEl.classList.add('show');
+                return;
+            }
+            try {
+                await auth.sendPasswordResetEmail(email);
+                errorEl.style.color = '#2e7d32';
+                errorEl.textContent = 'נשלח אליכם מייל לאיפוס סיסמה. בדקו את תיבת הדואר.';
+                errorEl.classList.add('show');
+            } catch (error) {
+                errorEl.style.color = '';
+                errorEl.textContent = error.code === 'auth/invalid-email'
+                    ? 'כתובת אימייל לא תקינה.'
+                    : 'לא ניתן לשלוח מייל איפוס כרגע. נסו שוב מאוחר יותר.';
+                errorEl.classList.add('show');
+            }
+        });
+
         document.getElementById('logout-btn').addEventListener('click', () => {
             auth.signOut();
         });
@@ -2320,6 +2484,13 @@
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('admin-panel').style.display = 'block';
         }
+
+        // Warn before leaving while a long upload/import is in progress (prevents a
+        // half-imported catalog if the owner closes the tab mid-run)
+        let adminBusy = false;
+        window.addEventListener('beforeunload', (e) => {
+            if (adminBusy) { e.preventDefault(); e.returnValue = ''; return ''; }
+        });
         
         // ===== Navigation =====
         document.querySelectorAll('.admin-nav button').forEach(btn => {
@@ -2334,13 +2505,34 @@
                 if (btn.dataset.section === 'image-matcher' && typeof updateIMCategoryFilter === 'function') {
                     updateIMCategoryFilter();
                 }
+                // Lazy-load tab data on first open
+                if (btn.dataset.section === 'inquiries') loadInquiries();
+                if (btn.dataset.section === 'settings') loadSiteSettingsAdmin();
             });
         });
         
         // ===== Load Data =====
+        function showLoadError(loadingId, label) {
+            const el = document.getElementById(loadingId);
+            if (el) {
+                el.innerHTML = `<div style="color:#c62828;padding:16px;text-align:center;">
+                    שגיאה בטעינת ${label}. ייתכן בעיית חיבור או הרשאות.<br>
+                    <button class="btn btn-secondary btn-small" style="margin-top:10px;" onclick="location.reload()">נסה שוב</button>
+                </div>`;
+                el.style.display = 'block';
+            }
+        }
+
+        // Unsubscribe handles so re-login doesn't stack duplicate listeners
+        let unsubAdminCats = null, unsubAdminSubs = null, unsubAdminProds = null;
+
         async function loadAllData() {
+            if (unsubAdminCats) unsubAdminCats();
+            if (unsubAdminSubs) unsubAdminSubs();
+            if (unsubAdminProds) unsubAdminProds();
+
             // Load categories
-            categoriesCollection.orderBy('order').onSnapshot((snapshot) => {
+            unsubAdminCats = categoriesCollection.orderBy('order').onSnapshot((snapshot) => {
                 categories = [];
                 snapshot.forEach((doc) => {
                     categories.push({ id: doc.id, ...doc.data() });
@@ -2348,20 +2540,20 @@
                 renderCategories();
                 updateCategorySelects();
                 document.getElementById('stat-categories').textContent = categories.length;
-            });
-            
+            }, (err) => { console.error('categories load error:', err); showLoadError('categories-loading', 'הקטגוריות'); });
+
             // Load subcategories
-            subcategoriesCollection.orderBy('order').onSnapshot((snapshot) => {
+            unsubAdminSubs = subcategoriesCollection.orderBy('order').onSnapshot((snapshot) => {
                 subcategories = [];
                 snapshot.forEach((doc) => {
                     subcategories.push({ id: doc.id, ...doc.data() });
                 });
                 renderSubcategories();
                 document.getElementById('stat-subcategories').textContent = subcategories.length;
-            });
-            
+            }, (err) => { console.error('subcategories load error:', err); showLoadError('subcategories-loading', 'תתי-הקטגוריות'); });
+
             // Load products
-            productsCollection.onSnapshot((snapshot) => {
+            unsubAdminProds = productsCollection.onSnapshot((snapshot) => {
                 products = [];
                 snapshot.forEach((doc) => {
                     products.push({ id: doc.id, ...doc.data() });
@@ -2376,7 +2568,7 @@
                 });
                 renderProducts();
                 document.getElementById('stat-products').textContent = products.length;
-            });
+            }, (err) => { console.error('products load error:', err); showLoadError('products-loading', 'המוצרים'); });
         }
         
         // ===== Categories =====
@@ -2405,28 +2597,56 @@
             `).join('');
         }
         
+        // Best-effort delete of an old Storage object when it's replaced or its doc is removed,
+        // so deleted/replaced images don't leak forever. Silently ignores already-gone files.
+        function deleteStorageByUrl(url) {
+            if (!url || typeof url !== 'string' || !url.includes('/o/')) return;
+            try {
+                storage.refFromURL(url).delete().catch(() => {});
+            } catch (e) { /* not a storage URL - ignore */ }
+        }
+
+        // The image matcher shares one Storage URL across a whole product group, so before
+        // deleting a product image we must confirm no OTHER product still references it -
+        // otherwise the siblings would point at a 404'd file.
+        function imageStillUsedElsewhere(url, excludeId) {
+            return products.some(p => p.id !== excludeId &&
+                ((Array.isArray(p.images) && p.images.includes(url)) || p.image === url));
+        }
+
+        // Same "real discount" predicate the public site uses, so the admin table and the
+        // live site never disagree about whether a product is on sale
+        function isActiveSale(p) {
+            if (p.hidePrice) return false;
+            const s = Number(p.salePrice), b = Number(p.price);
+            return p.salePrice != null && p.salePrice !== '' && !isNaN(s) && s > 0 && b > 0 && s < b;
+        }
+
         function openCategoryModal(category = null) {
             document.getElementById('category-modal').classList.add('active');
             document.getElementById('category-modal-title').textContent = category ? 'עריכת קטגוריה' : 'הוסף קטגוריה';
-            
+            // Always clear the file input so a leftover pick from a previous open can't be
+            // uploaded to the wrong category
+            document.getElementById('category-image').value = '';
+
             if (category) {
                 document.getElementById('category-id').value = category.id;
                 document.getElementById('category-name').value = category.name;
                 document.getElementById('category-order').value = category.order || 0;
-                if (category.image) {
-                    document.getElementById('category-image-preview').innerHTML = `<img src="${category.image}">`;
-                }
+                document.getElementById('category-image-preview').innerHTML = category.image
+                    ? `<img src="${category.image}">` : '';
             } else {
                 document.getElementById('category-form').reset();
                 document.getElementById('category-id').value = '';
                 document.getElementById('category-image-preview').innerHTML = '';
             }
-            
+
             document.getElementById('category-compression-status').style.display = 'none';
         }
-        
+
         function closeCategoryModal() {
             document.getElementById('category-modal').classList.remove('active');
+            document.getElementById('category-image').value = '';
         }
         
         function editCategory(id) {
@@ -2452,57 +2672,66 @@
             }
         }
         
-        async function saveCategory() {
+        async function saveCategory(btn) {
             const id = document.getElementById('category-id').value;
             const name = document.getElementById('category-name').value;
             const order = parseInt(document.getElementById('category-order').value) || 0;
             const imageFile = document.getElementById('category-image').files[0];
-            
+
             if (!name) {
                 alert('נא למלא שם קטגוריה');
                 return;
             }
-            
+
+            // Prevent double-submit creating duplicate categories
+            if (btn) { btn.disabled = true; btn.dataset.orig = btn.textContent; btn.textContent = 'שומר...'; }
+
             const statusEl = document.getElementById('category-compression-status');
-            
+            const oldImage = id ? (categories.find(c => c.id === id) || {}).image : null;
+
             try {
                 let imageUrl = null;
-                
+
                 if (imageFile) {
                     statusEl.textContent = '⏳ דוחס ומעלה תמונה...';
                     statusEl.className = 'compression-status compressing';
                     statusEl.style.display = 'block';
-                    
+
                     const compressedBlob = await compressImage(imageFile);
                     const fileName = `${Date.now()}_${imageFile.name.replace(/\.[^.]+$/, '')}.webp`;
                     const ref = storage.ref(`glasseria/categories/${fileName}`);
-                    await ref.put(compressedBlob);
+                    await ref.put(compressedBlob, { cacheControl: 'public, max-age=31536000, immutable' });
                     imageUrl = await ref.getDownloadURL();
-                    
+
                     const newSize = (compressedBlob.size / 1024).toFixed(1);
                     statusEl.textContent = `✅ תמונה נדחסה ל-${newSize}KB`;
                     statusEl.className = 'compression-status';
                 }
-                
+
                 const data = {
                     name,
                     order,
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 };
-                
+
                 if (imageUrl) data.image = imageUrl;
-                
+
                 if (id) {
                     await categoriesCollection.doc(id).update(data);
                 } else {
                     data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
                     await categoriesCollection.add(data);
                 }
-                
+
+                // Old image replaced - remove the orphaned Storage file
+                if (imageUrl && oldImage && oldImage !== imageUrl) deleteStorageByUrl(oldImage);
+
                 closeCategoryModal();
             } catch (error) {
                 console.error('Error saving category:', error);
                 alert('שגיאה בשמירה: ' + error.message);
+            } finally {
+                if (btn) { btn.disabled = false; if (btn.dataset.orig) btn.textContent = btn.dataset.orig; }
             }
         }
         
@@ -2516,8 +2745,10 @@
                 alert(`לא ניתן למחוק קטגוריה זו - יש ${parts.join(' ו-')} משויכים אליה.\nהעבירו או מחקו אותם קודם.`);
                 return;
             }
+            const catImage = (categories.find(c => c.id === id) || {}).image;
             openDeleteModal('האם אתה בטוח שברצונך למחוק קטגוריה זו?', async () => {
                 await categoriesCollection.doc(id).delete();
+                deleteStorageByUrl(catImage);
             });
         }
         
@@ -2557,26 +2788,28 @@
             
             const select = document.getElementById('subcategory-category');
             select.innerHTML = categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-            
+            // Clear the file input so a leftover pick can't attach to the wrong subcategory
+            document.getElementById('subcategory-image').value = '';
+
             if (subcategory) {
                 document.getElementById('subcategory-id').value = subcategory.id;
                 document.getElementById('subcategory-category').value = subcategory.categoryId;
                 document.getElementById('subcategory-name').value = subcategory.name;
                 document.getElementById('subcategory-order').value = subcategory.order || 0;
-                if (subcategory.image) {
-                    document.getElementById('subcategory-image-preview').innerHTML = `<img src="${subcategory.image}">`;
-                }
+                document.getElementById('subcategory-image-preview').innerHTML = subcategory.image
+                    ? `<img src="${subcategory.image}">` : '';
             } else {
                 document.getElementById('subcategory-form').reset();
                 document.getElementById('subcategory-id').value = '';
                 document.getElementById('subcategory-image-preview').innerHTML = '';
             }
-            
+
             document.getElementById('subcategory-compression-status').style.display = 'none';
         }
-        
+
         function closeSubcategoryModal() {
             document.getElementById('subcategory-modal').classList.remove('active');
+            document.getElementById('subcategory-image').value = '';
         }
         
         function editSubcategory(id) {
@@ -2602,59 +2835,66 @@
             }
         }
         
-        async function saveSubcategory() {
+        async function saveSubcategory(btn) {
             const id = document.getElementById('subcategory-id').value;
             const categoryId = document.getElementById('subcategory-category').value;
             const name = document.getElementById('subcategory-name').value;
             const order = parseInt(document.getElementById('subcategory-order').value) || 0;
             const imageFile = document.getElementById('subcategory-image').files[0];
-            
+
             if (!name || !categoryId) {
                 alert('נא למלא את כל השדות הנדרשים');
                 return;
             }
-            
+
+            if (btn) { btn.disabled = true; btn.dataset.orig = btn.textContent; btn.textContent = 'שומר...'; }
+
             const statusEl = document.getElementById('subcategory-compression-status');
-            
+            const oldImage = id ? (subcategories.find(s => s.id === id) || {}).image : null;
+
             try {
                 let imageUrl = null;
-                
+
                 if (imageFile) {
                     statusEl.textContent = '⏳ דוחס ומעלה תמונה...';
                     statusEl.className = 'compression-status compressing';
                     statusEl.style.display = 'block';
-                    
+
                     const compressedBlob = await compressImage(imageFile);
                     const fileName = `${Date.now()}_${imageFile.name.replace(/\.[^.]+$/, '')}.webp`;
                     const ref = storage.ref(`glasseria/subcategories/${fileName}`);
-                    await ref.put(compressedBlob);
+                    await ref.put(compressedBlob, { cacheControl: 'public, max-age=31536000, immutable' });
                     imageUrl = await ref.getDownloadURL();
-                    
+
                     const newSize = (compressedBlob.size / 1024).toFixed(1);
                     statusEl.textContent = `✅ תמונה נדחסה ל-${newSize}KB`;
                     statusEl.className = 'compression-status';
                 }
-                
+
                 const data = {
                     categoryId,
                     name,
                     order,
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 };
-                
+
                 if (imageUrl) data.image = imageUrl;
-                
+
                 if (id) {
                     await subcategoriesCollection.doc(id).update(data);
                 } else {
                     data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
                     await subcategoriesCollection.add(data);
                 }
-                
+
+                if (imageUrl && oldImage && oldImage !== imageUrl) deleteStorageByUrl(oldImage);
+
                 closeSubcategoryModal();
             } catch (error) {
                 console.error('Error saving subcategory:', error);
                 alert('שגיאה בשמירה: ' + error.message);
+            } finally {
+                if (btn) { btn.disabled = false; if (btn.dataset.orig) btn.textContent = btn.dataset.orig; }
             }
         }
         
@@ -2664,8 +2904,10 @@
                 alert(`לא ניתן למחוק תת-קטגוריה זו - יש ${relatedProducts.length} מוצרים משויכים אליה.\nהעבירו או מחקו אותם קודם.`);
                 return;
             }
+            const subImage = (subcategories.find(s => s.id === id) || {}).image;
             openDeleteModal('האם אתה בטוח שברצונך למחוק תת-קטגוריה זו?', async () => {
                 await subcategoriesCollection.doc(id).delete();
+                deleteStorageByUrl(subImage);
             });
         }
         
@@ -2679,23 +2921,53 @@
             table.style.display = 'table';
             
             const filterCategoryId = document.getElementById('filter-category').value;
+            const searchTerm = (document.getElementById('product-search')?.value || '').trim().toLowerCase();
             let filteredProducts = products;
-            
+
             if (filterCategoryId) {
-                filteredProducts = products.filter(p => p.categoryId === filterCategoryId);
+                filteredProducts = filteredProducts.filter(p => p.categoryId === filterCategoryId);
             }
-            
+            if (searchTerm) {
+                filteredProducts = filteredProducts.filter(p =>
+                    (p.name || '').toLowerCase().includes(searchTerm) ||
+                    (p.sku || '').toLowerCase().includes(searchTerm)
+                );
+            }
+
+            // Drag-reorder is only safe on the full unfiltered list - reordering a filtered
+            // subset would rewrite order:0..N over just those docs and scramble the whole catalog
+            const isFiltered = !!(filterCategoryId || searchTerm);
+            const dragHint = document.getElementById('products-drag-hint');
+            if (dragHint) {
+                dragHint.innerHTML = isFiltered
+                    ? '🔒 כדי לשנות את סדר המוצרים, נקה את החיפוש ובחר "כל הקטגוריות"'
+                    : '💡 גרור את השורות (⋮⋮) כדי לשנות את סדר המוצרים באתר';
+            }
+
             tbody.innerHTML = filteredProducts.map(product => {
                 const cat = categories.find(c => c.id === product.categoryId);
                 const subcat = subcategories.find(s => s.id === product.subcategoryId);
+                const onSale = isActiveSale(product);
+                let badges = '';
+                if (product.hidden) badges += ' <span style="background:#616161;color:#fff;font-size:10px;padding:1px 6px;border-radius:8px;">מוסתר</span>';
+                if (product.outOfStock) badges += ' <span style="background:#c62828;color:#fff;font-size:10px;padding:1px 6px;border-radius:8px;">אזל</span>';
+                if (onSale) badges += ' <span style="background:#e65100;color:#fff;font-size:10px;padding:1px 6px;border-radius:8px;">מבצע</span>';
+                let priceCell;
+                if (product.hidePrice) {
+                    priceCell = '<em style="color:#2e7d32">הצעת מחיר</em>';
+                } else if (onSale) {
+                    priceCell = '<span style="text-decoration:line-through;color:#999">₪' + (product.price || 0) + '</span> <strong style="color:#e65100">₪' + product.salePrice + '</strong>';
+                } else {
+                    priceCell = '₪' + (product.price || 0);
+                }
                 return `
-                    <tr data-id="${product.id}">
+                    <tr data-id="${product.id}" style="${product.hidden ? 'opacity:0.55;' : ''}">
                         <td><input type="checkbox" class="bulk-checkbox product-checkbox" data-id="${product.id}" onchange="updateBulkBar()"></td>
                         <td><span class="drag-handle">⋮⋮</span></td>
                         <td><img src="${product.image || '../images/placeholder.svg'}" class="table-image" onerror="this.src='../images/placeholder.svg'"></td>
-                        <td>${product.name}</td>
+                        <td>${product.name}${badges}</td>
                         <td>${product.sku || '-'}</td>
-                        <td>${product.hidePrice ? '<em style="color:#2e7d32">הצעת מחיר</em>' : '₪' + (product.price || 0)}</td>
+                        <td>${priceCell}</td>
                         <td>${cat ? cat.name : '-'}</td>
                         <td>${subcat ? subcat.name : '-'}</td>
                         <td class="actions">
@@ -2714,12 +2986,12 @@
             document.getElementById('select-all-products').checked = false;
             updateBulkBar();
             
-            // Initialize drag and drop
+            // Initialize drag and drop - only when showing the full list (see isFiltered note)
             if (productsSortable) {
                 productsSortable.destroy();
                 productsSortable = null;
             }
-            if (tbody) {
+            if (tbody && !isFiltered) {
                 productsSortable = new Sortable(tbody, {
                     animation: 150,
                     handle: '.drag-handle',
@@ -2815,8 +3087,17 @@
             }
 
             const updateData = {};
-            if (categoryId) updateData.categoryId = categoryId;
-            if (subcategoryId) updateData.subcategoryId = subcategoryId;
+            if (categoryId) {
+                updateData.categoryId = categoryId;
+                // Keep the denormalized category name in sync
+                const cat = categories.find(c => c.id === categoryId);
+                if (cat) updateData.category = cat.name;
+                // The old subcategory belongs to the old category - clear it unless a new one
+                // is explicitly chosen, otherwise the product keeps a mismatched subcategoryId
+                updateData.subcategoryId = subcategoryId || null;
+            } else if (subcategoryId) {
+                updateData.subcategoryId = subcategoryId;
+            }
 
             const confirmMsg = `לעדכן ${selectedIds.length} מוצרים?`;
             if (!confirm(confirmMsg)) return;
@@ -2838,11 +3119,136 @@
                 alert('שגיאה בעדכון: ' + error.message);
             }
         }
-        
+
+        // Apply a price change to a single number given the chosen mode
+        function applyPriceChange(base, mode, value, round) {
+            base = Number(base) || 0;
+            let result;
+            if (mode === 'percent') result = base * (1 + value / 100);
+            else if (mode === 'fixed') result = base + value;
+            else result = value; // 'set'
+            if (result < 0) result = 0;
+            return round ? Math.round(result) : Math.round(result * 100) / 100;
+        }
+
+        async function bulkUpdatePrices() {
+            const selectedIds = getSelectedProductIds();
+            if (selectedIds.length === 0) { alert('לא נבחרו מוצרים'); return; }
+
+            const mode = document.getElementById('bulk-price-mode').value;
+            const value = parseFloat(document.getElementById('bulk-price-value').value);
+            const round = document.getElementById('bulk-price-round').checked;
+            if (isNaN(value)) { alert('נא להזין ערך מספרי לעדכון המחיר'); return; }
+
+            const selectedProducts = products.filter(p => selectedIds.includes(p.id));
+
+            // Preview: show a couple of examples so the owner sees the effect before committing
+            const modeLabel = mode === 'percent' ? `${value}%` : (mode === 'fixed' ? `${value}₪` : `קביעה ל-${value}₪`);
+            const examples = selectedProducts.slice(0, 3).map(p =>
+                `• ${p.name}: ₪${p.price || 0} ← ₪${applyPriceChange(p.price, mode, value, round)}`
+            ).join('\n');
+            if (!confirm(`עדכון מחירים (${modeLabel}) ל-${selectedProducts.length} מוצרים.\nגם מחירי מידות/צבעים/וריאנטים יעודכנו.\n\nדוגמאות:\n${examples}\n\nלהמשיך?`)) return;
+
+            try {
+                for (let i = 0; i < selectedProducts.length; i += 500) {
+                    const chunk = selectedProducts.slice(i, i + 500);
+                    const batch = db.batch();
+                    chunk.forEach(p => {
+                        const upd = {
+                            price: applyPriceChange(p.price, mode, value, round),
+                            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                        };
+                        // Also update the per-size / per-color / per-variant price arrays
+                        if (Array.isArray(p.sizesPrices) && p.sizesPrices.length) {
+                            upd.sizesPrices = p.sizesPrices.map(sp => ({ ...sp, price: applyPriceChange(sp.price, mode, value, round) }));
+                        }
+                        if (Array.isArray(p.colorsPrices) && p.colorsPrices.length) {
+                            upd.colorsPrices = p.colorsPrices.map(cp => ({ ...cp, price: applyPriceChange(cp.price, mode, value, round) }));
+                        }
+                        if (Array.isArray(p.variantPrices) && p.variantPrices.length) {
+                            upd.variantPrices = p.variantPrices.map(vp => ({ ...vp, price: applyPriceChange(vp.price, mode, value, round) }));
+                        }
+                        // Scale an active sale price with percent/fixed changes, but never for
+                        // 'set' (uniform price) - that would equalize sale=price and kill the sale
+                        if (mode !== 'set' && p.salePrice != null && p.salePrice !== '') {
+                            upd.salePrice = applyPriceChange(p.salePrice, mode, value, round);
+                        }
+                        batch.update(productsCollection.doc(p.id), upd);
+                    });
+                    await batch.commit();
+                }
+                alert(`✅ המחירים של ${selectedProducts.length} מוצרים עודכנו בהצלחה`);
+                document.getElementById('bulk-price-value').value = '';
+                clearBulkSelection();
+            } catch (error) {
+                console.error('שגיאה בעדכון מחירים:', error);
+                alert('שגיאה בעדכון המחירים: ' + error.message);
+            }
+        }
+
         function filterProducts() {
             renderProducts();
         }
-        
+
+        // ===== Backup & Export =====
+        function downloadFile(filename, content, mime) {
+            const blob = new Blob([content], { type: mime });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+
+        function dateStamp() {
+            const d = new Date();
+            const p = n => String(n).padStart(2, '0');
+            return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+        }
+
+        function exportBackup() {
+            try {
+                const backup = {
+                    exportedAt: new Date().toISOString(),
+                    counts: { categories: categories.length, subcategories: subcategories.length, products: products.length },
+                    categories,
+                    subcategories,
+                    products
+                };
+                downloadFile(`glasseria-backup-${dateStamp()}.json`, JSON.stringify(backup, null, 2), 'application/json');
+            } catch (e) {
+                alert('שגיאה ביצירת הגיבוי: ' + e.message);
+            }
+        }
+
+        function exportPriceList() {
+            try {
+                const catName = id => (categories.find(c => c.id === id) || {}).name || '';
+                const subName = id => (subcategories.find(s => s.id === id) || {}).name || '';
+                const rows = products.map(p => ({
+                    'שם מוצר': p.name || '',
+                    'מק"ט': p.sku || '',
+                    'קטגוריה': catName(p.categoryId),
+                    'תת-קטגוריה': subName(p.subcategoryId),
+                    'סוג/דגם': p.type || '',
+                    'מחיר': p.hidePrice ? 'הצעת מחיר' : (p.price != null ? p.price : ''),
+                    'מחיר מבצע': (p.salePrice != null && p.salePrice !== '') ? p.salePrice : '',
+                    'מידות': Array.isArray(p.sizes) ? p.sizes.join(' | ') : '',
+                    'צבעים': Array.isArray(p.colors) ? p.colors.join(' | ') : '',
+                    'אזל מהמלאי': p.outOfStock ? 'כן' : '',
+                    'מוסתר': p.hidden ? 'כן' : ''
+                }));
+                // Prepend BOM so Hebrew opens correctly in Excel
+                const csv = '﻿' + Papa.unparse(rows);
+                downloadFile(`glasseria-מחירון-${dateStamp()}.csv`, csv, 'text/csv;charset=utf-8;');
+            } catch (e) {
+                alert('שגיאה בייצוא המחירון: ' + e.message);
+            }
+        }
+
         function updateCategorySelects() {
             const filterSelect = document.getElementById('filter-category');
             const productSelect = document.getElementById('product-category');
@@ -3193,6 +3599,9 @@
                 document.getElementById('product-description').value = product.description || '';
                 document.getElementById('product-colors-label').value = product.colorsLabel || 'צבע';
                 document.getElementById('product-hide-price').checked = product.hidePrice || false;
+                document.getElementById('product-sale-price').value = (product.salePrice != null) ? product.salePrice : '';
+                document.getElementById('product-out-of-stock').checked = product.outOfStock || false;
+                document.getElementById('product-hidden').checked = product.hidden || false;
                 updateColorsLabels();
 
                 const predefinedSizes = ['50', '60', '70', '80', '90', '100', '120', '150'];
@@ -3245,6 +3654,9 @@
                 document.getElementById('product-order').value = products.length;
                 document.getElementById('product-colors-label').value = 'צבע';
                 document.getElementById('product-hide-price').checked = false;
+                document.getElementById('product-sale-price').value = '';
+                document.getElementById('product-out-of-stock').checked = false;
+                document.getElementById('product-hidden').checked = false;
                 updateColorsLabels();
             }
 
@@ -3356,6 +3768,10 @@
             const sku = document.getElementById('product-sku').value;
             const price = parseFloat(document.getElementById('product-price').value) || 0;
             const hidePrice = document.getElementById('product-hide-price').checked;
+            const salePriceRaw = document.getElementById('product-sale-price').value;
+            const salePrice = salePriceRaw === '' ? null : (parseFloat(salePriceRaw) || null);
+            const outOfStock = document.getElementById('product-out-of-stock').checked;
+            const hidden = document.getElementById('product-hidden').checked;
             const categoryId = document.getElementById('product-category').value;
             const subcategoryId = document.getElementById('product-subcategory').value;
             const type = document.getElementById('product-type').value;
@@ -3376,10 +3792,12 @@
             
             const saveBtn = document.getElementById('save-product-btn');
             const statusEl = document.getElementById('product-compression-status');
-            
+            const oldImages = id ? ((products.find(p => p.id === id) || {}).images || []) : [];
+
             saveBtn.disabled = true;
             saveBtn.textContent = 'שומר...';
-            
+            adminBusy = true;
+
             try {
                 // Upload pending images first, then build final URL list in order
                 const pendingItems = productImagesOrder.filter(img => img.type === 'pending');
@@ -3397,7 +3815,7 @@
                         const compressedBlob = await compressImage(item.file);
                         const fileName = Date.now() + '_' + i + '_' + item.file.name.replace(/\.[^.]+$/, '') + '.webp';
                         const ref = storage.ref('glasseria/products/' + fileName);
-                        await ref.put(compressedBlob);
+                        await ref.put(compressedBlob, { cacheControl: 'public, max-age=31536000, immutable' });
                         const imageUrl = await ref.getDownloadURL();
                         uploadedMap.set(item, imageUrl);
                     }
@@ -3423,6 +3841,9 @@
                     sku,
                     price,
                     hidePrice,
+                    salePrice,
+                    outOfStock,
+                    hidden,
                     categoryId,
                     subcategoryId: subcategoryId || null,
                     category: cat ? cat.name : '',
@@ -3441,15 +3862,28 @@
                 if (allImageUrls.length > 0) {
                     data.images = allImageUrls;
                     data.image = allImageUrls[0];
+                } else if (id) {
+                    // Editing and the owner removed every image - persist the empty state
+                    // instead of silently keeping the old images
+                    data.images = [];
+                    data.image = '';
                 }
-                
+
                 if (id) {
                     await productsCollection.doc(id).update(data);
                 } else {
                     data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
                     await productsCollection.add(data);
                 }
-                
+
+                // Remove Storage files for images dropped in this edit - but only if no other
+                // product still references them (matcher-shared images)
+                if (id && oldImages.length) {
+                    oldImages
+                        .filter(u => !allImageUrls.includes(u) && !imageStillUsedElsewhere(u, id))
+                        .forEach(deleteStorageByUrl);
+                }
+
                 closeProductModal();
             } catch (error) {
                 console.error('Error saving product:', error);
@@ -3457,12 +3891,17 @@
             } finally {
                 saveBtn.disabled = false;
                 saveBtn.textContent = 'שמור';
+                adminBusy = false;
             }
         }
-        
+
         function deleteProduct(id) {
+            const prod = products.find(p => p.id === id) || {};
+            const imgs = prod.images && prod.images.length ? prod.images : (prod.image ? [prod.image] : []);
             openDeleteModal('האם אתה בטוח שברצונך למחוק מוצר זה?', async () => {
                 await productsCollection.doc(id).delete();
+                // Only delete Storage files no other product shares (matcher-grouped images)
+                imgs.filter(u => !imageStillUsedElsewhere(u, id)).forEach(deleteStorageByUrl);
             });
         }
         
@@ -3481,8 +3920,16 @@
         }
         
         document.getElementById('confirm-delete-btn').addEventListener('click', async () => {
-            if (deleteCallback) {
+            if (!deleteCallback) return;
+            const btn = document.getElementById('confirm-delete-btn');
+            btn.disabled = true;
+            try {
                 await deleteCallback();
+            } catch (error) {
+                console.error('Error during delete:', error);
+                alert('שגיאה במחיקה: ' + (error.message || error));
+            } finally {
+                btn.disabled = false;
                 closeDeleteModal();
             }
         });
@@ -3561,7 +4008,7 @@
 
         function handleCSVUpload(file) {
             if (!file) return;
-            if (!file.name.endsWith('.csv')) {
+            if (!file.name.toLowerCase().endsWith('.csv')) {
                 alert('נא לבחור קובץ CSV');
                 return;
             }
@@ -3732,7 +4179,9 @@
             renderImportTable();
         }
 
-        function toggleSelectAll(select) {
+        // Renamed from toggleSelectAll: a second declaration with the same name shadowed the
+        // products-tab version below (function hoisting), breaking "select all" for products
+        function csvToggleSelectAll(select) {
             const visibleRows = csvFilteredRows.slice(0, csvDisplayLimit);
             if (select) {
                 visibleRows.forEach(r => csvSelectedIds.add(r._index));
@@ -3933,12 +4382,23 @@
 
         function onMergeToggleChange() {
             csvMergeEnabled = document.getElementById('csv-merge-toggle').checked;
+            // Merge and update-by-SKU are mutually exclusive: a merged row's "sku" is the
+            // model/type, not a real SKU, so matching existing products by it is unreliable
+            if (csvMergeEnabled) document.getElementById('csv-update-toggle').checked = false;
             if (csvRawRows.length > 0) {
                 csvAllRows = csvMergeEnabled ? mergeRowsByModel(csvRawRows) : csvRawRows.map((r, i) => ({ ...r, _index: i }));
                 csvSelectedIds.clear();
                 csvDisplayLimit = 100;
                 updateOriginalCategoryFilter();
                 filterImportProducts();
+            }
+        }
+
+        function onUpdateToggleChange() {
+            // Turning on update-by-SKU forces merge off (see mutual-exclusion note above)
+            if (document.getElementById('csv-update-toggle').checked) {
+                const mergeEl = document.getElementById('csv-merge-toggle');
+                if (mergeEl.checked) { mergeEl.checked = false; onMergeToggleChange(); }
             }
         }
 
@@ -3974,14 +4434,16 @@
             });
 
             return Object.values(groups).map((g, idx) => {
-                const minPrice = Math.min(...g.prices);
-                const maxPrice = Math.max(...g.prices);
+                // Guard against an all-empty-price group: Math.min([]) is Infinity,
+                // which would be saved as the product price and shown as "₪∞"
+                const minPrice = g.prices.length ? Math.min(...g.prices) : 0;
+                const maxPrice = g.prices.length ? Math.max(...g.prices) : 0;
                 const uniqueSizes = [...new Set(g.sizes)];
                 const uniqueColors = [...g.colors];
 
                 // Build description with price table if prices vary
                 let desc = g.baseDescription;
-                if (minPrice !== maxPrice) {
+                if (g.prices.length && minPrice !== maxPrice) {
                     const priceTable = g.sizesPrices
                         .filter((v, i, a) => a.findIndex(x => x.size === v.size) === i)
                         .map(sp => 'מידה ' + sp.size + ': ₪' + sp.price.toLocaleString())
@@ -4008,7 +4470,8 @@
                     sizes: uniqueSizes,
                     colors: uniqueColors,
                     sizesPrices: sizesPrices,
-                    _mergedCount: g.allRows.length
+                    _mergedCount: g.allRows.length,
+                    _rawIndices: g.allRows.map(r => r._index)
                 };
             });
         }
@@ -4024,7 +4487,7 @@
         const _origHandleCSVUpload = handleCSVUpload;
         handleCSVUpload = function(file) {
             if (!file) return;
-            if (!file.name.endsWith('.csv')) {
+            if (!file.name.toLowerCase().endsWith('.csv')) {
                 alert('נא לבחור קובץ CSV');
                 return;
             }
@@ -4044,9 +4507,11 @@
                         columnMapping[field] = findColumn(headers, possibleNames);
                     }
 
+                    const totalDataRows = results.data.length;
                     csvRawRows = results.data
                         .map((row, idx) => ({ ...mapCSVRow(row, columnMapping), _index: idx }))
                         .filter(r => r.name);
+                    const skipped = totalDataRows - csvRawRows.length;
 
                     csvMergeEnabled = document.getElementById('csv-merge-toggle').checked;
                     csvAllRows = csvMergeEnabled ? mergeRowsByModel(csvRawRows) : csvRawRows;
@@ -4055,6 +4520,7 @@
 
                     document.getElementById('csv-file-info').innerHTML =
                         '<span>📄 <strong>' + file.name + '</strong> — ' + csvRawRows.length + ' שורות (' + csvAllRows.length + ' מוצרים)</span>' +
+                        (skipped > 0 ? '<span style="color:#e65100;">⚠️ ' + skipped + ' שורות דולגו (ללא שם מוצר)</span>' : '') +
                         '<span>עמודות: ' + headers.join(', ') + '</span>';
 
                     updateOriginalCategoryFilter();
@@ -4125,6 +4591,7 @@
             btn.textContent = 'מייבא...';
             progressEl.style.display = 'block';
             resultEl.style.display = 'none';
+            adminBusy = true;
 
             try {
                 let categoryId = document.getElementById('csv-import-category').value;
@@ -4154,37 +4621,72 @@
 
                 const selectedRows = csvAllRows.filter(r => csvSelectedIds.has(r._index));
                 const total = selectedRows.length;
-                let imported = 0, errors = 0;
+                let imported = 0, errors = 0, updatedCount = 0, createdCount = 0;
                 const BATCH_SIZE = 400;
                 const existingProductCount = products.length;
+
+                // Update-by-SKU: build a lookup of existing products keyed by SKU
+                const updateBySku = document.getElementById('csv-update-toggle').checked;
+                const skuMap = {};
+                if (updateBySku) {
+                    products.forEach(p => { if (p.sku) skuMap[String(p.sku).trim()] = p.id; });
+                    let willUpdate = 0, willCreate = 0;
+                    selectedRows.forEach(r => {
+                        const s = (r.sku || '').trim();
+                        if (s && skuMap[s]) willUpdate++; else willCreate++;
+                    });
+                    if (!confirm(`${willUpdate} מוצרים קיימים יעודכנו לפי מק"ט, ${willCreate} מוצרים חדשים ייווצרו.\nלהמשיך?`)) {
+                        progressEl.style.display = 'none';
+                        return; // finally resets the button and adminBusy
+                    }
+                }
 
                 for (let i = 0; i < total; i += BATCH_SIZE) {
                     const batchRows = selectedRows.slice(i, i + BATCH_SIZE);
                     const batch = db.batch();
 
                     batchRows.forEach((row, batchIdx) => {
-                        const docRef = productsCollection.doc();
                         const sizesArr = row.sizes || (row.size ? [row.size] : []);
                         const colorsArr = row.colors || (row.color ? [row.color] : []);
-                        const productData = {
-                            name: row.name,
-                            sku: row.sku || '',
-                            price: row.price || 0,
-                            categoryId,
-                            subcategoryId,
-                            category: categoryName,
-                            type: row.type || '',
-                            description: row.description || '',
-                            sizes: sizesArr,
-                            colors: colorsArr,
-                            sizesPrices: row.sizesPrices || [],
-                            images: [],
-                            image: '',
-                            order: existingProductCount + i + batchIdx,
-                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                        };
-                        batch.set(docRef, productData);
+                        const rowSku = (row.sku || '').trim();
+                        const existingId = (updateBySku && rowSku && skuMap[rowSku]) ? skuMap[rowSku] : null;
+
+                        if (existingId) {
+                            // Update existing product in place - preserve its images, order,
+                            // category placement and createdAt; refresh catalog/price fields only
+                            batch.update(productsCollection.doc(existingId), {
+                                name: row.name,
+                                price: row.price || 0,
+                                type: row.type || '',
+                                description: row.description || '',
+                                sizes: sizesArr,
+                                colors: colorsArr,
+                                sizesPrices: row.sizesPrices || [],
+                                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                            createdCount += 0; updatedCount++;
+                        } else {
+                            const docRef = productsCollection.doc();
+                            batch.set(docRef, {
+                                name: row.name,
+                                sku: row.sku || '',
+                                price: row.price || 0,
+                                categoryId,
+                                subcategoryId,
+                                category: categoryName,
+                                type: row.type || '',
+                                description: row.description || '',
+                                sizes: sizesArr,
+                                colors: colorsArr,
+                                sizesPrices: row.sizesPrices || [],
+                                images: [],
+                                image: '',
+                                order: existingProductCount + i + batchIdx,
+                                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                            createdCount++;
+                        }
                     });
 
                     try { await batch.commit(); imported += batchRows.length; }
@@ -4196,11 +4698,20 @@
 
                 progressFill.style.width = '100%';
                 resultEl.style.display = 'block';
-                if (errors === 0) { resultEl.className = 'csv-import-result success'; resultEl.textContent = '✅ ' + imported + ' מוצרים יובאו בהצלחה!'; }
-                else { resultEl.className = 'csv-import-result error'; resultEl.textContent = '⚠️ ' + imported + ' יובאו, ' + errors + ' נכשלו'; }
+                const summary = updateBySku ? ` (${createdCount} חדשים, ${updatedCount} עודכנו)` : '';
+                if (errors === 0) { resultEl.className = 'csv-import-result success'; resultEl.textContent = '✅ ' + imported + ' מוצרים יובאו בהצלחה!' + summary; }
+                else { resultEl.className = 'csv-import-result error'; resultEl.textContent = '⚠️ ' + imported + ' יובאו, ' + errors + ' נכשלו' + summary; }
 
+                // Remove imported rows from BOTH the visible list and the raw backing list,
+                // so toggling "merge" afterwards can't resurrect already-imported rows
                 const importedIndices = new Set(selectedRows.map(r => r._index));
+                const importedRawIndices = new Set();
+                selectedRows.forEach(r => {
+                    if (Array.isArray(r._rawIndices)) r._rawIndices.forEach(ri => importedRawIndices.add(ri));
+                    else importedRawIndices.add(r._index);
+                });
                 csvAllRows = csvAllRows.filter(r => !importedIndices.has(r._index));
+                csvRawRows = csvRawRows.filter(r => !importedRawIndices.has(r._index));
                 csvSelectedIds.clear();
                 filterImportProducts();
 
@@ -4213,6 +4724,7 @@
                 btn.disabled = false;
                 btn.textContent = 'ייבא מוצרים נבחרים';
                 updateImportButton();
+                adminBusy = false;
             }
         };
 
@@ -4321,7 +4833,10 @@
         function assignImageToGroup(groupIdx) {
             if (imSelectedImage === null) return;
 
-            // Clear previous assignment if this image was assigned elsewhere
+            // Only one image per group - unassign any image already matched to this group,
+            // otherwise both would upload and the second silently overwrites the first (orphan)
+            imImages.forEach(im => { if (im.matchedTo === groupIdx) im.matchedTo = null; });
+
             const img = imImages[imSelectedImage];
             img.matchedTo = groupIdx;
 
@@ -4362,55 +4877,254 @@
             progressEl.style.display = 'block';
             resultEl.style.display = 'none';
             progressFill.style.width = '0%';
+            adminBusy = true;
 
             let uploaded = 0, errors = 0;
 
-            for (let i = 0; i < matchedImages.length; i++) {
-                const img = matchedImages[i];
-                const group = imProductGroups[img.matchedTo];
+            try {
+                for (let i = 0; i < matchedImages.length; i++) {
+                    const img = matchedImages[i];
+                    const group = imProductGroups[img.matchedTo];
 
-                try {
-                    progressText.textContent = 'דוחס ומעלה ' + (i + 1) + ' / ' + matchedImages.length + '...';
+                    try {
+                        progressText.textContent = 'דוחס ומעלה ' + (i + 1) + ' / ' + matchedImages.length + '...';
 
-                    // Compress and upload
-                    const compressed = await compressImage(img.file);
-                    const fileName = Date.now() + '_' + img.file.name.replace(/\.[^.]+$/, '') + '.webp';
-                    const ref = storage.ref('glasseria/products/' + fileName);
-                    await ref.put(compressed);
-                    const imageUrl = await ref.getDownloadURL();
+                        // Compress and upload
+                        const compressed = await compressImage(img.file);
+                        const fileName = Date.now() + '_' + img.file.name.replace(/\.[^.]+$/, '') + '.webp';
+                        const ref = storage.ref('glasseria/products/' + fileName);
+                        await ref.put(compressed, { cacheControl: 'public, max-age=31536000, immutable' });
+                        const imageUrl = await ref.getDownloadURL();
 
-                    // Update all products in this group
-                    const batch = db.batch();
-                    group.productIds.forEach(pid => {
-                        batch.update(productsCollection.doc(pid), {
-                            image: imageUrl,
-                            images: [imageUrl],
-                            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                        // Append to each product's gallery instead of replacing it (arrayUnion),
+                        // and set the primary `image` only if the product has none yet - so an
+                        // existing multi-photo gallery isn't wiped down to this single image
+                        const batch = db.batch();
+                        group.productIds.forEach(pid => {
+                            const existing = products.find(p => p.id === pid) || {};
+                            const update = {
+                                images: firebase.firestore.FieldValue.arrayUnion(imageUrl),
+                                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                            };
+                            if (!existing.image) update.image = imageUrl;
+                            batch.update(productsCollection.doc(pid), update);
                         });
-                    });
-                    await batch.commit();
-                    uploaded++;
-                } catch (err) {
-                    console.error('Error uploading image for group ' + group.type + ':', err);
-                    errors++;
+                        await batch.commit();
+                        uploaded++;
+                    } catch (err) {
+                        console.error('Error uploading image for group ' + group.type + ':', err);
+                        errors++;
+                    }
+
+                    progressFill.style.width = Math.round(((i + 1) / matchedImages.length) * 100) + '%';
                 }
 
-                progressFill.style.width = Math.round(((i + 1) / matchedImages.length) * 100) + '%';
+                progressFill.style.width = '100%';
+                resultEl.style.display = 'block';
+                if (errors === 0) {
+                    resultEl.className = 'csv-import-result success';
+                    resultEl.textContent = '✅ ' + uploaded + ' תמונות הועלו ושויכו בהצלחה!';
+                } else {
+                    resultEl.className = 'csv-import-result error';
+                    resultEl.textContent = '⚠️ ' + uploaded + ' הועלו, ' + errors + ' נכשלו';
+                }
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'שמור והעלה תמונות';
+                adminBusy = false;
             }
-
-            progressFill.style.width = '100%';
-            resultEl.style.display = 'block';
-            if (errors === 0) {
-                resultEl.className = 'csv-import-result success';
-                resultEl.textContent = '✅ ' + uploaded + ' תמונות הועלו ושויכו בהצלחה!';
-            } else {
-                resultEl.className = 'csv-import-result error';
-                resultEl.textContent = '⚠️ ' + uploaded + ' הועלו, ' + errors + ' נכשלו';
-            }
-
-            btn.disabled = false;
-            btn.textContent = 'שמור והעלה תמונות';
             loadMatcherProducts();
+        }
+
+        // ===== Inquiries =====
+        let inquiriesData = [];
+
+        async function loadInquiries() {
+            const loadingEl = document.getElementById('inquiries-loading');
+            loadingEl.style.display = 'block';
+            loadingEl.textContent = 'טוען פניות...';
+            try {
+                const snap = await inquiriesCollection.orderBy('createdAt', 'desc').limit(500).get();
+                inquiriesData = [];
+                // Spread FIRST, then set id - so a malicious doc field named "id" (inquiries are
+                // anonymous-writable) can never override the trusted Firestore auto-id that we
+                // interpolate into the status-select handler
+                snap.forEach(d => inquiriesData.push({ ...d.data(), id: d.id }));
+                loadingEl.style.display = 'none';
+                renderInquiries();
+            } catch (e) {
+                console.error('loadInquiries error:', e);
+                loadingEl.textContent = 'שגיאה בטעינת הפניות: ' + (e.message || e);
+            }
+        }
+
+        function renderInquiries() {
+            const filter = document.getElementById('inquiries-filter').value;
+            const listEl = document.getElementById('inquiries-list');
+            const summaryEl = document.getElementById('inquiries-summary');
+
+            // Summary across ALL inquiries (not the current filter)
+            const prodCount = {};
+            inquiriesData.forEach(i => (i.items || []).forEach(it => {
+                if (it && it.name) prodCount[it.name] = (prodCount[it.name] || 0) + 1;
+            }));
+            const top = Object.entries(prodCount).sort((a, b) => b[1] - a[1]).slice(0, 5);
+            summaryEl.innerHTML = '<strong>סה"כ פניות:</strong> ' + inquiriesData.length +
+                (top.length ? ' &nbsp;|&nbsp; <strong>מוצרים מבוקשים:</strong> ' +
+                    top.map(([n, c]) => _escHtml(n) + ' (' + c + ')').join(', ') : '');
+
+            let rows = inquiriesData;
+            if (filter !== 'all') rows = rows.filter(i => (i.status || 'new') === filter);
+            if (rows.length === 0) {
+                listEl.innerHTML = '<p style="color:var(--secondary)">אין פניות להצגה.</p>';
+                return;
+            }
+
+            listEl.innerHTML = rows.map(inq => {
+                const date = (inq.createdAt && inq.createdAt.toDate) ? inq.createdAt.toDate().toLocaleString('he-IL') : '';
+                const status = inq.status || 'new';
+                const itemsHtml = (inq.items || []).map(it => {
+                    const parts = [_escHtml(it.name || '')];
+                    if (it.sku) parts.push('מק"ט ' + _escHtml(String(it.sku)));
+                    if (it.size) parts.push('מידה ' + _escHtml(String(it.size)));
+                    if (it.color) parts.push(_escHtml(String(it.color)));
+                    if (it.price != null) parts.push('₪' + _escHtml(String(it.price)));
+                    return '<li>' + parts.join(' · ') + '</li>';
+                }).join('');
+                return '<div class="card" style="margin-bottom:10px;">' +
+                    '<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:center;">' +
+                        '<span style="color:var(--secondary);font-size:13px;">' + _escHtml(date) +
+                            ' · ' + (Number(inq.itemCount) || (inq.items || []).length) + ' פריטים' +
+                            ' · הערכה ₪' + _escHtml(String(Number(inq.totalValue) || 0)) + '</span>' +
+                        '<select onchange="updateInquiryStatus(\'' + inq.id + '\', this.value)">' +
+                            '<option value="new"' + (status === 'new' ? ' selected' : '') + '>חדש</option>' +
+                            '<option value="handled"' + (status === 'handled' ? ' selected' : '') + '>טופל</option>' +
+                            '<option value="closed"' + (status === 'closed' ? ' selected' : '') + '>נסגרה עסקה</option>' +
+                        '</select>' +
+                    '</div>' +
+                    '<ul style="margin:8px 0 0;padding-right:18px;">' + itemsHtml + '</ul>' +
+                '</div>';
+            }).join('');
+        }
+
+        async function updateInquiryStatus(id, status) {
+            try {
+                await inquiriesCollection.doc(id).update({ status });
+                const inq = inquiriesData.find(i => i.id === id);
+                if (inq) inq.status = status;
+                renderInquiries();
+            } catch (e) {
+                alert('שגיאה בעדכון הסטטוס: ' + (e.message || e));
+            }
+        }
+
+        // ===== Site Settings (banner + hero text) =====
+        async function loadSiteSettingsAdmin() {
+            const loading = document.getElementById('settings-loading');
+            const form = document.getElementById('settings-form');
+            loading.style.display = 'block';
+            try {
+                const snap = await settingsCollection.doc(SETTINGS_DOC_ID).get();
+                const s = snap.exists ? snap.data() : {};
+                document.getElementById('settings-hero-title').value = s.heroTitle || '';
+                document.getElementById('settings-hero-subtitle').value = s.heroSubtitle || '';
+                document.getElementById('settings-banner-visible').checked = !!s.bannerVisible;
+                document.getElementById('settings-banner-text').value = s.bannerText || '';
+                loading.style.display = 'none';
+                form.style.display = 'block';
+            } catch (e) {
+                loading.textContent = 'שגיאה בטעינת ההגדרות: ' + (e.message || e);
+            }
+        }
+
+        async function saveSiteSettings(btn) {
+            if (btn) { btn.disabled = true; btn.textContent = 'שומר...'; }
+            try {
+                await settingsCollection.doc(SETTINGS_DOC_ID).set({
+                    heroTitle: document.getElementById('settings-hero-title').value.trim(),
+                    heroSubtitle: document.getElementById('settings-hero-subtitle').value.trim(),
+                    bannerVisible: document.getElementById('settings-banner-visible').checked,
+                    bannerText: document.getElementById('settings-banner-text').value.trim(),
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
+                const msg = document.getElementById('settings-saved-msg');
+                msg.style.display = 'inline';
+                setTimeout(() => { msg.style.display = 'none'; }, 2500);
+            } catch (e) {
+                alert('שגיאה בשמירת ההגדרות: ' + (e.message || e));
+            } finally {
+                if (btn) { btn.disabled = false; btn.textContent = 'שמור הגדרות'; }
+            }
+        }
+
+        // ===== Business Stats (dashboard, from data already collected) =====
+        async function loadBusinessStats() {
+            const loadingEl = document.getElementById('biz-stats-loading');
+            loadingEl.style.display = 'block';
+            loadingEl.textContent = 'טוען נתונים...';
+            const cutoff = firebase.firestore.Timestamp.fromDate(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000));
+            try {
+                const [logsSnap, eventsSnap, inqSnap] = await Promise.all([
+                    logsCollection.where('timestamp', '>', cutoff).orderBy('timestamp', 'desc').limit(3000).get().catch(() => null),
+                    eventsCollection.where('createdAt', '>', cutoff).orderBy('createdAt', 'desc').limit(3000).get().catch(() => null),
+                    inquiriesCollection.where('createdAt', '>', cutoff).orderBy('createdAt', 'desc').limit(1000).get().catch(() => null)
+                ]);
+
+                // Visits = "session" info logs
+                const visitLogs = [];
+                if (logsSnap) logsSnap.forEach(d => { const x = d.data(); if (x.source === 'session') visitLogs.push(x); });
+                const visits = visitLogs.length;
+
+                // Returning = device seen across more than one session
+                const sessionsByDevice = {};
+                visitLogs.forEach(x => {
+                    if (!x.deviceId) return;
+                    (sessionsByDevice[x.deviceId] = sessionsByDevice[x.deviceId] || new Set()).add(x.sessionId);
+                });
+                let returning = 0;
+                Object.values(sessionsByDevice).forEach(set => { if (set.size > 1) returning++; });
+
+                // In-app browsers (Facebook/Instagram) share
+                let inApp = 0;
+                visitLogs.forEach(x => {
+                    const d = x.device || {};
+                    if (d.inApp === true || d.inApp === 'כן' || /FBAN|FBAV|Instagram/i.test(d.ua || '')) inApp++;
+                });
+                const inAppPct = visits ? Math.round(inApp / visits * 100) : 0;
+
+                const inquiriesCount = inqSnap ? inqSnap.size : 0;
+
+                // Top viewed products / categories from events
+                const prodViews = {}, catViews = {};
+                if (eventsSnap) eventsSnap.forEach(d => {
+                    const e = d.data();
+                    if (e.type === 'product_view' && e.productName) prodViews[e.productName] = (prodViews[e.productName] || 0) + 1;
+                    if (e.type === 'category_view' && e.categoryName) catViews[e.categoryName] = (catViews[e.categoryName] || 0) + 1;
+                });
+
+                document.getElementById('biz-visits').textContent = visits;
+                document.getElementById('biz-returning').textContent = returning;
+                document.getElementById('biz-inquiries').textContent = inquiriesCount;
+                document.getElementById('biz-inapp').textContent = inAppPct + '%';
+                document.getElementById('biz-stats-grid').style.display = 'grid';
+
+                const topProd = Object.entries(prodViews).sort((a, b) => b[1] - a[1]).slice(0, 8);
+                const topCat = Object.entries(catViews).sort((a, b) => b[1] - a[1]).slice(0, 8);
+                let bh = '<h3 style="margin:8px 0;">מוצרים נצפים ביותר</h3>';
+                bh += topProd.length
+                    ? '<ul style="padding-right:18px;">' + topProd.map(([n, c]) => '<li>' + _escHtml(n) + ' — ' + c + ' צפיות</li>').join('') + '</ul>'
+                    : '<p style="color:var(--secondary)">אין נתונים עדיין (ייאסף עם הזמן).</p>';
+                bh += '<h3 style="margin:12px 0 8px;">קטגוריות נצפות ביותר</h3>';
+                bh += topCat.length
+                    ? '<ul style="padding-right:18px;">' + topCat.map(([n, c]) => '<li>' + _escHtml(n) + ' — ' + c + ' צפיות</li>').join('') + '</ul>'
+                    : '<p style="color:var(--secondary)">אין נתונים עדיין.</p>';
+                document.getElementById('biz-breakdown').innerHTML = bh;
+                document.getElementById('biz-breakdown').style.display = 'block';
+                loadingEl.style.display = 'none';
+            } catch (e) {
+                console.error('loadBusinessStats error:', e);
+                loadingEl.textContent = 'שגיאה בטעינת הנתונים: ' + (e.message || e);
+            }
         }
 
         // ===== Logs Viewer =====
@@ -4441,6 +5155,7 @@
                 if (logsData.length === 0) {
                     empty.style.display = 'block';
                     document.getElementById('logs-stats').innerHTML = '';
+                    document.getElementById('logs-problems').innerHTML = '';
                     return;
                 }
 
@@ -4454,6 +5169,7 @@
                 }
 
                 renderLogsStats(logsData);
+                renderCommonProblems(logsData);
                 renderSessions(filtered);
 
                 if (filtered.length === 0) {
@@ -4491,6 +5207,40 @@
             });
             // Sort sessions by time (newest first)
             return Object.values(map).sort((a, b) => (b.firstTime || 0) - (a.firstTime || 0));
+        }
+
+        // Group all error/warn logs into a "common problems" summary with counts, last-seen,
+        // and the plain-Hebrew "what to do" action from explainLog
+        function renderCommonProblems(logs) {
+            const el = document.getElementById('logs-problems');
+            if (!el) return;
+            const groups = {};
+            logs.forEach(log => {
+                if (log.level !== 'error' && log.level !== 'warn') return;
+                const exp = (typeof explainLog === 'function')
+                    ? explainLog(log)
+                    : { title: log.message || '', action: '', severity: log.level, fixable: 'none' };
+                let key = exp.title;
+                if (log.source === 'image') key += '|' + (log.productId || log.src || '');
+                if (!groups[key]) groups[key] = { title: exp.title, action: exp.action, severity: exp.severity, count: 0, last: null };
+                groups[key].count++;
+                const t = (log.timestamp && log.timestamp.toDate) ? log.timestamp.toDate() : null;
+                if (t && (!groups[key].last || t > groups[key].last)) groups[key].last = t;
+            });
+            const arr = Object.values(groups).sort((a, b) => b.count - a.count);
+            if (arr.length === 0) {
+                el.innerHTML = '<div style="background:#e8f5e9;color:#2e7d32;padding:12px;border-radius:8px;">✅ אין שגיאות או אזהרות ב-500 הלוגים האחרונים.</div>';
+                return;
+            }
+            el.innerHTML = '<div class="card" style="padding:14px;"><h3 style="margin-bottom:10px;">🔎 בעיות נפוצות (500 לוגים אחרונים)</h3>' +
+                arr.slice(0, 12).map(g => {
+                    const color = g.severity === 'error' ? 'var(--danger)' : 'var(--warning)';
+                    const last = g.last ? g.last.toLocaleString('he-IL') : '';
+                    const action = g.action ? '<div style="font-size:13px;color:#555;margin-top:3px;">🔧 ' + _escHtml(g.action) + '</div>' : '';
+                    return '<div style="border-right:3px solid ' + color + ';padding:7px 10px;margin-bottom:8px;background:#fafafa;border-radius:4px;">' +
+                        '<strong style="color:' + color + '">' + _escHtml(g.title) + '</strong> · ' + g.count + ' פעמים' +
+                        (last ? ' · אחרון: ' + _escHtml(last) : '') + action + '</div>';
+                }).join('') + '</div>';
         }
 
         function renderLogsStats(logs) {
@@ -4579,8 +5329,8 @@
 
                     let details = '';
                     if (log.durationMs) details += `<span>⏱ ${(log.durationMs / 1000).toFixed(1)}s</span>`;
-                    if (log.productCount) details += `<span>📦 ${log.productCount} מוצרים</span>`;
-                    if (log.retryCount) details += `<span>🔄 ${log.retryCount} ניסיונות</span>`;
+                    if (log.productCount) details += `<span>📦 ${_escHtml(String(log.productCount))} מוצרים</span>`;
+                    if (log.retryCount) details += `<span>🔄 ${_escHtml(String(log.retryCount))} ניסיונות</span>`;
                     if (log.referrer && log.referrer !== 'direct') details += `<span>🔗 ${_escHtml(log.referrer)}</span>`;
 
                     const tech = [];
@@ -4594,9 +5344,17 @@
                         ? `<details class="log-tech" onclick="event.stopPropagation()"><summary>פרטים טכניים</summary><pre>${tech.join('\n')}</pre></details>`
                         : '';
 
+                    // "What to do" — the plain-Hebrew fix recommendation, color-coded by who can act
+                    const fixColor = exp.fixable === 'owner' ? '#1565c0' : (exp.fixable === 'developer' ? '#6a1b9a' : (exp.fixable === 'visitor' ? '#00695c' : '#616161'));
+                    const fixLabel = exp.fixable === 'owner' ? '🔧 מה לעשות' : (exp.fixable === 'developer' ? '👨‍💻 למפתח' : (exp.fixable === 'visitor' ? '🌐 בצד הלקוח' : 'ℹ️ מידע'));
+                    const actionBlock = exp.action
+                        ? `<div class="log-action" style="background:#f5f7fa;border-right:3px solid ${fixColor};padding:6px 10px;margin-top:6px;border-radius:4px;font-size:13px;"><strong style="color:${fixColor}">${fixLabel}:</strong> ${_escHtml(exp.action)}</div>`
+                        : '';
+
                     return `<div class="log-entry">
                         <div class="log-header"><span class="log-badge ${lvl}">${_escHtml(log.level || '')}</span><span class="log-time">${logTime}</span></div>
                         <div class="log-message" style="font-weight:600;color:${sevColor}">${_escHtml(exp.title)}</div>
+                        ${actionBlock}
                         ${details ? `<div class="log-details">${details}</div>` : ''}
                         ${techBlock}
                     </div>`;

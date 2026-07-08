@@ -141,23 +141,44 @@ const modalClose = document.getElementById('modal-close');
 // ===== Initialize =====
 document.addEventListener('DOMContentLoaded', () => {
     loadAllData();
+    loadSiteSettings();
     setupEventListeners();
     setupWelcomePopup();
     createLightbox();
     createSelectionModal();
     setupHistoryNavigation();
 
-    // Fullscreen splash screen for 3.2 seconds, then fade out
-    setTimeout(() => {
-        if (loadingEl) {
-            loadingEl.classList.add('fade-out');
-            setTimeout(() => {
-                loadingEl.style.display = 'none';
-                loadingEl.classList.remove('fade-out');
-            }, 400);
-        }
-    }, 3200);
+    // Splash is hidden when the products actually load (showLoading(false) -> hideSplash),
+    // with a short minimum display so it doesn't flash on fast cached loads. On slow
+    // connections it stays visible with the loading hints instead of exposing an empty
+    // grid. Safety cap only - showLoadingError also hides it on failure.
+    window._splashShownAt = Date.now();
+    setTimeout(hideSplash, 45000);
 });
+
+// ===== Site Settings (hero text + announcement banner, managed from admin) =====
+function loadSiteSettings() {
+    try {
+        if (typeof settingsCollection === 'undefined') return;
+        settingsCollection.doc(SETTINGS_DOC_ID).onSnapshot((snap) => {
+            const s = snap.exists ? snap.data() : {};
+            const titleEl = document.getElementById('hero-title');
+            const subEl = document.getElementById('hero-subtitle');
+            const bannerEl = document.getElementById('site-banner');
+            // Only override defaults when the admin actually set a value (textContent = no HTML injection)
+            if (titleEl && s.heroTitle) titleEl.textContent = s.heroTitle;
+            if (subEl && s.heroSubtitle) subEl.textContent = s.heroSubtitle;
+            if (bannerEl) {
+                if (s.bannerVisible && s.bannerText) {
+                    bannerEl.textContent = s.bannerText;
+                    bannerEl.style.display = 'block';
+                } else {
+                    bannerEl.style.display = 'none';
+                }
+            }
+        }, () => { /* settings are optional - ignore read errors */ });
+    } catch (e) { /* never block the site on settings */ }
+}
 
 // ===== History Navigation =====
 function setupHistoryNavigation() {
@@ -284,7 +305,7 @@ function openSelectionModal(product, sourceButton) {
     const firstImage = product.images && product.images.length > 0 
         ? product.images[0] 
         : (product.image || 'images/placeholder.svg');
-    modalImage.innerHTML = `<img src="${firstImage}" alt="${product.name}" onerror="this.src='images/placeholder.svg'">`;
+    modalImage.innerHTML = `<img src="${firstImage}" alt="${product.name}" onerror="this.onerror=null;this.src='images/placeholder.svg'">`;
     modalName.textContent = product.name;
     modalSku.textContent = `מק"ט: ${product.sku || '-'}`;
     
@@ -333,12 +354,16 @@ function openSelectionModal(product, sourceButton) {
     }
     
     modal.classList.add('active');
-    // Lock body scroll - improved for mobile
-    document.body.dataset.scrollY = window.scrollY;
-    document.body.style.position = 'fixed';
-    document.body.style.top = `-${window.scrollY}px`;
-    document.body.style.width = '100%';
-    document.body.style.overflow = 'hidden';
+    // Lock body scroll - only if not already locked by another modal (e.g. the product
+    // modal). When body is already fixed, window.scrollY is 0 and saving it would
+    // overwrite the user's real position - dumping them at the top on close.
+    if (document.body.style.position !== 'fixed') {
+        document.body.dataset.scrollY = window.scrollY;
+        document.body.style.position = 'fixed';
+        document.body.style.top = `-${window.scrollY}px`;
+        document.body.style.width = '100%';
+        document.body.style.overflow = 'hidden';
+    }
 }
 
 // ===== Close Selection Modal =====
@@ -347,14 +372,16 @@ function closeSelectionModal() {
     modal.classList.remove('active');
     pendingFavoriteProduct = null;
     
-    // Restore body scroll
-    const scrollY = document.body.dataset.scrollY || '0';
-    document.body.style.position = '';
-    document.body.style.top = '';
-    document.body.style.width = '';
-    document.body.style.overflow = '';
-    window.scrollTo(0, parseInt(scrollY));
-    
+    // Restore body scroll - but not while the product modal is still open (it owns the lock)
+    if (!productModal.classList.contains('active')) {
+        const scrollY = document.body.dataset.scrollY || '0';
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        document.body.style.overflow = '';
+        window.scrollTo({ top: parseInt(scrollY), behavior: 'instant' });
+    }
+
     // Clear selections
     document.querySelectorAll('#selection-modal .selection-option').forEach(btn => {
         btn.classList.remove('selected');
@@ -435,16 +462,24 @@ function addToFavorites(productId, selectedSize, selectedColor, button) {
     favorites.push({
         id: productId,
         selectedSize: selectedSize,
-        selectedColor: selectedColor
+        selectedColor: selectedColor,
+        quantity: 1
     });
-    
+
     if (button) {
         button.classList.add('active');
     }
-    
+
     safeSetStorage('glasseria_favorites', JSON.stringify(favorites));
     updateFavoritesCount();
     renderFavoritesList();
+
+    // Analytics: favorite adds (intent signal). One per product per session.
+    const favProduct = products.find(p => p.id === productId);
+    logEventOnce('fav:' + productId, 'favorite_add', {
+        productId: productId,
+        productName: favProduct ? favProduct.name : ''
+    });
 
     // Update card button if exists
     const cardBtn = document.querySelector(`.product-card .favorite-btn[data-id="${productId}"]`);
@@ -973,6 +1008,7 @@ function checkAllDataLoaded() {
 }
 
 function showLoadingError(message) {
+    hideSplash(); // the error element renders behind the fullscreen splash - reveal it
     let errorEl = document.getElementById('loading-error');
     if (!errorEl) {
         errorEl = document.createElement('div');
@@ -1000,8 +1036,12 @@ function hideLoadingError() {
 }
 
 function showLoadingHint(message) {
-    // Update the loading text inside the animation if it exists
-    const loadingSlogan = loadingEl ? loadingEl.querySelector('.loading-slogan') : null;
+    // Write into the splash slogan only while the splash is actually visible and data
+    // hasn't loaded - otherwise the message lands in a hidden element and is never seen
+    // (this was why "loaded from cache" / retry hints were invisible on slow loads)
+    const splashVisible = loadingEl && !window._splashHidden &&
+        loadingEl.style.display !== 'none' && !productsLoaded;
+    const loadingSlogan = splashVisible ? loadingEl.querySelector('.loading-slogan') : null;
     if (loadingSlogan) {
         loadingSlogan.textContent = message;
         loadingSlogan.style.opacity = '0.7';
@@ -1029,31 +1069,49 @@ function hideLoadingHint() {
 
 // ===== Show/Hide Loading =====
 function showLoading(show) {
-    // Splash screen is always shown for 5s via setTimeout in DOMContentLoaded
-    // Only use this for showing (not hiding - the timer handles that)
-    if (loadingEl && show) {
+    if (!loadingEl) return;
+    if (show) {
+        window._splashHidden = false;
         loadingEl.style.display = 'flex';
+    } else {
+        // Data arrived - hide the splash, keeping a short minimum display time
+        const MIN_SPLASH_MS = 1200;
+        const elapsed = Date.now() - (window._splashShownAt || 0);
+        setTimeout(hideSplash, Math.max(0, MIN_SPLASH_MS - elapsed));
     }
+}
+
+function hideSplash() {
+    if (!loadingEl || window._splashHidden) return;
+    window._splashHidden = true;
+    loadingEl.classList.add('fade-out');
+    setTimeout(() => {
+        loadingEl.style.display = 'none';
+        loadingEl.classList.remove('fade-out');
+    }, 400);
 }
 
 // ===== Render Navigation =====
 function renderNavigation() {
-    const navLinks = categories.map(cat => 
+    const navLinks = categories.map(cat =>
         `<a href="#" class="nav-link" data-category="${cat.id}">${cat.name}</a>`
     ).join('');
-    
-    mainNav.innerHTML = `
+
+    // "מבצעים" appears only when there are products with an active sale
+    const hasSales = products.some(p => !p.hidden && hasActiveSale(p));
+    const saleLink = hasSales
+        ? `<a href="#" class="nav-link nav-sale" data-category="__sale__">🔥 מבצעים</a>`
+        : '';
+
+    const linksHtml = `
         <a href="#" class="nav-link active" data-category="all">הכל</a>
+        ${saleLink}
         ${navLinks}
         <a href="about.html" class="nav-link nav-about">אודות</a>
     `;
-    
-    mobileNav.innerHTML = `
-        <a href="#" class="nav-link active" data-category="all">הכל</a>
-        ${navLinks}
-        <a href="about.html" class="nav-link nav-about">אודות</a>
-    `;
-    
+    mainNav.innerHTML = linksHtml;
+    mobileNav.innerHTML = linksHtml;
+
     document.querySelectorAll('.nav-link:not(.nav-about)').forEach(link => {
         link.addEventListener('click', handleNavClick);
     });
@@ -1071,11 +1129,11 @@ function renderCategories() {
     }
     
     categoriesGrid.innerHTML = categories.map(cat => {
-        const productCount = products.filter(p => p.categoryId === cat.id).length;
+        const productCount = products.filter(p => p.categoryId === cat.id && !p.hidden).length;
         return `
             <div class="category-card" data-category="${cat.id}">
                 <div class="category-image">
-                    <img src="${cat.image || 'images/placeholder.svg'}" alt="${cat.name}" loading="lazy" onerror="this.src='images/placeholder.svg'">
+                    <img src="${cat.image || 'images/placeholder.svg'}" alt="${cat.name}" loading="lazy" onerror="this.onerror=null;this.src='images/placeholder.svg'">
                 </div>
                 <div class="category-info">
                     <h3>${cat.name}</h3>
@@ -1094,7 +1152,14 @@ function renderCategories() {
 function handleCategoryClick(categoryId) {
     currentCategoryId = categoryId;
     const category = categories.find(c => c.id === categoryId);
-    
+
+    // Analytics: which categories people open (once per category per session)
+    if (categoryId && categoryId !== '__sale__') {
+        logEventOnce('cat:' + categoryId, 'category_view', {
+            categoryId: categoryId, categoryName: category ? category.name : ''
+        });
+    }
+
     const subs = subcategories.filter(s => s.categoryId === categoryId);
     
     if (subs.length > 0) {
@@ -1123,11 +1188,11 @@ function showSubcategoriesWithoutHistory(categoryId, subs) {
     document.getElementById('products').style.display = 'none';
     
     subcategoriesGrid.innerHTML = subs.map(sub => {
-        const productCount = products.filter(p => p.subcategoryId === sub.id).length;
+        const productCount = products.filter(p => p.subcategoryId === sub.id && !p.hidden).length;
         return `
             <div class="subcategory-card" data-subcategory="${sub.id}">
                 <div class="subcategory-image">
-                    <img src="${sub.image || 'images/placeholder.svg'}" alt="${sub.name}" loading="lazy" onerror="this.src='images/placeholder.svg'">
+                    <img src="${sub.image || 'images/placeholder.svg'}" alt="${sub.name}" loading="lazy" onerror="this.onerror=null;this.src='images/placeholder.svg'">
                 </div>
                 <div class="subcategory-info">
                     <h3>${sub.name}</h3>
@@ -1148,7 +1213,7 @@ function showSubcategoriesWithoutHistory(categoryId, subs) {
             </div>
             <div class="subcategory-info">
                 <h3>כל המוצרים</h3>
-                <span class="subcategory-count">${products.filter(p => p.categoryId === categoryId).length} מוצרים</span>
+                <span class="subcategory-count">${products.filter(p => p.categoryId === categoryId && !p.hidden).length} מוצרים</span>
             </div>
         </div>
     ` + subcategoriesGrid.innerHTML;
@@ -1185,20 +1250,27 @@ function showProductsWithoutHistory(categoryId, subcategoryId) {
     // Show products section
     document.getElementById('products').style.display = 'block';
     
-    let filtered = products;
+    // Hidden products never appear on the public site
+    const visible = products.filter(p => !p.hidden);
+    let filtered = visible;
     let title = 'כל המוצרים';
-    
-    if (categoryId) {
-        filtered = products.filter(p => p.categoryId === categoryId);
+
+    if (categoryId === '__sale__') {
+        // Virtual "מבצעים" category - all products with an active sale
+        filtered = visible.filter(p => hasActiveSale(p));
+        title = 'מבצעים';
+        showProductsBackButton(categoryId);
+    } else if (categoryId) {
+        filtered = visible.filter(p => p.categoryId === categoryId);
         const cat = categories.find(c => c.id === categoryId);
         title = cat ? cat.name : '';
-        
+
         if (subcategoryId) {
             filtered = filtered.filter(p => p.subcategoryId === subcategoryId);
             const sub = subcategories.find(s => s.id === subcategoryId);
             title = sub ? `${cat ? cat.name + ' - ' : ''}${sub.name}` : title;
         }
-        
+
         // הצגת כפתור חזרה כשאנחנו בתוך קטגוריה
         showProductsBackButton(categoryId);
     } else {
@@ -1227,7 +1299,8 @@ function hideProductsBackButton() {
 
 // ===== Render Products (Lazy Rendering) =====
 function renderProducts(filteredProducts = null) {
-    currentFilteredProducts = filteredProducts !== null ? filteredProducts : products;
+    // Default (home "all products") must also exclude hidden products
+    currentFilteredProducts = filteredProducts !== null ? filteredProducts : products.filter(p => !p.hidden);
     renderedCount = 0;
 
     productsGrid.innerHTML = '';
@@ -1315,6 +1388,40 @@ function setupScrollObserver() {
 }
 
 // ===== Create Product Card (עם תמיכה בקרוסלה) =====
+// ===== Sale / New helpers =====
+function hasActiveSale(product) {
+    if (product.hidePrice) return false;
+    const sale = Number(product.salePrice);
+    const base = Number(product.price);
+    // Requires a real discount: a positive base price strictly above a positive sale price
+    return product.salePrice != null && product.salePrice !== '' && !isNaN(sale) && sale > 0
+        && base > 0 && sale < base;
+}
+
+function isNewProduct(product) {
+    const ms = product.createdAt?.toMillis?.() || (product.createdAt?.seconds ? product.createdAt.seconds * 1000 : 0);
+    if (!ms) return false;
+    const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
+    return (Date.now() - ms) < THIRTY_DAYS;
+}
+
+// Price HTML for cards/modal, honoring hidePrice, active sale, and variant "starting from"
+function productPriceHtml(product) {
+    if (product.hidePrice) return '<span class="quote-text">קבל הצעת מחיר</span>';
+    if (hasActiveSale(product)) {
+        return '<span class="price-original">₪' + formatPrice(product.price) + '</span> ' +
+               '<span class="price-sale">₪' + formatPrice(product.salePrice) + '</span>';
+    }
+    return (hasVariantPricing(product) ? 'החל מ-' : '') + '₪' + formatPrice(product.price);
+}
+
+function productBadgesHtml(product) {
+    let b = '';
+    if (hasActiveSale(product)) b += '<span class="product-badge badge-sale">מבצע</span>';
+    if (isNewProduct(product)) b += '<span class="product-badge badge-new">חדש</span>';
+    return b ? `<div class="product-badges">${b}</div>` : '';
+}
+
 function createProductCard(product, isFavorite, skipCarouselInit = false) {
     // תמיכה גם בתמונה בודדת וגם במערך תמונות
     const images = product.images && product.images.length > 0
@@ -1323,20 +1430,28 @@ function createProductCard(product, isFavorite, skipCarouselInit = false) {
 
     const card = document.createElement('div');
     card.className = 'product-card';
+    // Product identity for the image-failure logger (so a broken image says which product)
+    card.dataset.productId = product.id;
+    card.dataset.productName = product.name || '';
+    if (product.sku) card.dataset.productSku = product.sku;
+    const favControl = product.outOfStock
+        ? '<div class="out-of-stock-badge">אזל מהמלאי</div>'
+        : `<button class="favorite-btn ${isFavorite ? 'active' : ''}" data-id="${product.id}">
+            <svg viewBox="0 0 24 24">
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+            </svg>
+        </button>`;
     card.innerHTML = `
         <div class="product-image">
             <!-- הקרוסלה תיווצר כאן -->
         </div>
-        <button class="favorite-btn ${isFavorite ? 'active' : ''}" data-id="${product.id}">
-            <svg viewBox="0 0 24 24">
-                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-            </svg>
-        </button>
+        ${productBadgesHtml(product)}
+        ${favControl}
         <div class="product-info">
             <h3 class="product-name">${product.name}</h3>
             <p class="product-sku">מק"ט: ${product.sku || '-'}</p>
             ${product.type ? `<p class="product-type">${product.type}</p>` : ''}
-            <p class="product-price">${product.hidePrice ? '<span class="quote-text">קבל הצעת מחיר</span>' : (hasVariantPricing(product) ? 'החל מ-' : '') + '₪' + (product.price || '0')}</p>
+            <p class="product-price">${productPriceHtml(product)}</p>
         </div>
     `;
 
@@ -1356,12 +1471,14 @@ function createProductCard(product, isFavorite, skipCarouselInit = false) {
         }
     });
 
-    // כפתור מועדפים
+    // כפתור מועדפים (לא קיים אם המוצר אזל מהמלאי)
     const favoriteBtn = card.querySelector('.favorite-btn');
-    favoriteBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        toggleFavorite(product.id, favoriteBtn, product);
-    });
+    if (favoriteBtn) {
+        favoriteBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleFavorite(product.id, favoriteBtn, product);
+        });
+    }
 
     return card;
 }
@@ -1399,7 +1516,7 @@ function updateModalPrice(product) {
     if (selectedSize && selectedColor && hasVariants) {
         const variant = product.variantPrices.find(v => v.size === selectedSize && v.color === selectedColor);
         if (variant) {
-            priceEl.innerHTML = '₪' + variant.price.toLocaleString();
+            priceEl.innerHTML = '₪' + formatPrice(variant.price);
             return;
         }
     }
@@ -1423,7 +1540,7 @@ function updateModalPrice(product) {
         if (selectedSize && product.sizesPrices && product.sizesPrices.length > 0) {
             const sp = product.sizesPrices.find(sp => sp.size === selectedSize);
             if (sp) {
-                priceEl.innerHTML = '₪' + sp.price.toLocaleString();
+                priceEl.innerHTML = '₪' + formatPrice(sp.price);
                 return;
             }
         }
@@ -1432,17 +1549,20 @@ function updateModalPrice(product) {
         if (selectedColor && product.colorsPrices && product.colorsPrices.length > 0) {
             const cp = product.colorsPrices.find(cp => cp.color === selectedColor);
             if (cp) {
-                priceEl.innerHTML = '₪' + cp.price.toLocaleString();
+                priceEl.innerHTML = '₪' + formatPrice(cp.price);
                 return;
             }
         }
     }
 
-    // Fallback: base price
+    // Fallback: base price (honor an active sale when there's no variant pricing)
     if (hasVariantPricing(product)) {
-        priceEl.innerHTML = '<span class="price-prefix">החל מ-</span>₪' + (product.price || '0');
+        priceEl.innerHTML = '<span class="price-prefix">החל מ-</span>₪' + formatPrice(product.price);
+    } else if (hasActiveSale(product)) {
+        priceEl.innerHTML = '<span class="price-original">₪' + formatPrice(product.price) + '</span> ' +
+                            '<span class="price-sale">₪' + formatPrice(product.salePrice) + '</span>';
     } else {
-        priceEl.innerHTML = '₪' + (product.price || '0');
+        priceEl.innerHTML = '₪' + formatPrice(product.price);
     }
 }
 
@@ -1466,8 +1586,14 @@ function getResolvedPrice(product, selectedSize, selectedColor) {
             if (cp) return cp.price;
         }
     }
-    // Fallback: base price
+    // Fallback: base price (or the sale price when a sale is active)
+    if (hasActiveSale(product)) return Number(product.salePrice);
     return product.price || 0;
+}
+
+// Consistent price display everywhere: "1,234" (handles numbers and numeric strings)
+function formatPrice(p) {
+    return (Number(p) || 0).toLocaleString('he-IL');
 }
 
 // ===== Product Modal (עם תמיכה בקרוסלה ו-Lightbox) =====
@@ -1475,6 +1601,12 @@ function openProductModal(product) {
     const cat = categories.find(c => c.id === product.categoryId);
     const sub = subcategories.find(s => s.id === product.subcategoryId);
     const isFavorite = isProductInFavorites(product.id);
+
+    // Analytics: which products get looked at (once per product per session)
+    logEventOnce('view:' + product.id, 'product_view', {
+        productId: product.id, productName: product.name,
+        categoryId: product.categoryId, categoryName: cat ? cat.name : ''
+    });
     
     // תמיכה גם בתמונה בודדת וגם במערך תמונות
     const images = product.images && product.images.length > 0 
@@ -1488,14 +1620,13 @@ function openProductModal(product) {
             </div>
             <div class="modal-product-info">
                 <div class="modal-product-category">${cat ? cat.name : ''} ${sub ? '/ ' + sub.name : ''}</div>
-                <h2 class="modal-product-name">${product.name}</h2>
+                <h2 class="modal-product-name">${product.name}${isNewProduct(product) ? ' <span class="product-badge badge-new">חדש</span>' : ''}${hasActiveSale(product) ? ' <span class="product-badge badge-sale">מבצע</span>' : ''}</h2>
                 <p class="modal-product-sku">מק"ט: ${product.sku || '-'}</p>
                 ${product.type ? `<p class="modal-product-type">${product.type}</p>` : ''}
+                ${product.outOfStock ? '<p class="modal-out-of-stock">אזל מהמלאי — ניתן לפנות אלינו לבירור זמינות</p>' : ''}
                 ${product.description ? `<p class="modal-product-description">${product.description}</p>` : ''}
                 <div class="modal-product-price" id="modal-dynamic-price">
-                    ${product.hidePrice
-                        ? '<span class="quote-text">קבל הצעת מחיר</span>'
-                        : (hasVariantPricing(product) ? '<span class="price-prefix">החל מ-</span>' : '') + '₪' + (product.price || '0')}
+                    ${productPriceHtml(product)}
                 </div>
 
                 ${product.sizes && product.sizes.length > 0 ? `
@@ -1524,12 +1655,14 @@ function openProductModal(product) {
                     </div>
                 ` : ''}
                 
-                <button class="modal-favorite-btn ${isFavorite ? 'active' : ''}" data-id="${product.id}">
+                ${product.outOfStock
+                    ? '<button class="modal-favorite-btn" disabled style="opacity:0.6;cursor:not-allowed;">אזל מהמלאי</button>'
+                    : `<button class="modal-favorite-btn ${isFavorite ? 'active' : ''}" data-id="${product.id}">
                     <svg viewBox="0 0 24 24">
                         <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
                     </svg>
                     ${isFavorite ? 'הסר מהמועדפים' : 'הוסף למועדפים'}
-                </button>
+                </button>`}
             </div>
         </div>
     `;
@@ -1583,9 +1716,9 @@ function openProductModal(product) {
         });
     });
 
-    // כפתור מועדפים במודל
+    // כפתור מועדפים במודל (מושבת אם המוצר אזל מהמלאי)
     const modalFavBtn = modalContent.querySelector('.modal-favorite-btn');
-    modalFavBtn.addEventListener('click', () => {
+    if (modalFavBtn && !product.outOfStock) modalFavBtn.addEventListener('click', () => {
         const wasInFavorites = isProductInFavorites(product.id);
         toggleFavorite(product.id, modalFavBtn, product);
         const isNowFavorite = isProductInFavorites(product.id);
@@ -1674,10 +1807,13 @@ function setupEventListeners() {
         if (e.target === productModal) closeProductModal();
     });
 
-    // Escape key closes modals (priority: selection modal > product modal > favorites)
-    // Note: lightbox Escape is handled separately in createLightbox()
+    // Escape key closes modals (priority: lightbox > selection modal > product modal > favorites)
+    // When the lightbox is open its own handler (createLightbox) closes it - one Escape,
+    // one layer. Without this check a single Escape closed the product modal underneath too.
     document.addEventListener('keydown', (e) => {
         if (e.key !== 'Escape') return;
+        const lightboxEl = document.getElementById('image-lightbox');
+        if (lightboxEl && lightboxEl.classList.contains('active')) return;
         const selectionModal = document.getElementById('selection-modal');
         if (selectionModal && selectionModal.classList.contains('active')) {
             closeSelectionModal();
@@ -1745,21 +1881,27 @@ function closeFavoritesPanel() {
     document.body.style.top = '';
     document.body.style.width = '';
     document.body.style.overflow = '';
-    window.scrollTo(0, parseInt(scrollY));
+    window.scrollTo({ top: parseInt(scrollY), behavior: 'instant' });
 }
 
 function renderFavoritesList() {
     favoritesList.innerHTML = '';
-    
+
+    let total = 0;
+    let hasPricedItems = false;
+
     favorites.forEach(fav => {
         const product = products.find(p => p.id === fav.id);
-        if (!product) return;
-        
+        // Skip products that were deleted or hidden after being favorited
+        if (!product || product.hidden) return;
+
+        const qty = Math.max(1, parseInt(fav.quantity) || 1);
+
         // תמיכה בתמונה הראשונה מהמערך
-        const firstImage = product.images && product.images.length > 0 
-            ? product.images[0] 
+        const firstImage = product.images && product.images.length > 0
+            ? product.images[0]
             : (product.image || 'images/placeholder.svg');
-        
+
         // Build selection info
         let selectionInfo = '';
         if (fav.selectedSize || fav.selectedColor) {
@@ -1768,36 +1910,64 @@ function renderFavoritesList() {
             if (fav.selectedColor) parts.push(`${getProductColorsLabel(product, 'singular')}: ${fav.selectedColor}`);
             selectionInfo = `<div class="favorite-item-selection">${parts.join(' | ')}</div>`;
         }
-        
+
+        if (!product.hidePrice) {
+            total += (Number(getResolvedPrice(product, fav.selectedSize, fav.selectedColor)) || 0) * qty;
+            hasPricedItems = true;
+        }
+
         const item = document.createElement('div');
         item.className = 'favorite-item';
         item.innerHTML = `
             <div class="favorite-item-image">
-                <img src="${firstImage}" alt="${product.name}" onerror="this.src='images/placeholder.svg'">
+                <img src="${firstImage}" alt="${product.name}" onerror="this.onerror=null;this.src='images/placeholder.svg'">
             </div>
             <div class="favorite-item-info">
                 <div class="favorite-item-name">${product.name}</div>
                 <div class="favorite-item-sku">מק"ט: ${product.sku || '-'}</div>
                 ${selectionInfo}
-                <div class="favorite-item-price">${product.hidePrice ? '<span class="quote-text">קבל הצעת מחיר</span>' : '₪' + getResolvedPrice(product, fav.selectedSize, fav.selectedColor).toLocaleString()}</div>
+                <div class="favorite-item-price">${product.hidePrice ? '<span class="quote-text">קבל הצעת מחיר</span>' : '₪' + formatPrice(getResolvedPrice(product, fav.selectedSize, fav.selectedColor))}</div>
+                <div class="favorite-item-qty">
+                    <button type="button" class="qty-btn qty-minus" aria-label="הפחת כמות">−</button>
+                    <span class="qty-value">${qty}</span>
+                    <button type="button" class="qty-btn qty-plus" aria-label="הוסף כמות">+</button>
+                </div>
             </div>
-            <button class="favorite-item-remove" data-id="${product.id}">
+            <button class="favorite-item-remove" data-id="${product.id}" aria-label="הסר מהמועדפים">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="18" y1="6" x2="6" y2="18"/>
                     <line x1="6" y1="6" x2="18" y2="18"/>
                 </svg>
             </button>
         `;
-        
-        const removeBtn = item.querySelector('.favorite-item-remove');
-        removeBtn.addEventListener('click', () => {
+
+        item.querySelector('.favorite-item-remove').addEventListener('click', () => {
             removeFromFavorites(product.id, null);
         });
-        
+        item.querySelector('.qty-minus').addEventListener('click', () => changeFavoriteQty(product.id, -1));
+        item.querySelector('.qty-plus').addEventListener('click', () => changeFavoriteQty(product.id, 1));
+
         favoritesList.appendChild(item);
     });
-    
+
+    // Total estimate line (only when there are priced items)
+    if (hasPricedItems) {
+        const totalEl = document.createElement('div');
+        totalEl.className = 'favorites-total';
+        totalEl.innerHTML = `<span>הערכת סה"כ:</span> <strong>₪${formatPrice(total)}</strong>`;
+        favoritesList.appendChild(totalEl);
+    }
+
     updateFavoritesCount();
+}
+
+// Change quantity of a favorite entry (min 1). Removing is via the × button.
+function changeFavoriteQty(productId, delta) {
+    const fav = favorites.find(f => f.id === productId);
+    if (!fav) return;
+    fav.quantity = Math.max(1, (parseInt(fav.quantity) || 1) + delta);
+    safeSetStorage('glasseria_favorites', JSON.stringify(favorites));
+    renderFavoritesList();
 }
 
 function clearFavorites() {
@@ -1811,23 +1981,67 @@ function clearFavorites() {
     renderFavoritesList();
 }
 
+// Safe accessors for the persisted session/device ids (guard if logger failed to load)
+function getSessionId() {
+    try { return (typeof GlasseriaLogger !== 'undefined' && GlasseriaLogger.getSessionId()) || ''; }
+    catch (e) { return ''; }
+}
+function getDeviceId() {
+    try { return (typeof GlasseriaLogger !== 'undefined' && GlasseriaLogger.getDeviceId()) || ''; }
+    catch (e) { return ''; }
+}
+
+// Per-session dedup so browsing doesn't flood the events collection
+const _loggedEventKeys = new Set();
+function logEventOnce(key, type, ctx) {
+    if (_loggedEventKeys.has(key)) return;
+    _loggedEventKeys.add(key);
+    logEvent(type, ctx);
+}
+
+// Fire-and-forget analytics event. Never blocks the UI; matches the hardened
+// glasseria_events rule shape exactly (createdAt = serverTimestamp).
+function logEvent(type, ctx = {}) {
+    try {
+        if (typeof eventsCollection === 'undefined') return;
+        const doc = {
+            type: String(type).slice(0, 40),
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            sessionId: getSessionId(),
+            deviceId: getDeviceId()
+        };
+        if (ctx.productId) doc.productId = String(ctx.productId);
+        if (ctx.productName) doc.productName = String(ctx.productName).slice(0, 300);
+        if (ctx.categoryId) doc.categoryId = String(ctx.categoryId);
+        if (ctx.categoryName) doc.categoryName = String(ctx.categoryName).slice(0, 300);
+        if (typeof ctx.value === 'number') doc.value = ctx.value;
+        eventsCollection.add(doc).catch(() => {});
+    } catch (e) { /* analytics must never break the site */ }
+}
+
 function sendToWhatsApp() {
     if (favorites.length === 0) {
         alert('נא לבחור מוצרים לפני שליחה');
         return;
     }
-    
+
     let message = 'שלום, אני מעוניין במוצרים הבאים:\n\n';
-    
-    favorites.forEach((fav, index) => {
+    const items = [];
+    let totalValue = 0;
+
+    let lineNo = 0;
+    favorites.forEach((fav) => {
         const product = products.find(p => p.id === fav.id);
-        if (!product) return;
-        
+        // Skip deleted or hidden products so they don't appear in the quote
+        if (!product || product.hidden) return;
+        lineNo++;
+
+        const qty = Math.max(1, parseInt(fav.quantity) || 1);
         const cat = categories.find(c => c.id === product.categoryId);
-        message += `${index + 1}. ${product.name}\n`;
+        message += `${lineNo}. ${product.name}${qty > 1 ? ` ×${qty}` : ''}\n`;
         message += `   מק"ט: ${product.sku || '-'}\n`;
         if (cat) message += `   קטגוריה: ${cat.name}\n`;
-        
+
         // Add selected size and color
         if (fav.selectedSize) {
             message += `   מידה: ${fav.selectedSize}\n`;
@@ -1835,21 +2049,71 @@ function sendToWhatsApp() {
         if (fav.selectedColor) {
             message += `   ${getProductColorsLabel(product, 'singular')}: ${fav.selectedColor}\n`;
         }
-        
+
+        let itemPrice = 0;
         if (product.hidePrice) {
             message += `   מחיר: קבל הצעת מחיר\n\n`;
         } else {
-            const resolvedPrice = getResolvedPrice(product, fav.selectedSize, fav.selectedColor);
-            message += `   מחיר: ₪${resolvedPrice}\n\n`;
+            itemPrice = getResolvedPrice(product, fav.selectedSize, fav.selectedColor);
+            totalValue += (Number(itemPrice) || 0) * qty;
+            const lineTotal = (Number(itemPrice) || 0) * qty;
+            message += `   מחיר: ₪${formatPrice(itemPrice)}${qty > 1 ? ` (סה"כ ₪${formatPrice(lineTotal)})` : ''}\n\n`;
         }
+
+        items.push({
+            name: product.name || '',
+            sku: product.sku || '',
+            size: fav.selectedSize || '',
+            color: fav.selectedColor || '',
+            price: product.hidePrice ? null : (Number(itemPrice) || 0),
+            quantity: qty
+        });
     });
-    
-    message += 'אשמח לקבל פרטים נוספים. תודה!';
-    
+
+    if (items.length === 0) {
+        alert('נא לבחור מוצרים לפני שליחה');
+        return;
+    }
+
+    // Estimated total (only if there was at least one priced item)
+    if (totalValue > 0) {
+        message += `הערכת סה"כ: ₪${formatPrice(totalValue)}\n\n`;
+    }
+
+    // Customer-details template - saves the first back-and-forth when quoting
+    message += 'כדי לזרז את ההצעה, אשמח למלא:\n';
+    message += 'שם: \n';
+    message += 'עיר: \n';
+    message += 'מתי הפרויקט: \n\n';
+    message += 'תודה!';
+
     const encodedMessage = encodeURIComponent(message);
     const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodedMessage}`;
-    
+
+    // Open WhatsApp first - the send must never be blocked by logging
     window.open(whatsappUrl, '_blank');
+
+    // Record the inquiry for the business (fire-and-forget). Shape matches the
+    // hardened glasseria_inquiries rule.
+    try {
+        if (typeof inquiriesCollection !== 'undefined') {
+            // Cap items to satisfy the hardened rule (items.size() <= 200) even for an
+            // unrealistically large favorites list
+            const cappedItems = items.slice(0, 200);
+            inquiriesCollection.add({
+                items: cappedItems,
+                itemCount: cappedItems.length,
+                totalValue,
+                status: 'new',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                sessionId: getSessionId(),
+                deviceId: getDeviceId(),
+                page: 'catalog'
+            }).catch(() => {});
+        }
+    } catch (e) { /* inquiry logging must never break the send */ }
+
+    logEvent('whatsapp_send', { value: items.length });
 }
 
 // ===== Mobile Menu =====

@@ -55,6 +55,10 @@ const auth = typeof firebase.auth === 'function' ? firebase.auth() : null;
 const categoriesCollection = db.collection('glasseria_categories');
 const subcategoriesCollection = db.collection('glasseria_subcategories');
 const productsCollection = db.collection('glasseria_products');
+const inquiriesCollection = db.collection('glasseria_inquiries');
+const eventsCollection = db.collection('glasseria_events');
+const settingsCollection = db.collection('glasseria_settings');
+const SETTINGS_DOC_ID = 'site';
 
 // Storage References (only available when storage SDK is loaded - admin pages)
 const storageRef = storage ? storage.ref() : null;

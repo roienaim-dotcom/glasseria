@@ -136,10 +136,13 @@
             }
         });
         
-        // סגירה ב-Escape
+        // סגירה ב-Escape - רק כשהפאנל באמת פתוח, אחרת גונב פוקוס מכל Escape באתר
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
-                closePanel();
+                const panel = document.getElementById('accessibility-panel');
+                if (panel && panel.classList.contains('active')) {
+                    closePanel();
+                }
             }
         });
         

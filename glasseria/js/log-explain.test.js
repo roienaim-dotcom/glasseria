@@ -33,5 +33,25 @@ check('global', { level: 'error', source: 'global', message: 'x is not defined' 
 check('promise', { level: 'error', source: 'promise' }, 'תקלה טכנית באתר — פעולה ברקע נכשלה', 'error');
 check('fallback', { level: 'error', source: 'mystery' }, 'תקלה לא צפויה באתר', 'error');
 
+// Phase 4 additions: cache-after-server-fail, zero products, load code map, image identity, actions
+check('timing cache = warn', { level: 'timing', source: 'load', method: 'get-cache', productCount: 50 }, 'האתר הוצג מגרסה שמורה — לא היה חיבור לשרת', 'warn');
+check('timing snapshot-cache = warn', { level: 'timing', source: 'load', method: 'onSnapshot-cache' }, 'האתר הוצג מגרסה שמורה — לא היה חיבור לשרת', 'warn');
+check('timing zero products = error', { level: 'timing', source: 'load', method: 'onSnapshot', productCount: 0 }, 'האתר נטען אבל בלי מוצרים', 'error');
+check('load permission-denied code', { level: 'error', source: 'load', code: 'permission-denied' }, 'אין הרשאת גישה לנתונים — כנראה בעיה בהגדרות האבטחה של מסד הנתונים', 'error');
+check('image with product name', { level: 'warn', source: 'image', productName: 'מקלחון פינתי', sku: 'AB1' }, 'תמונת המוצר "מקלחון פינתי" (מק"ט AB1) לא נטענה — קישור שבור או בעיית רשת', 'warn');
+
+// Assert the new action field exists where it should
+function checkAction(name, log, shouldHaveAction) {
+    const r = explainLog(log);
+    const has = !!(r.action && r.action.length);
+    if (has === shouldHaveAction) { passed++; console.log('  ✓ action:' + name); }
+    else { failed++; console.error('  ✗ action:' + name + ' -> ' + JSON.stringify(r)); }
+}
+checkAction('permission-denied has action', { level: 'error', source: 'firestore', code: 'permission-denied' }, true);
+checkAction('image has action', { level: 'warn', source: 'image', message: 'a.jpg' }, true);
+checkAction('global has action', { level: 'error', source: 'global' }, true);
+checkAction('clean success no action', { level: 'timing', source: 'load', productCount: 50 }, false);
+checkAction('visit no action', { level: 'info', source: 'session', message: 'כניסה לאתר' }, false);
+
 console.log('\n' + passed + ' passed, ' + failed + ' failed');
 process.exit(failed ? 1 : 0);

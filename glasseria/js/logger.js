@@ -189,11 +189,44 @@ const GlasseriaLogger = (() => {
             clientTime: new Date().toISOString(),
             url: window.location.href
         };
-        // Fire-and-forget - don't await, don't block
+        // Fire-and-forget - don't await, don't block. On failure (Firestore down / rules /
+        // quota - exactly when the site is broken) stash the log so it survives to next visit.
         db.collection(COLLECTION).add(doc).catch(() => {
-            // Silently fail - logging should never break the app
+            _backupFailedLog(doc);
         });
     }
+
+    // ---- Failed-log backup (localStorage) so logs aren't lost when Firestore is unreachable ----
+    const PENDING_KEY = 'glasseria_pending_logs';
+    function _backupFailedLog(doc) {
+        try {
+            const copy = Object.assign({}, doc);
+            delete copy.timestamp; // serverTimestamp sentinel isn't JSON-serializable
+            const arr = JSON.parse(localStorage.getItem(PENDING_KEY) || '[]');
+            arr.push(copy);
+            while (arr.length > 20) arr.shift(); // keep only the 20 most recent
+            localStorage.setItem(PENDING_KEY, JSON.stringify(arr));
+        } catch (e) { /* storage blocked - nothing more we can do */ }
+    }
+    function _retryPendingLogs() {
+        if (typeof db === 'undefined' || !db) return;
+        let arr;
+        try {
+            arr = JSON.parse(localStorage.getItem(PENDING_KEY) || '[]');
+            localStorage.removeItem(PENDING_KEY);
+        } catch (e) { return; }
+        if (!arr || !arr.length) return;
+        arr.forEach((copy) => {
+            const doc = Object.assign({}, copy, {
+                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                retried: true
+            });
+            db.collection(COLLECTION).add(doc).catch(() => _backupFailedLog(copy));
+        });
+    }
+
+    // Dedup image-load failures by src so one broken image can't exhaust the log budget
+    const _seenImageErrors = new Set();
 
     // Queue logs created before Firestore is available; flush when it is.
     let _queue = [];
@@ -214,8 +247,9 @@ const GlasseriaLogger = (() => {
         _flushQueue();
         _writeDoc(entry);
     }
-    // Belt-and-suspenders flush in case Firestore SDK came up after first logs
-    setTimeout(_flushQueue, 3000);
+    // Belt-and-suspenders flush in case Firestore SDK came up after first logs,
+    // and resend any logs that failed to write on a previous visit.
+    setTimeout(() => { _flushQueue(); _retryPendingLogs(); }, 3000);
 
     return {
         // Log an error
@@ -268,7 +302,17 @@ const GlasseriaLogger = (() => {
                 if (target && target !== window && target.tagName) {
                     if (target.tagName.toLowerCase() === 'img') {
                         const src = target.src || target.currentSrc || 'unknown';
-                        this.warn('image', 'תמונה לא נטענה: ' + src, { src });
+                        if (_seenImageErrors.has(src)) return; // already logged this broken image
+                        _seenImageErrors.add(src);
+                        // Walk up to the product card to identify WHICH product's image failed
+                        const holder = target.closest && target.closest('[data-product-name]');
+                        const extra = { src };
+                        if (holder) {
+                            if (holder.dataset.productName) extra.productName = holder.dataset.productName;
+                            if (holder.dataset.productSku) extra.sku = holder.dataset.productSku;
+                            if (holder.dataset.productId) extra.productId = holder.dataset.productId;
+                        }
+                        this.warn('image', 'תמונה לא נטענה: ' + src, extra);
                     }
                     return; // other resource errors ignored for now
                 }
@@ -292,6 +336,19 @@ const GlasseriaLogger = (() => {
         // Get session start time (for calculating load duration)
         getSessionStart() {
             return sessionStart;
+        },
+
+        // Expose the persisted session / device ids for inquiries & analytics events
+        getSessionId() {
+            return sessionId;
+        },
+        getDeviceId() {
+            return deviceId;
+        },
+
+        // Resend logs that failed to write on a previous visit / while offline
+        retryPendingLogs() {
+            _retryPendingLogs();
         }
     };
 })();
@@ -320,4 +377,8 @@ window.addEventListener('pageshow', (e) => {
 
 // Connectivity changes during the session
 window.addEventListener('offline', () => GlasseriaLogger.warn('network', 'החיבור לאינטרנט נותק'));
-window.addEventListener('online', () => GlasseriaLogger.info('network', 'החיבור לאינטרנט חזר'));
+window.addEventListener('online', () => {
+    GlasseriaLogger.info('network', 'החיבור לאינטרנט חזר');
+    // Connection restored - try to flush any logs that failed while offline
+    if (typeof GlasseriaLogger.retryPendingLogs === 'function') GlasseriaLogger.retryPendingLogs();
+});

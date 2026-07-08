@@ -13,18 +13,25 @@
     X-XSS-Protection = "1; mode=block"
     X-Content-Type-Options = "nosniff"
 
-# Cache static assets - Netlify CDN invalidates on deploy
+# JS/CSS: browsers must revalidate so deployed fixes reach returning users immediately
+# (Netlify serves 304 via ETag when unchanged - cheap). Files are not fingerprinted,
+# so long browser caching here would serve week-old code after a deploy.
 [[headers]]
   for = "/js/*"
   [headers.values]
-    Cache-Control = "public, max-age=604800"
+    Cache-Control = "public, max-age=0, must-revalidate"
 
 [[headers]]
   for = "/css/*"
   [headers.values]
-    Cache-Control = "public, max-age=604800"
+    Cache-Control = "public, max-age=0, must-revalidate"
 
 [[headers]]
   for = "/images/*"
   [headers.values]
     Cache-Control = "public, max-age=2592000"
+
+[[headers]]
+  for = "/admin/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
