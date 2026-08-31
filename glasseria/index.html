@@ -35,6 +35,15 @@
                 <a href="#" class="nav-link active" data-category="all">הכל</a>
                 <!-- Dynamic categories will be loaded here -->
             </nav>
+            <div class="header-actions">
+                <a href="tel:0524048371" class="header-phone" id="header-phone" aria-label="התקשרו אלינו">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                    </svg>
+                    <span class="header-phone-number" id="header-phone-number">052-404-8371</span>
+                </a>
+                <button class="header-callback-btn" id="lead-open-btn">נחזור אליכם</button>
+            </div>
             <button class="mobile-menu-btn" aria-label="תפריט">
                 <span></span>
                 <span></span>
@@ -115,6 +124,9 @@
                 <!-- Products will be loaded here -->
             </div>
             <div id="products-sentinel" style="height: 1px;"></div>
+            <div class="view-all-wrap" id="view-all-wrap" style="display: none;">
+                <button class="view-all-btn" id="view-all-btn">לצפייה בכל המוצרים <span aria-hidden="true">←</span></button>
+            </div>
             <div class="no-products" id="no-products" style="display: none;">
                 <p>אין מוצרים בקטגוריה זו</p>
             </div>
@@ -156,6 +168,7 @@
                 שלח ב-WhatsApp
             </button>
         </div>
+        <button class="favorites-lead-link" id="lead-from-cart">מעדיפים שנתקשר? השאירו מספר ←</button>
     </div>
 
     <!-- Overlay -->
@@ -182,6 +195,14 @@
     <!-- Footer -->
     <footer class="footer">
     <div class="container">
+        <div class="footer-contact">
+            <div class="footer-brand">GLASSERIA — מקלחונים וזכוכית בהתאמה אישית</div>
+            <div class="footer-contact-links">
+                <a href="tel:0524048371" class="footer-contact-link" id="footer-phone">📞 <span id="footer-phone-text">052-404-8371</span></a>
+                <a href="https://wa.me/972524048371" class="footer-contact-link" id="footer-whatsapp" target="_blank" rel="noopener noreferrer">💬 שלחו לנו וואטסאפ</a>
+                <span class="footer-contact-link" id="footer-hours" style="display: none;">🕗 <span id="footer-hours-text"></span></span>
+            </div>
+        </div>
         <p>&copy; 2024 Glasseria. כל הזכויות שמורות.</p>
         <a href="accessibility.html" style="color: rgba(255,255,255,0.7); font-size: 13px; text-decoration: none; margin-top: 8px; display: inline-block;">♿ הצהרת נגישות</a>
         <a href="terms.html" style="color: rgba(255,255,255,0.7); font-size: 13px; text-decoration: none; margin-top: 8px; display: inline-block; margin-right: 16px;">📄 תנאי שימוש</a>
@@ -192,6 +213,38 @@
         </div>
     </div>
 </footer>
+    <!-- Lead Form Modal ("נחזור אליכם") -->
+    <div class="lead-modal-overlay" id="lead-modal" role="dialog" aria-modal="true" aria-label="השאירו פרטים ונחזור אליכם">
+        <div class="lead-modal">
+            <button class="lead-modal-close" id="lead-modal-close" aria-label="סגירה">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+            <div id="lead-form-view">
+                <h3 class="lead-title">נחזור אליכם</h3>
+                <p class="lead-subtitle">השאירו שם וטלפון — ונחזור אליכם בהקדם</p>
+                <label class="lead-label" for="lead-name">שם *</label>
+                <input type="text" id="lead-name" class="lead-input" autocomplete="name" maxlength="100">
+                <label class="lead-label" for="lead-phone">טלפון *</label>
+                <input type="tel" id="lead-phone" class="lead-input" inputmode="tel" autocomplete="tel" placeholder="050-1234567" maxlength="20">
+                <label class="lead-label" for="lead-note">הודעה (לא חובה)</label>
+                <textarea id="lead-note" class="lead-input lead-textarea" rows="2" maxlength="1000"></textarea>
+                <input type="text" id="lead-company" class="lead-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+                <div class="lead-cart-note" id="lead-cart-note" style="display: none;">המוצרים שבחרתם יצורפו לפנייה 🛒</div>
+                <div class="lead-error" id="lead-error" style="display: none;"></div>
+                <button class="lead-submit-btn" id="lead-submit-btn">שלחו לי</button>
+            </div>
+            <div id="lead-success-view" style="display: none;">
+                <div class="lead-success-icon" aria-hidden="true">✓</div>
+                <h3 class="lead-title" id="lead-success-title">תודה!</h3>
+                <p class="lead-subtitle">קיבלנו את הפנייה — נחזור אליכם עד מחר.</p>
+                <button class="lead-submit-btn" id="lead-success-close">סגירה</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Welcome Popup -->
     <div class="welcome-popup-overlay" id="welcome-popup">
         <div class="welcome-popup">

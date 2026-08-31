@@ -2398,8 +2398,346 @@ img {
         padding: 16px;
         padding-bottom: max(16px, env(safe-area-inset-bottom));
     }
-    
+
     .selection-option {
         padding: 12px 16px;
     }
+}
+
+/* =====================================================================
+   v3: Header contact, footer contact, homepage view-all, lead form
+   ===================================================================== */
+
+/* ----- Header: phone pill + callback button ----- */
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.header-phone {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border: 1px solid #ddd;
+    border-radius: 25px;
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    white-space: nowrap;
+    transition: all 0.3s;
+}
+
+.header-phone:hover {
+    border-color: var(--primary);
+    background: var(--light);
+}
+
+.header-phone svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+.header-callback-btn {
+    padding: 9px 16px;
+    background: var(--primary);
+    color: var(--white);
+    border: none;
+    border-radius: 25px;
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: opacity 0.3s;
+}
+
+.header-callback-btn:hover {
+    opacity: 0.85;
+}
+
+/* Desktop nav: contact rows live only in the mobile menu */
+@media (min-width: 993px) {
+    .nav-phone,
+    .nav-callback {
+        display: none;
+    }
+}
+
+@media (max-width: 992px) {
+    /* Number text hidden on small screens - the pill becomes a round dial icon */
+    .header-phone-number {
+        display: none;
+    }
+
+    .header-phone {
+        padding: 10px;
+        border-radius: 50%;
+    }
+
+    .mobile-nav .nav-phone,
+    .mobile-nav .nav-callback {
+        font-weight: 600;
+        border-top: 1px solid #eee;
+    }
+}
+
+@media (max-width: 480px) {
+    /* Very small screens: the callback button moves to the mobile menu only */
+    .header-callback-btn {
+        display: none;
+    }
+}
+
+/* ----- Footer contact ----- */
+.footer-contact {
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+}
+
+.footer-brand {
+    font-weight: 600;
+    font-size: 15px;
+    margin-bottom: 12px;
+}
+
+.footer-contact-links {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px 22px;
+}
+
+.footer-contact-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: rgba(255,255,255,0.9);
+    text-decoration: none;
+    font-size: 14px;
+    transition: color 0.3s;
+}
+
+a.footer-contact-link:hover {
+    color: #fff;
+    text-decoration: underline;
+}
+
+/* ----- Homepage "view all products" button ----- */
+.view-all-wrap {
+    text-align: center;
+    margin: 28px 0 8px;
+}
+
+.view-all-btn {
+    padding: 14px 32px;
+    background: var(--primary);
+    color: var(--white);
+    border: none;
+    border-radius: 25px;
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+    transition: transform 0.2s, opacity 0.3s;
+}
+
+.view-all-btn:hover {
+    opacity: 0.85;
+    transform: translateY(-1px);
+}
+
+/* ----- Favorites panel: lead link ----- */
+.favorites-lead-link {
+    display: block;
+    width: 100%;
+    padding: 10px 16px 14px;
+    background: none;
+    border: none;
+    color: var(--secondary);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: underline;
+    cursor: pointer;
+    text-align: center;
+}
+
+.favorites-lead-link:hover {
+    color: var(--primary);
+}
+
+/* ----- Lead modal ----- */
+.lead-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 3000;
+    padding: 20px;
+}
+
+.lead-modal-overlay.active {
+    display: flex;
+}
+
+.lead-modal {
+    position: relative;
+    background: var(--white);
+    border-radius: var(--radius);
+    width: 100%;
+    max-width: 380px;
+    max-height: 90vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 28px 24px 24px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+    direction: rtl;
+}
+
+.lead-modal-close {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    width: 32px;
+    height: 32px;
+    background: var(--light);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 7px;
+    color: var(--primary);
+}
+
+.lead-modal-close svg {
+    width: 100%;
+    height: 100%;
+}
+
+.lead-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.lead-subtitle {
+    color: var(--secondary);
+    font-size: 14px;
+    margin-bottom: 16px;
+}
+
+.lead-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    margin: 12px 0 4px;
+}
+
+.lead-input {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 15px;
+    background: var(--white);
+    color: var(--primary);
+}
+
+.lead-input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.lead-textarea {
+    resize: vertical;
+    min-height: 56px;
+}
+
+/* Honeypot: visually gone, still present for bots that fill every field.
+   Kept INSIDE the modal bounds - an off-screen offset would inflate the modal's
+   scrollable overflow area */
+.lead-hp {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+    border: 0;
+    padding: 0;
+}
+
+.lead-cart-note {
+    margin-top: 12px;
+    padding: 8px 12px;
+    background: var(--light);
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--secondary);
+}
+
+.lead-error {
+    margin-top: 12px;
+    padding: 10px 12px;
+    background: #fdecea;
+    color: #b3261e;
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.lead-submit-btn {
+    width: 100%;
+    margin-top: 16px;
+    padding: 13px 16px;
+    background: var(--primary);
+    color: var(--white);
+    border: none;
+    border-radius: 25px;
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    transition: opacity 0.3s;
+}
+
+.lead-submit-btn:hover {
+    opacity: 0.85;
+}
+
+.lead-submit-btn:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+
+.lead-success-icon {
+    width: 52px;
+    height: 52px;
+    margin: 4px auto 12px;
+    background: #e9f9ef;
+    color: #1f7a3f;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    font-weight: 700;
+}
+
+#lead-success-view {
+    text-align: center;
 }

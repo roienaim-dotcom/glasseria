@@ -1750,6 +1750,15 @@
                             <label>טקסט ההודעה</label>
                             <input type="text" id="settings-banner-text" placeholder="לדוגמה: מבצע חורף — 10% על כל המקלחונים">
                         </div>
+                        <hr style="margin:16px 0;border:none;border-top:1px solid #eee;">
+                        <div class="form-group">
+                            <label>טלפון ליצירת קשר (מוצג בכותרת ובתחתית האתר)</label>
+                            <input type="text" id="settings-contact-phone" placeholder="052-404-8371">
+                        </div>
+                        <div class="form-group">
+                            <label>שעות פעילות (ריק = לא מוצג באתר)</label>
+                            <input type="text" id="settings-contact-hours" placeholder="לדוגמה: א'-ה' 9:00-18:00, ו' 9:00-13:00">
+                        </div>
                         <button class="btn btn-primary" id="settings-save-btn" onclick="saveSiteSettings(this)">שמור הגדרות</button>
                         <span id="settings-saved-msg" style="margin-right:10px;color:var(--success);display:none;">✅ נשמר</span>
                     </div>
@@ -2168,7 +2177,7 @@
         <div class="modal" style="max-width: 600px;">
             <div class="modal-header">
                 <h3 id="product-modal-title">הוסף מוצר</h3>
-                <button class="modal-close" onclick="closeProductModal()">&times;</button>
+                <button class="modal-close" id="product-modal-close-x" onclick="closeProductModal()">&times;</button>
             </div>
             <div class="modal-body">
                 <form id="product-form">
@@ -2293,7 +2302,7 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeProductModal()">ביטול</button>
+                <button class="btn btn-secondary" id="product-modal-cancel-btn" onclick="closeProductModal()">ביטול</button>
                 <button class="btn btn-primary" id="save-product-btn" onclick="saveProduct()">שמור</button>
             </div>
         </div>
@@ -3669,7 +3678,12 @@
             document.getElementById('product-compression-status').style.display = 'none';
         }
         
+        // Guards closeProductModal while saveProduct's uploads are in flight: closing
+        // resets productImagesOrder, which the save would then read as "all images removed"
+        let productSaveInProgress = false;
+
         function closeProductModal() {
+            if (productSaveInProgress) return;
             document.getElementById('product-modal').classList.remove('active');
             customSizes = [];
             customColors = [];
@@ -3797,10 +3811,18 @@
             saveBtn.disabled = true;
             saveBtn.textContent = 'שומר...';
             adminBusy = true;
+            productSaveInProgress = true;
+            const closeXBtn = document.getElementById('product-modal-close-x');
+            const cancelBtn = document.getElementById('product-modal-cancel-btn');
+            if (closeXBtn) closeXBtn.disabled = true;
+            if (cancelBtn) cancelBtn.disabled = true;
 
             try {
+                // Snapshot the image order before any await: the global mutates if the modal
+                // is closed or another product is opened while uploads are in flight
+                const orderSnapshot = productImagesOrder.slice();
                 // Upload pending images first, then build final URL list in order
-                const pendingItems = productImagesOrder.filter(img => img.type === 'pending');
+                const pendingItems = orderSnapshot.filter(img => img.type === 'pending');
                 const uploadedMap = new Map();
 
                 if (pendingItems.length > 0) {
@@ -3824,8 +3846,9 @@
                     statusEl.className = 'compression-status';
                 }
 
-                // Build final URL array respecting drag-and-drop order
-                const allImageUrls = productImagesOrder.map(img => {
+                // Build final URL array respecting drag-and-drop order (from the snapshot,
+                // never the live global - see productSaveInProgress note above)
+                const allImageUrls = orderSnapshot.map(img => {
                     if (img.type === 'existing') return img.url;
                     return uploadedMap.get(img) || '';
                 }).filter(Boolean);
@@ -3884,14 +3907,18 @@
                         .forEach(deleteStorageByUrl);
                 }
 
+                productSaveInProgress = false;
                 closeProductModal();
             } catch (error) {
                 console.error('Error saving product:', error);
                 alert('שגיאה בשמירה: ' + error.message);
             } finally {
+                productSaveInProgress = false;
                 saveBtn.disabled = false;
                 saveBtn.textContent = 'שמור';
                 adminBusy = false;
+                if (closeXBtn) closeXBtn.disabled = false;
+                if (cancelBtn) cancelBtn.disabled = false;
             }
         }
 
@@ -4991,9 +5018,22 @@
                     if (it.price != null) parts.push('₪' + _escHtml(String(it.price)));
                     return '<li>' + parts.join(' · ') + '</li>';
                 }).join('');
+                const sourceBadge = inq.source === 'form'
+                    ? '<span style="background:#eef4ff;color:#2456b0;border-radius:12px;padding:2px 10px;font-size:12px;">📋 טופס</span>'
+                    : '<span style="background:#e9f9ef;color:#1f7a3f;border-radius:12px;padding:2px 10px;font-size:12px;">💬 וואטסאפ</span>';
+                const customerBits = [];
+                if (inq.customerName) customerBits.push('<strong>' + _escHtml(String(inq.customerName)) + '</strong>');
+                if (inq.customerPhone) {
+                    const custPhone = _escHtml(String(inq.customerPhone));
+                    customerBits.push('<a href="tel:' + custPhone + '" style="color:inherit;">📞 ' + custPhone + '</a>');
+                }
+                if (inq.customerNote) customerBits.push(_escHtml(String(inq.customerNote)));
+                const customerHtml = customerBits.length
+                    ? '<div style="margin-top:8px;font-size:14px;">' + customerBits.join(' &nbsp;·&nbsp; ') + '</div>'
+                    : '';
                 return '<div class="card" style="margin-bottom:10px;">' +
                     '<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:center;">' +
-                        '<span style="color:var(--secondary);font-size:13px;">' + _escHtml(date) +
+                        '<span style="color:var(--secondary);font-size:13px;">' + sourceBadge + ' ' + _escHtml(date) +
                             ' · ' + (Number(inq.itemCount) || (inq.items || []).length) + ' פריטים' +
                             ' · הערכה ₪' + _escHtml(String(Number(inq.totalValue) || 0)) + '</span>' +
                         '<select onchange="updateInquiryStatus(\'' + inq.id + '\', this.value)">' +
@@ -5002,7 +5042,8 @@
                             '<option value="closed"' + (status === 'closed' ? ' selected' : '') + '>נסגרה עסקה</option>' +
                         '</select>' +
                     '</div>' +
-                    '<ul style="margin:8px 0 0;padding-right:18px;">' + itemsHtml + '</ul>' +
+                    customerHtml +
+                    (itemsHtml ? '<ul style="margin:8px 0 0;padding-right:18px;">' + itemsHtml + '</ul>' : '') +
                 '</div>';
             }).join('');
         }
@@ -5030,6 +5071,8 @@
                 document.getElementById('settings-hero-subtitle').value = s.heroSubtitle || '';
                 document.getElementById('settings-banner-visible').checked = !!s.bannerVisible;
                 document.getElementById('settings-banner-text').value = s.bannerText || '';
+                document.getElementById('settings-contact-phone').value = s.contactPhone || '';
+                document.getElementById('settings-contact-hours').value = s.contactHours || '';
                 loading.style.display = 'none';
                 form.style.display = 'block';
             } catch (e) {
@@ -5045,6 +5088,8 @@
                     heroSubtitle: document.getElementById('settings-hero-subtitle').value.trim(),
                     bannerVisible: document.getElementById('settings-banner-visible').checked,
                     bannerText: document.getElementById('settings-banner-text').value.trim(),
+                    contactPhone: document.getElementById('settings-contact-phone').value.trim(),
+                    contactHours: document.getElementById('settings-contact-hours').value.trim(),
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 }, { merge: true });
                 const msg = document.getElementById('settings-saved-msg');

@@ -75,6 +75,15 @@ document.head.appendChild(favoritesAnimationStyles);
 // WhatsApp Number
 const WHATSAPP_NUMBER = '972524048371';
 
+// Contact details shown in the header / footer / mobile nav. The admin settings doc
+// (contactPhone / contactHours) overrides these; they are the hardcoded fallbacks.
+const CONTACT_PHONE_DEFAULT = '052-404-8371';
+let contactPhone = CONTACT_PHONE_DEFAULT;
+let contactHours = '';
+
+// Lead form ("נחזור אליכם") state: whether the current open modal should attach the cart
+let leadFromCart = false;
+
 // State
 let categories = [];
 let subcategories = [];
@@ -158,6 +167,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ===== Site Settings (hero text + announcement banner, managed from admin) =====
 function loadSiteSettings() {
+    // Apply the hardcoded defaults immediately (also fills the footer WhatsApp link);
+    // the settings snapshot below overrides them when/if it arrives
+    applyContactSettings({});
     try {
         if (typeof settingsCollection === 'undefined') return;
         settingsCollection.doc(SETTINGS_DOC_ID).onSnapshot((snap) => {
@@ -176,8 +188,56 @@ function loadSiteSettings() {
                     bannerEl.style.display = 'none';
                 }
             }
+            applyContactSettings(s);
         }, () => { /* settings are optional - ignore read errors */ });
     } catch (e) { /* never block the site on settings */ }
+}
+
+// ===== Contact details (header pill / footer / mobile nav) =====
+function telHref(phone) {
+    return 'tel:' + String(phone).replace(/[^\d+]/g, '');
+}
+
+function applyContactSettings(s) {
+    // Phone is rendered into nav innerHTML later, so keep only phone-safe characters
+    const rawPhone = (s && s.contactPhone) ? String(s.contactPhone).replace(/[^\d\-+ ]/g, '').trim() : '';
+    contactPhone = rawPhone || CONTACT_PHONE_DEFAULT;
+    contactHours = (s && s.contactHours) ? String(s.contactHours) : '';
+
+    const headerPhone = document.getElementById('header-phone');
+    const headerPhoneNumber = document.getElementById('header-phone-number');
+    if (headerPhone) headerPhone.href = telHref(contactPhone);
+    if (headerPhoneNumber) headerPhoneNumber.textContent = contactPhone;
+
+    const footerPhone = document.getElementById('footer-phone');
+    const footerPhoneText = document.getElementById('footer-phone-text');
+    if (footerPhone) footerPhone.href = telHref(contactPhone);
+    if (footerPhoneText) footerPhoneText.textContent = contactPhone;
+
+    const hoursWrap = document.getElementById('footer-hours');
+    const hoursText = document.getElementById('footer-hours-text');
+    if (hoursWrap && hoursText) {
+        if (contactHours) {
+            hoursText.textContent = contactHours;
+            hoursWrap.style.display = 'inline-flex';
+        } else {
+            hoursWrap.style.display = 'none';
+        }
+    }
+
+    // Rows already rendered into the nav are updated in place; future renders use contactPhone
+    document.querySelectorAll('.nav-phone').forEach(link => {
+        link.href = telHref(contactPhone);
+        const num = link.querySelector('.nav-phone-number');
+        if (num) num.textContent = contactPhone;
+    });
+
+    // Footer WhatsApp opens the chat with a friendly greeting
+    const footerWa = document.getElementById('footer-whatsapp');
+    if (footerWa) {
+        footerWa.href = 'https://wa.me/' + WHATSAPP_NUMBER + '?text=' +
+            encodeURIComponent('היי, אשמח לפרטים על המוצרים שלכם');
+    }
 }
 
 // ===== History Navigation =====
@@ -223,10 +283,25 @@ function showCategoriesView() {
     categoriesSection.style.display = 'block';
     subcategoriesSection.style.display = 'none';
     document.getElementById('products').style.display = 'block';
-    currentCategoryTitle.textContent = 'כל המוצרים';
+    currentCategoryTitle.textContent = 'מוצרים נבחרים';
     hideProductsBackButton();
-    renderProducts();
+    renderHomepageProducts();
     setActiveNav('all');
+}
+
+// Homepage shows a curated sample (1-2 per category) instead of the full catalog,
+// so the page has a reachable bottom (footer). The full catalog stays one click away.
+function renderHomepageProducts() {
+    const sample = getHomepageSampleProducts();
+    if (sample.length > 0) {
+        renderProducts(sample);
+    } else {
+        // No categorized products (or data not loaded yet) - fall back to everything
+        renderProducts();
+        currentCategoryTitle.textContent = 'כל המוצרים';
+    }
+    const viewAllWrap = document.getElementById('view-all-wrap');
+    if (viewAllWrap) viewAllWrap.style.display = currentFilteredProducts.length > 0 ? 'block' : 'none';
 }
 
 // ===== Create Selection Modal =====
@@ -752,8 +827,14 @@ function applyProductsData(loadMethod) {
     // Log load timing only on first load (not on live real-time updates)
     if (!window._initialLoadLogged) {
         window._initialLoadLogged = true;
-        const duration = Date.now() - (window._glasseriaLoadStart || GlasseriaLogger.getSessionStart());
-        GlasseriaLogger.logLoadTime(loadMethod || 'onSnapshot', products.length, duration);
+        // Guard if logger failed to load (ad blockers block "logger.js") - rendering the
+        // catalog must never depend on logging
+        try {
+            if (typeof GlasseriaLogger !== 'undefined') {
+                const duration = Date.now() - (window._glasseriaLoadStart || GlasseriaLogger.getSessionStart());
+                GlasseriaLogger.logLoadTime(loadMethod || 'onSnapshot', products.length, duration);
+            }
+        } catch (e) { /* never block rendering on logging */ }
     }
     showLoading(false);
     hideLoadingError();
@@ -768,8 +849,11 @@ function applyProductsData(loadMethod) {
     renderCategories();
     if (currentView === 'products' && currentCategoryId) {
         showProductsWithoutHistory(currentCategoryId, currentSubcategoryId);
+    } else if (currentView === 'products') {
+        // "All products" view (opened from the homepage view-all button)
+        showProductsWithoutHistory(null, null);
     } else {
-        renderProducts();
+        renderHomepageProducts();
     }
 }
 
@@ -945,6 +1029,11 @@ async function loadAllData() {
             categoriesLoaded = true;
             renderCategories();
             renderNavigation();
+            // The homepage sample is keyed off categories - recompute it if the user is on
+            // the homepage and products resolved first (listener order isn't guaranteed)
+            if (currentView === 'categories' && productsLoaded) {
+                renderHomepageProducts();
+            }
             checkAllDataLoaded();
         }, handleError('categories'));
 
@@ -1103,17 +1192,32 @@ function renderNavigation() {
         ? `<a href="#" class="nav-link nav-sale" data-category="__sale__">🔥 מבצעים</a>`
         : '';
 
+    // Contact rows appear only in the mobile menu (hidden in the desktop nav via CSS).
+    // contactPhone is already sanitized to phone-safe characters in applyContactSettings
+    const contactLinks = `
+        <a href="${telHref(contactPhone)}" class="nav-link nav-phone">📞 התקשרו: <span class="nav-phone-number">${contactPhone}</span></a>
+        <a href="#" class="nav-link nav-callback">📩 נחזור אליכם</a>
+    `;
+
     const linksHtml = `
         <a href="#" class="nav-link active" data-category="all">הכל</a>
         ${saleLink}
         ${navLinks}
         <a href="about.html" class="nav-link nav-about">אודות</a>
+        ${contactLinks}
     `;
     mainNav.innerHTML = linksHtml;
     mobileNav.innerHTML = linksHtml;
 
-    document.querySelectorAll('.nav-link:not(.nav-about)').forEach(link => {
+    document.querySelectorAll('.nav-link:not(.nav-about):not(.nav-phone):not(.nav-callback)').forEach(link => {
         link.addEventListener('click', handleNavClick);
+    });
+    document.querySelectorAll('.nav-callback').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            closeMobileMenu();
+            openLeadModal(false);
+        });
     });
 }
 
@@ -1274,9 +1378,12 @@ function showProductsWithoutHistory(categoryId, subcategoryId) {
         // הצגת כפתור חזרה כשאנחנו בתוך קטגוריה
         showProductsBackButton(categoryId);
     } else {
-        hideProductsBackButton();
+        // תצוגת "כל המוצרים" (נפתחת מכפתור דף הבית) - כפתור החזרה מוביל לדף הבית
+        showProductsBackButton(null);
     }
-    
+
+    const viewAllWrap = document.getElementById('view-all-wrap');
+    if (viewAllWrap) viewAllWrap.style.display = 'none';
     currentCategoryTitle.textContent = title;
     renderProducts(filtered);
     setActiveNav(categoryId);
@@ -1403,6 +1510,27 @@ function isNewProduct(product) {
     if (!ms) return false;
     const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
     return (Date.now() - ms) < THIRTY_DAYS;
+}
+
+// ===== Homepage sample: 1-2 products per category =====
+// Per-category picks prefer active-sale / new products; remaining slots fill from the
+// admin-controlled drag order (products are already globally sorted by 'order')
+function getHomepageSampleProducts() {
+    const visible = products.filter(p => !p.hidden);
+    const sample = [];
+    categories.forEach(cat => {
+        const inCat = visible.filter(p => p.categoryId === cat.id);
+        if (inCat.length === 0) return;
+        const picks = [];
+        inCat.forEach(p => {
+            if (picks.length < 2 && (hasActiveSale(p) || isNewProduct(p))) picks.push(p);
+        });
+        inCat.forEach(p => {
+            if (picks.length < 2 && picks.indexOf(p) === -1) picks.push(p);
+        });
+        sample.push(...picks);
+    });
+    return sample;
 }
 
 // Price HTML for cards/modal, honoring hidePrice, active sale, and variant "starting from"
@@ -1799,7 +1927,27 @@ function setupEventListeners() {
     overlay.addEventListener('click', closeFavoritesPanel);
     btnClear.addEventListener('click', clearFavorites);
     btnWhatsapp.addEventListener('click', sendToWhatsApp);
-    
+
+    // Lead form ("נחזור אליכם") entry points + homepage view-all button
+    const leadOpenBtn = document.getElementById('lead-open-btn');
+    if (leadOpenBtn) leadOpenBtn.addEventListener('click', () => openLeadModal(false));
+    const leadFromCartBtn = document.getElementById('lead-from-cart');
+    if (leadFromCartBtn) leadFromCartBtn.addEventListener('click', () => openLeadModal(true));
+    const leadModalEl = document.getElementById('lead-modal');
+    if (leadModalEl) {
+        leadModalEl.addEventListener('click', (e) => {
+            if (e.target === leadModalEl) closeLeadModal();
+        });
+    }
+    const leadCloseBtn = document.getElementById('lead-modal-close');
+    if (leadCloseBtn) leadCloseBtn.addEventListener('click', closeLeadModal);
+    const leadSuccessCloseBtn = document.getElementById('lead-success-close');
+    if (leadSuccessCloseBtn) leadSuccessCloseBtn.addEventListener('click', closeLeadModal);
+    const leadSubmitBtn = document.getElementById('lead-submit-btn');
+    if (leadSubmitBtn) leadSubmitBtn.addEventListener('click', submitLeadForm);
+    const viewAllBtn = document.getElementById('view-all-btn');
+    if (viewAllBtn) viewAllBtn.addEventListener('click', () => showProducts(null, null));
+
     mobileMenuBtn.addEventListener('click', toggleMobileMenu);
     
     modalClose.addEventListener('click', closeProductModal);
@@ -1814,6 +1962,11 @@ function setupEventListeners() {
         if (e.key !== 'Escape') return;
         const lightboxEl = document.getElementById('image-lightbox');
         if (lightboxEl && lightboxEl.classList.contains('active')) return;
+        const leadModal = document.getElementById('lead-modal');
+        if (leadModal && leadModal.classList.contains('active')) {
+            closeLeadModal();
+            return;
+        }
         const selectionModal = document.getElementById('selection-modal');
         if (selectionModal && selectionModal.classList.contains('active')) {
             closeSelectionModal();
@@ -2114,6 +2267,167 @@ function sendToWhatsApp() {
     } catch (e) { /* inquiry logging must never break the send */ }
 
     logEvent('whatsapp_send', { value: items.length });
+}
+
+// ===== Lead Form ("נחזור אליכם") =====
+function openLeadModal(fromCart) {
+    const modal = document.getElementById('lead-modal');
+    if (!modal) return;
+    // Attach the cart only if it would actually contribute items (hidden/deleted
+    // products are dropped by buildLeadItems - don't promise an empty attachment)
+    leadFromCart = !!fromCart && buildLeadItems().items.length > 0;
+
+    const cartNote = document.getElementById('lead-cart-note');
+    if (cartNote) cartNote.style.display = leadFromCart ? 'block' : 'none';
+    const errEl = document.getElementById('lead-error');
+    if (errEl) errEl.style.display = 'none';
+    const formView = document.getElementById('lead-form-view');
+    const successView = document.getElementById('lead-success-view');
+    if (formView) formView.style.display = 'block';
+    if (successView) successView.style.display = 'none';
+
+    modal.classList.add('active');
+    // Lock body scroll - only if another layer (favorites panel/modal) doesn't already
+    // own the lock; stomping it would lose the user's real scroll position
+    if (document.body.style.position !== 'fixed') {
+        document.body.dataset.scrollY = window.scrollY;
+        document.body.style.position = 'fixed';
+        document.body.style.top = `-${window.scrollY}px`;
+        document.body.style.width = '100%';
+        document.body.style.overflow = 'hidden';
+    }
+    const nameInput = document.getElementById('lead-name');
+    if (nameInput) setTimeout(() => nameInput.focus(), 50);
+}
+
+function closeLeadModal() {
+    const modal = document.getElementById('lead-modal');
+    if (modal) modal.classList.remove('active');
+    // Restore body scroll - unless another open layer still owns the lock
+    const selectionModal = document.getElementById('selection-modal');
+    const otherLockActive =
+        (productModal && productModal.classList.contains('active')) ||
+        (favoritesPanel && favoritesPanel.classList.contains('active')) ||
+        (selectionModal && selectionModal.classList.contains('active'));
+    if (!otherLockActive) {
+        const scrollY = document.body.dataset.scrollY || '0';
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        document.body.style.overflow = '';
+        window.scrollTo({ top: parseInt(scrollY), behavior: 'instant' });
+    }
+}
+
+// Same item shape sendToWhatsApp saves, reused when a lead attaches the cart
+function buildLeadItems() {
+    const items = [];
+    let totalValue = 0;
+    favorites.forEach((fav) => {
+        const product = products.find(p => p.id === fav.id);
+        if (!product || product.hidden) return;
+        const qty = Math.max(1, parseInt(fav.quantity) || 1);
+        let itemPrice = 0;
+        if (!product.hidePrice) {
+            itemPrice = getResolvedPrice(product, fav.selectedSize, fav.selectedColor);
+            totalValue += (Number(itemPrice) || 0) * qty;
+        }
+        items.push({
+            name: product.name || '',
+            sku: product.sku || '',
+            size: fav.selectedSize || '',
+            color: fav.selectedColor || '',
+            price: product.hidePrice ? null : (Number(itemPrice) || 0),
+            quantity: qty
+        });
+    });
+    return { items: items.slice(0, 200), totalValue };
+}
+
+function showLeadSuccess(name) {
+    const formView = document.getElementById('lead-form-view');
+    const successView = document.getElementById('lead-success-view');
+    const title = document.getElementById('lead-success-title');
+    if (title) title.textContent = name ? `תודה ${name}!` : 'תודה!';
+    if (formView) formView.style.display = 'none';
+    if (successView) successView.style.display = 'block';
+    // Clear the form for a possible next use
+    const nameInput = document.getElementById('lead-name');
+    const phoneInput = document.getElementById('lead-phone');
+    const noteInput = document.getElementById('lead-note');
+    if (nameInput) nameInput.value = '';
+    if (phoneInput) phoneInput.value = '';
+    if (noteInput) noteInput.value = '';
+}
+
+function showLeadError(message) {
+    const errEl = document.getElementById('lead-error');
+    if (!errEl) return;
+    errEl.textContent = message;
+    errEl.style.display = 'block';
+}
+
+async function submitLeadForm() {
+    const btn = document.getElementById('lead-submit-btn');
+    const name = (document.getElementById('lead-name')?.value || '').trim();
+    const phoneRaw = (document.getElementById('lead-phone')?.value || '').trim();
+    const note = (document.getElementById('lead-note')?.value || '').trim();
+    const honeypot = (document.getElementById('lead-company')?.value || '').trim();
+    const errEl = document.getElementById('lead-error');
+    if (errEl) errEl.style.display = 'none';
+
+    if (!name) {
+        showLeadError('נא למלא שם');
+        return;
+    }
+    let phoneDigits = phoneRaw.replace(/\D/g, '');
+    // Normalize international format (+972-52...) to the local 05X form
+    if (/^972\d{8,9}$/.test(phoneDigits)) phoneDigits = '0' + phoneDigits.slice(3);
+    if (!/^0\d{8,9}$/.test(phoneDigits)) {
+        showLeadError('נא למלא מספר טלפון תקין (למשל 050-1234567)');
+        return;
+    }
+    // Honeypot filled = bot. Pretend success, save nothing.
+    if (honeypot) {
+        showLeadSuccess(name);
+        return;
+    }
+
+    if (btn) { btn.disabled = true; btn.textContent = 'שולח...'; }
+    try {
+        if (typeof inquiriesCollection === 'undefined') throw new Error('db-unavailable');
+        const { items, totalValue } = leadFromCart ? buildLeadItems() : { items: [], totalValue: 0 };
+        const doc = {
+            items: items,
+            itemCount: items.length,
+            totalValue: totalValue,
+            status: 'new',
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            sessionId: getSessionId(),
+            deviceId: getDeviceId(),
+            page: 'catalog',
+            customerName: name.slice(0, 200),
+            customerPhone: phoneDigits.slice(0, 30),
+            source: 'form'
+        };
+        if (note) doc.customerNote = note.slice(0, 2000);
+        // Offline/blocked Firestore keeps add() pending forever - race an 8s timeout so
+        // the user always reaches the phone-number fallback instead of a stuck button
+        const addPromise = inquiriesCollection.add(doc);
+        // If the timeout wins, a late add() rejection must not surface as a global
+        // unhandledrejection (the logger forwards those into the admin error log)
+        addPromise.catch(() => {});
+        await Promise.race([
+            addPromise,
+            new Promise((resolve, reject) => setTimeout(() => reject(new Error('lead-timeout')), 8000))
+        ]);
+        showLeadSuccess(name);
+        try { logEvent('lead_submit', { value: items.length }); } catch (e) { /* non-blocking */ }
+    } catch (e) {
+        showLeadError('לא הצלחנו לשמור את הפנייה כרגע — אפשר פשוט להתקשר: ' + contactPhone);
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = 'שלחו לי'; }
+    }
 }
 
 // ===== Mobile Menu =====
