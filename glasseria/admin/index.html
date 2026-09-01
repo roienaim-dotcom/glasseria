@@ -5165,8 +5165,7 @@
         }
 
         // ===== Business Stats (dashboard, from data already collected) =====
-        // Collapsed by default; first expand auto-loads the data (no "רענן" click needed)
-        let bizStatsLoadedOnce = false;
+        // Collapsed by default; EVERY expand auto-loads fresh data (no "רענן" click needed)
         function toggleBizStats() {
             const body = document.getElementById('biz-stats-body');
             const arrow = document.getElementById('biz-stats-arrow');
@@ -5174,16 +5173,22 @@
             const open = body.style.display === 'none';
             body.style.display = open ? 'block' : 'none';
             if (arrow) arrow.style.transform = open ? 'rotate(180deg)' : '';
-            if (open && !bizStatsLoadedOnce) {
-                bizStatsLoadedOnce = true;
-                loadBusinessStats();
-            }
+            if (open) loadBusinessStats();
         }
 
         async function loadBusinessStats() {
             const loadingEl = document.getElementById('biz-stats-loading');
             loadingEl.style.display = 'block';
             loadingEl.textContent = 'טוען נתונים...';
+            // The section can be expanded before Firebase finishes restoring the login
+            // session - without waiting, the queries fail as permission-denied and the
+            // .catch(() => null) below silently renders zeros
+            if (!auth.currentUser) {
+                await new Promise((resolve) => {
+                    const unsub = auth.onAuthStateChanged(() => { unsub(); resolve(); });
+                    setTimeout(resolve, 4000);
+                });
+            }
             const cutoff = firebase.firestore.Timestamp.fromDate(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000));
             try {
                 const [logsSnap, eventsSnap, inqSnap] = await Promise.all([
@@ -5191,6 +5196,13 @@
                     eventsCollection.where('createdAt', '>', cutoff).orderBy('createdAt', 'desc').limit(3000).get().catch(() => null),
                     inquiriesCollection.where('createdAt', '>', cutoff).orderBy('createdAt', 'desc').limit(1000).get().catch(() => null)
                 ]);
+
+                // All three failed = a real error (auth/permissions/network), not "no data" -
+                // show it instead of rendering misleading zeros
+                if (!logsSnap && !eventsSnap && !inqSnap) {
+                    loadingEl.textContent = 'שגיאה בטעינת הנתונים — נסו ללחוץ רענן';
+                    return;
+                }
 
                 // Visits = "session" info logs
                 const visitLogs = [];
