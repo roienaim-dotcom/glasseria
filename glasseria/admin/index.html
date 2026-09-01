@@ -1661,21 +1661,26 @@
                 </div>
                 
                 <div class="card">
-                    <div class="card-header">
+                    <div class="card-header" onclick="toggleBizStats()" style="cursor:pointer;user-select:none;" title="הצגה/הסתרה של הנתונים">
                         <h2>📈 נתוני האתר (30 ימים אחרונים)</h2>
-                        <button class="btn btn-secondary btn-small" onclick="loadBusinessStats()">🔄 רענן</button>
+                        <span id="biz-stats-arrow" style="display:inline-block;transition:transform 0.2s;color:var(--secondary);font-size:18px;">▾</span>
                     </div>
-                    <div id="biz-stats-loading" style="color:var(--secondary);padding:8px 0;">לחץ "רענן" כדי לטעון נתונים...</div>
-                    <div class="stats-grid" id="biz-stats-grid" style="display:none;margin-top:10px;">
-                        <div class="stat-card"><div class="stat-number" id="biz-visits">0</div><div class="stat-label">כניסות</div></div>
-                        <div class="stat-card"><div class="stat-number" id="biz-returning">0</div><div class="stat-label">מבקרים חוזרים</div></div>
-                        <div class="stat-card"><div class="stat-number" id="biz-inquiries">0</div><div class="stat-label">פניות וואטסאפ</div></div>
-                        <div class="stat-card"><div class="stat-number" id="biz-inapp">0%</div><div class="stat-label">מפייסבוק/אינסטגרם</div></div>
+                    <div id="biz-stats-body" style="display:none;">
+                        <div style="text-align:left;margin-top:4px;">
+                            <button class="btn btn-secondary btn-small" onclick="loadBusinessStats()">🔄 רענן</button>
+                        </div>
+                        <div id="biz-stats-loading" style="color:var(--secondary);padding:8px 0;">טוען נתונים...</div>
+                        <div class="stats-grid" id="biz-stats-grid" style="display:none;margin-top:10px;">
+                            <div class="stat-card"><div class="stat-number" id="biz-visits">0</div><div class="stat-label">כניסות</div></div>
+                            <div class="stat-card"><div class="stat-number" id="biz-returning">0</div><div class="stat-label">מבקרים חוזרים</div></div>
+                            <div class="stat-card"><div class="stat-number" id="biz-inquiries">0</div><div class="stat-label">פניות וואטסאפ</div></div>
+                            <div class="stat-card"><div class="stat-number" id="biz-inapp">0%</div><div class="stat-label">מפייסבוק/אינסטגרם</div></div>
+                        </div>
+                        <div id="biz-breakdown" style="display:none;margin-top:16px;"></div>
+                        <p style="margin-top:10px;font-size:12px;color:var(--secondary);">
+                            הנתונים מבוססים על מה שהאתר אוסף אוטומטית (כניסות, מכשירים, צפיות, פניות). ללא מידע אישי מזהה.
+                        </p>
                     </div>
-                    <div id="biz-breakdown" style="display:none;margin-top:16px;"></div>
-                    <p style="margin-top:10px;font-size:12px;color:var(--secondary);">
-                        הנתונים מבוססים על מה שהאתר אוסף אוטומטית (כניסות, מכשירים, צפיות, פניות). ללא מידע אישי מזהה.
-                    </p>
                 </div>
 
                 <div class="card">
@@ -1728,7 +1733,6 @@
             <section class="section" id="section-settings">
                 <div class="card">
                     <h2>⚙️ הגדרות אתר</h2>
-                    <p style="margin:10px 0;color:var(--secondary);">כאן אפשר לשנות את הכותרת בעמוד הבית ולפרסם הודעה/מבצע — בלי צורך במתכנת.</p>
                     <div id="settings-loading" style="color:var(--secondary);">טוען הגדרות...</div>
                     <div id="settings-form" style="display:none;max-width:560px;">
                         <div class="form-group">
@@ -5048,23 +5052,36 @@
                         '<span style="color:var(--secondary);font-size:13px;">' + sourceBadge + ' ' + _escHtml(date) +
                             ' · ' + (Number(inq.itemCount) || (inq.items || []).length) + ' פריטים' +
                             ' · הערכה ₪' + _escHtml(String(Number(inq.totalValue) || 0)) + '</span>' +
-                        '<select onchange="updateInquiryStatus(\'' + inq.id + '\', this.value)">' +
-                            '<option value="new"' + (status === 'new' ? ' selected' : '') + '>חדש</option>' +
-                            '<option value="handled"' + (status === 'handled' ? ' selected' : '') + '>טופל</option>' +
-                            '<option value="closed"' + (status === 'closed' ? ' selected' : '') + '>נסגרה עסקה</option>' +
-                        '</select>' +
+                        '<div style="display:flex;gap:8px;align-items:center;">' +
+                            '<select onchange="updateInquiryStatus(\'' + inq.id + '\', this.value)">' +
+                                '<option value="new"' + (status === 'new' ? ' selected' : '') + '>חדש</option>' +
+                                '<option value="handled"' + (status === 'handled' ? ' selected' : '') + '>טופל</option>' +
+                                '<option value="closed"' + (status === 'closed' ? ' selected' : '') + '>נסגרה עסקה</option>' +
+                            '</select>' +
+                            '<button title="מחק פנייה" aria-label="מחק פנייה"' +
+                                ' style="background:#fdecea;color:#b3261e;border:none;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:14px;"' +
+                                ' onclick="deleteInquiry(\'' + inq.id + '\')">🗑</button>' +
+                        '</div>' +
                     '</div>' +
                     customerHtml +
                     (itemsHtml ? '<ul style="margin:8px 0 0;padding-right:18px;">' + itemsHtml + '</ul>' : '') +
                     '<div style="margin-top:10px;display:flex;gap:8px;align-items:center;">' +
                         '<input type="text" id="inq-note-' + inq.id + '" value="' + _escHtml(String(inq.notes || '')) + '"' +
-                            ' placeholder="הערה פנימית (למשל: ביקש הצעה, לחזור אחרי החג)" maxlength="1000"' +
+                            ' placeholder="הערה פנימית" maxlength="1000"' +
                             ' style="flex:1;min-width:180px;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-family:inherit;font-size:13px;background:#fff;">' +
                         '<button class="btn btn-secondary" style="padding:8px 14px;font-size:13px;white-space:nowrap;"' +
                             ' onclick="saveInquiryNote(\'' + inq.id + '\', this)">שמור הערה</button>' +
                     '</div>' +
                 '</div>';
             }).join('');
+        }
+
+        function deleteInquiry(id) {
+            openDeleteModal('האם למחוק את הפנייה? פעולה זו אינה הפיכה.', async () => {
+                await inquiriesCollection.doc(id).delete();
+                inquiriesData = inquiriesData.filter(i => i.id !== id);
+                renderInquiries();
+            });
         }
 
         async function saveInquiryNote(id, btn) {
@@ -5140,6 +5157,21 @@
         }
 
         // ===== Business Stats (dashboard, from data already collected) =====
+        // Collapsed by default; first expand auto-loads the data (no "רענן" click needed)
+        let bizStatsLoadedOnce = false;
+        function toggleBizStats() {
+            const body = document.getElementById('biz-stats-body');
+            const arrow = document.getElementById('biz-stats-arrow');
+            if (!body) return;
+            const open = body.style.display === 'none';
+            body.style.display = open ? 'block' : 'none';
+            if (arrow) arrow.style.transform = open ? 'rotate(180deg)' : '';
+            if (open && !bizStatsLoadedOnce) {
+                bizStatsLoadedOnce = true;
+                loadBusinessStats();
+            }
+        }
+
         async function loadBusinessStats() {
             const loadingEl = document.getElementById('biz-stats-loading');
             loadingEl.style.display = 'block';
