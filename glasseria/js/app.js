@@ -823,16 +823,38 @@ function applyProductsData(loadMethod) {
     }
     dataLoadRetries = 0;
     // Log load timing only on first load (not on live real-time updates)
+    // Load-time logging. A cache-first paint is NOT a final verdict: with offline
+    // persistence every returning visitor renders from cache first and the server
+    // snapshot follows seconds later - logging the first (cache) event produced a false
+    // "הוצג מגרסה שמורה" warning for every healthy returning visitor. Defer the cache
+    // verdict; log it only if no server data arrives within 20s. A get-cache verdict
+    // (server explicitly retried and failed) still logs immediately.
     if (!window._initialLoadLogged) {
-        window._initialLoadLogged = true;
-        // Guard if logger failed to load (ad blockers block "logger.js") - rendering the
-        // catalog must never depend on logging
-        try {
-            if (typeof GlasseriaLogger !== 'undefined') {
-                const duration = Date.now() - (window._glasseriaLoadStart || GlasseriaLogger.getSessionStart());
-                GlasseriaLogger.logLoadTime(loadMethod || 'onSnapshot', products.length, duration);
+        const finalizeLoadLog = (method) => {
+            if (window._initialLoadLogged) return;
+            window._initialLoadLogged = true;
+            if (window._cacheVerdictTimer) {
+                clearTimeout(window._cacheVerdictTimer);
+                window._cacheVerdictTimer = null;
             }
-        } catch (e) { /* never block rendering on logging */ }
+            // Guard if logger failed to load (ad blockers) - rendering must never depend on it
+            try {
+                if (typeof GlasseriaLogger !== 'undefined') {
+                    const duration = Date.now() - (window._glasseriaLoadStart || GlasseriaLogger.getSessionStart());
+                    GlasseriaLogger.logLoadTime(method, products.length, duration);
+                }
+            } catch (e) { /* never block rendering on logging */ }
+        };
+        if ((loadMethod || 'onSnapshot') === 'onSnapshot-cache') {
+            if (!window._cacheVerdictTimer) {
+                window._cacheVerdictTimer = setTimeout(() => {
+                    window._cacheVerdictTimer = null;
+                    finalizeLoadLog('onSnapshot-cache');
+                }, 20000);
+            }
+        } else {
+            finalizeLoadLog(loadMethod || 'onSnapshot');
+        }
     }
     showLoading(false);
     hideLoadingError();
