@@ -235,6 +235,14 @@
             align-items: center;
             margin-bottom: 20px;
         }
+
+        /* Collapsible headers (title + chevron) stay on ONE row at every width -
+           overrides the mobile rule that stacks regular card headers into a column */
+        .card-header.collapsible-header {
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+        }
         
         .card-header h2 {
             font-size: 18px;
@@ -1661,7 +1669,7 @@
                 </div>
                 
                 <div class="card">
-                    <div class="card-header" onclick="toggleBizStats()" style="cursor:pointer;user-select:none;" title="הצגה/הסתרה של הנתונים">
+                    <div class="card-header collapsible-header" onclick="toggleBizStats()" style="cursor:pointer;user-select:none;" title="הצגה/הסתרה של הנתונים">
                         <h2>📈 נתוני האתר (30 ימים אחרונים)</h2>
                         <span id="biz-stats-arrow" style="display:inline-block;transition:transform 0.2s;color:var(--secondary);font-size:18px;">▾</span>
                     </div>
