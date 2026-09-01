@@ -301,6 +301,10 @@ const GlasseriaLogger = (() => {
                 const target = e.target;
                 if (target && target !== window && target.tagName) {
                     if (target.tagName.toLowerCase() === 'img') {
+                        // An empty/missing src attribute resolves to the page URL and can
+                        // fire a bogus error event - markup artifact, not a broken image
+                        const srcAttr = target.getAttribute && target.getAttribute('src');
+                        if (!srcAttr) return;
                         const src = target.src || target.currentSrc || 'unknown';
                         if (_seenImageErrors.has(src)) return; // already logged this broken image
                         _seenImageErrors.add(src);

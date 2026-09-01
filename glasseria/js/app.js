@@ -377,9 +377,7 @@ function openSelectionModal(product, sourceButton) {
     const selectionNote = document.getElementById('selection-note');
     
     // Set product info
-    const firstImage = product.images && product.images.length > 0 
-        ? product.images[0] 
-        : (product.image || 'images/placeholder.svg');
+    const firstImage = getProductImages(product)[0];
     modalImage.innerHTML = `<img src="${firstImage}" alt="${product.name}" onerror="this.onerror=null;this.src='images/placeholder.svg'">`;
     modalName.textContent = product.name;
     modalSku.textContent = `מק"ט: ${product.sku || '-'}`;
@@ -644,7 +642,7 @@ function createLightbox() {
         <button class="lightbox-arrow prev" id="lightbox-prev">
             <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <img src="" alt="תמונה מוגדלת" id="lightbox-image">
+        <img alt="תמונה מוגדלת" id="lightbox-image">
         <button class="lightbox-arrow next" id="lightbox-next">
             <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
         </button>
@@ -1447,9 +1445,7 @@ function renderNextBatch() {
         fragment.appendChild(card);
 
         // Collect images for carousel init after DOM insertion
-        const images = product.images && product.images.length > 0
-            ? product.images
-            : (product.image ? [product.image] : ['images/placeholder.svg']);
+        const images = getProductImages(product);
         if (images.length > 0) {
             cardsToInit.push({ card, images });
         }
@@ -1512,6 +1508,17 @@ function isNewProduct(product) {
     return (Date.now() - ms) < THIRTY_DAYS;
 }
 
+// ===== Product images helper =====
+// Legacy docs can hold empty-string entries ('' resolves to the page URL and fires
+// a bogus image-error) - pick only real image URLs, with the placeholder as fallback
+function getProductImages(product) {
+    const raw = product.images && product.images.length > 0
+        ? product.images
+        : (product.image ? [product.image] : []);
+    const clean = raw.filter(u => typeof u === 'string' && u.trim() !== '');
+    return clean.length > 0 ? clean : ['images/placeholder.svg'];
+}
+
 // ===== Homepage sample: 1-2 products per category =====
 // Per-category picks prefer active-sale / new products; remaining slots fill from the
 // admin-controlled drag order (products are already globally sorted by 'order')
@@ -1552,9 +1559,7 @@ function productBadgesHtml(product) {
 
 function createProductCard(product, isFavorite, skipCarouselInit = false) {
     // תמיכה גם בתמונה בודדת וגם במערך תמונות
-    const images = product.images && product.images.length > 0
-        ? product.images
-        : (product.image ? [product.image] : ['images/placeholder.svg']);
+    const images = getProductImages(product);
 
     const card = document.createElement('div');
     card.className = 'product-card';
@@ -1737,10 +1742,8 @@ function openProductModal(product) {
     });
     
     // תמיכה גם בתמונה בודדת וגם במערך תמונות
-    const images = product.images && product.images.length > 0 
-        ? product.images 
-        : (product.image ? [product.image] : ['images/placeholder.svg']);
-    
+    const images = getProductImages(product);
+
     modalContent.innerHTML = `
         <div class="modal-product">
             <div class="modal-product-image" data-images='${JSON.stringify(images)}'>
@@ -2051,9 +2054,7 @@ function renderFavoritesList() {
         const qty = Math.max(1, parseInt(fav.quantity) || 1);
 
         // תמיכה בתמונה הראשונה מהמערך
-        const firstImage = product.images && product.images.length > 0
-            ? product.images[0]
-            : (product.image || 'images/placeholder.svg');
+        const firstImage = getProductImages(product)[0];
 
         // Build selection info
         let selectionInfo = '';

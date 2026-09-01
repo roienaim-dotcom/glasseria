@@ -1670,13 +1670,18 @@
                 
                 <div class="card">
                     <div class="card-header collapsible-header" onclick="toggleBizStats()" style="cursor:pointer;user-select:none;" title="הצגה/הסתרה של הנתונים">
-                        <h2>📈 נתוני האתר (30 ימים אחרונים)</h2>
+                        <h2 style="display:flex;align-items:center;gap:8px;">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <rect x="3" y="3" width="18" height="18" rx="4" stroke="currentColor" stroke-width="1.6"/>
+                                <rect x="7" y="12" width="2.6" height="5" rx="1.3" fill="currentColor"/>
+                                <rect x="10.7" y="9" width="2.6" height="8" rx="1.3" fill="currentColor"/>
+                                <rect x="14.4" y="6.5" width="2.6" height="10.5" rx="1.3" fill="currentColor"/>
+                            </svg>
+                            נתוני האתר (30 ימים אחרונים)
+                        </h2>
                         <span id="biz-stats-arrow" style="display:inline-block;transition:transform 0.2s;color:var(--secondary);font-size:18px;">▾</span>
                     </div>
                     <div id="biz-stats-body" style="display:none;">
-                        <div style="text-align:left;margin-top:4px;">
-                            <button class="btn btn-secondary btn-small" onclick="loadBusinessStats()">🔄 רענן</button>
-                        </div>
                         <div id="biz-stats-loading" style="color:var(--secondary);padding:8px 0;">טוען נתונים...</div>
                         <div class="stats-grid" id="biz-stats-grid" style="display:none;margin-top:10px;">
                             <div class="stat-card"><div class="stat-number" id="biz-visits">0</div><div class="stat-label">כניסות</div></div>
@@ -5200,7 +5205,7 @@
                 // All three failed = a real error (auth/permissions/network), not "no data" -
                 // show it instead of rendering misleading zeros
                 if (!logsSnap && !eventsSnap && !inqSnap) {
-                    loadingEl.textContent = 'שגיאה בטעינת הנתונים — נסו ללחוץ רענן';
+                    loadingEl.textContent = 'שגיאה בטעינת הנתונים — סגרו ופתחו שוב את החץ';
                     return;
                 }
 
