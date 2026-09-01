@@ -5031,7 +5031,19 @@
                 const customerHtml = customerBits.length
                     ? '<div style="margin-top:8px;font-size:14px;">' + customerBits.join(' &nbsp;·&nbsp; ') + '</div>'
                     : '';
-                return '<div class="card" style="margin-bottom:10px;">' +
+                // Row color: status first (closed=green, handled=light yellow), then for
+                // new inquiries - blue for WhatsApp, light blue for form leads
+                let rowStyle = 'margin-bottom:10px;';
+                if (status === 'closed') {
+                    rowStyle += 'background:#dcfce7;border-right:4px solid #22c55e;';
+                } else if (status === 'handled') {
+                    rowStyle += 'background:#fef9c3;border-right:4px solid #eab308;';
+                } else if (inq.source === 'form') {
+                    rowStyle += 'background:#eff6ff;border-right:4px solid #93c5fd;';
+                } else {
+                    rowStyle += 'background:#dbeafe;border-right:4px solid #2563eb;';
+                }
+                return '<div class="card" style="' + rowStyle + '">' +
                     '<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:center;">' +
                         '<span style="color:var(--secondary);font-size:13px;">' + sourceBadge + ' ' + _escHtml(date) +
                             ' · ' + (Number(inq.itemCount) || (inq.items || []).length) + ' פריטים' +
@@ -5044,8 +5056,33 @@
                     '</div>' +
                     customerHtml +
                     (itemsHtml ? '<ul style="margin:8px 0 0;padding-right:18px;">' + itemsHtml + '</ul>' : '') +
+                    '<div style="margin-top:10px;display:flex;gap:8px;align-items:center;">' +
+                        '<input type="text" id="inq-note-' + inq.id + '" value="' + _escHtml(String(inq.notes || '')) + '"' +
+                            ' placeholder="הערה פנימית (למשל: ביקש הצעה, לחזור אחרי החג)" maxlength="1000"' +
+                            ' style="flex:1;min-width:180px;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-family:inherit;font-size:13px;background:#fff;">' +
+                        '<button class="btn btn-secondary" style="padding:8px 14px;font-size:13px;white-space:nowrap;"' +
+                            ' onclick="saveInquiryNote(\'' + inq.id + '\', this)">שמור הערה</button>' +
+                    '</div>' +
                 '</div>';
             }).join('');
+        }
+
+        async function saveInquiryNote(id, btn) {
+            const input = document.getElementById('inq-note-' + id);
+            if (!input) return;
+            const val = input.value.trim().slice(0, 1000);
+            const orig = btn.textContent;
+            btn.disabled = true;
+            try {
+                await inquiriesCollection.doc(id).update({ notes: val });
+                const inq = inquiriesData.find(i => i.id === id);
+                if (inq) inq.notes = val;
+                btn.textContent = '✓ נשמר';
+                setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 1500);
+            } catch (e) {
+                btn.disabled = false;
+                alert('שגיאה בשמירת ההערה: ' + (e.message || e));
+            }
         }
 
         async function updateInquiryStatus(id, status) {

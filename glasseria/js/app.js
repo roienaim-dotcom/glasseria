@@ -1196,7 +1196,7 @@ function renderNavigation() {
     // contactPhone is already sanitized to phone-safe characters in applyContactSettings
     const contactLinks = `
         <a href="${telHref(contactPhone)}" class="nav-link nav-phone">📞 התקשרו: <span class="nav-phone-number">${contactPhone}</span></a>
-        <a href="#" class="nav-link nav-callback">📩 נחזור אליכם</a>
+        <a href="#" class="nav-link nav-callback">📩 השארת פרטים</a>
     `;
 
     const linksHtml = `

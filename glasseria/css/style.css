@@ -2460,16 +2460,26 @@ img {
     opacity: 0.85;
 }
 
-/* Desktop nav: contact rows live only in the mobile menu */
-@media (min-width: 993px) {
-    .nav-phone,
-    .nav-callback {
-        display: none;
-    }
+/* Hamburger navigation at ALL widths (Roei, 2026-09-01): with 11+ categories the
+   inline nav can't coexist with the contact actions, so the desktop header now
+   shows logo + phone + "השארת פרטים" + hamburger, same as mobile */
+.nav {
+    display: none;
 }
 
+.mobile-menu-btn {
+    display: flex;
+}
+
+/* The dropdown menu now serves desktop too - keep its rows tidy and centered */
+.mobile-nav .nav-link {
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+}
+
+/* Small screens: drop the number text - the pill becomes a compact dial icon */
 @media (max-width: 992px) {
-    /* Number text hidden on small screens - the pill becomes a round dial icon */
     .header-phone-number {
         display: none;
     }
@@ -2478,12 +2488,23 @@ img {
         padding: 10px;
         border-radius: 50%;
     }
+}
 
-    .mobile-nav .nav-phone,
-    .mobile-nav .nav-callback {
-        font-weight: 600;
-        border-top: 1px solid #eee;
-    }
+/* Contact rows in the menu: a clearly separated, tappable section.
+   Explicit color pins readability against .nav-link:hover's white-on-primary */
+.mobile-nav .nav-phone {
+    margin-top: 6px;
+    font-weight: 600;
+    color: var(--secondary);
+    background: var(--light);
+    border-radius: 25px;
+}
+
+.mobile-nav .nav-callback {
+    font-weight: 600;
+    background: var(--primary);
+    color: var(--white);
+    border-radius: 25px;
 }
 
 @media (max-width: 480px) {
